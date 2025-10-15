@@ -1,0 +1,7 @@
+var d = {true:1};
+d[true] = false;
+d[-1] = "nihao";
+d["a"] = [1,2,3];
+println(d.pairs());
+d.remove("a");
+println(d.pairs());

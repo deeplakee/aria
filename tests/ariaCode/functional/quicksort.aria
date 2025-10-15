@@ -1,0 +1,36 @@
+fun partition(arr, left, right) {
+  # elect right element as pivot
+  var pivot = arr[right];
+  var partitionIndex = left;
+  
+  for (var i = left; i < right; i++) {
+    if (arr[i] < pivot) {
+      # swap
+      var tmp = arr[i];
+      arr[i] = arr[partitionIndex];
+      arr[partitionIndex] = tmp;
+      partitionIndex++;
+    }
+  }
+  
+    var tmp = arr[right];
+    arr[right] = arr[partitionIndex];
+    arr[partitionIndex] = tmp;
+  
+    return partitionIndex;
+}
+
+fun quick_sort(arr,left,right){
+    if(left >= right){
+        return;
+    }
+    var pivotIndex = partition(arr, left, right);
+    quick_sort(arr, left, pivotIndex - 1);
+    quick_sort(arr, pivotIndex + 1, right);
+  
+    return arr;
+}
+
+var a = [3, 6, 8, 10, 1, 2, 1,-1];
+quick_sort(a,0,a.size()-1);
+println(a);

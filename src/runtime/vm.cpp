@@ -1,0 +1,1073 @@
+#include "runtime/vm.h"
+
+#include "chunk/chunk.h"
+#include "chunk/disassembler.h"
+#include "compile/compiler.h"
+#include "error/error.h"
+#include "object/objBoundMethod.h"
+#include "object/objClass.h"
+#include "object/objException.h"
+#include "object/objFunction.h"
+#include "object/objInstance.h"
+#include "object/objIterator.h"
+#include "object/objList.h"
+#include "object/objMap.h"
+#include "object/objModule.h"
+#include "object/objNativeFn.h"
+#include "object/objString.h"
+#include "object/objUpvalue.h"
+#include "runtime/native.h"
+#include "value/valueHashTable.h"
+
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <sstream>
+#include <utility>
+
+namespace aria {
+
+#define THROW_EXCEPTION(code, err) \
+    throwException(code, err); \
+    break;
+
+// we consider exception is created with newException or throwException,
+// so the err_flag is set and err is ObjException
+#define CHECK_EXCEPTION(err) \
+    if (get_err_flag()) { \
+        if (!is_ObjException(err)) { \
+            reportRuntimeFatalError(ErrorCode::RUNTIME_UNKNOWN, "Invalid return value"); \
+        } \
+        throwException(as_ObjException(err)); \
+        break; \
+    }
+
+uint8_t read_byte(CallFrame *frame)
+{
+    return *frame->ip++;
+}
+
+opCode read_opcode(CallFrame *frame)
+{
+    return static_cast<opCode>(read_byte(frame));
+}
+
+uint16_t read_word(CallFrame *frame)
+{
+    frame->ip += 2;
+    return static_cast<uint16_t>((frame->ip[-1] << 8) | frame->ip[-2]);
+}
+
+Value read_constant(CallFrame *frame)
+{
+    return frame->function->chunk->consts[read_word(frame)];
+}
+
+ObjString *read_ObjString(CallFrame *frame)
+{
+    return as_ObjString(read_constant(frame));
+}
+
+AriaVM::AriaVM()
+    : gc{new GC{}}
+    , Cframes{new CallFrame[FRAME_SIZE]}
+    , Eframes{new ExceptionFrame[FRAME_SIZE]}
+    , Rmodules{new Value[FRAME_SIZE]}
+    , CframeCount{0}
+    , EframeCount{0}
+    , RmoduleCount{0}
+    , frame{nullptr}
+    , E_REG{nil_val}
+    , flags{0}
+    , builtIn{new ValueHashTable{gc}}
+    , cachedModules{new ValueHashTable{gc}}
+    , openUpvalues{nullptr}
+    , globals{new ValueHashTable{gc}}
+{
+    gc->bindVM(this);
+    registerNative();
+}
+
+AriaVM::~AriaVM()
+{
+    delete[] Cframes;
+    delete[] Eframes;
+    delete[] Rmodules;
+    delete builtIn;
+    delete cachedModules;
+    delete globals;
+    delete gc;
+}
+
+interpretResult AriaVM::interpret(String srcFilePath, String source)
+{
+    ariaDir = getProgramDirectory();
+    srcFilePath = getAbsolutePath(getWorkingDirectory(), srcFilePath);
+#ifdef DEBUG_MODE
+    println("aria directory: {}", ariaDir);
+    println("source file path: {}", srcFilePath);
+#endif
+    auto script = Compiler::compile(srcFilePath, std::move(source), gc, globals);
+    if (script == nullptr) {
+        return interpretResult::COMPILE_ERROR;
+    }
+    reset();
+    try {
+        stack.push(obj_val(script));
+        callModule(script);
+        if (get_err_flag()) {
+            return interpretResult::RUNTIME_ERROR;
+        }
+        run();
+        return interpretResult::SUCCESS;
+    } catch (const ariaException &e) {
+        error(e.what());
+    }
+    return interpretResult::RUNTIME_ERROR;
+}
+
+interpretResult AriaVM::interpret(String source)
+{
+    std::ofstream out(tmp_aria_file_path);
+    out << source;
+    out.close();
+    return interpret(tmp_aria_file_path, std::move(source));
+}
+
+interpretResult AriaVM::interpretFromFile(const String &srcFilePath)
+{
+    try {
+        String code = readFile(srcFilePath);
+        return interpret(srcFilePath, code);
+    } catch (const std::runtime_error &e) {
+        error(e.what());
+        return interpretResult::SRC_FILE_ERROR;
+    }
+}
+
+Value AriaVM::runFunction(ObjFunction *fun, int argCount, const Value *args)
+{
+    stack.push(obj_val(fun));
+    if (fun == nullptr) {
+        reportRuntimeFatalError(ErrorCode::RUNTIME_NULL_REFERENCE, "Invalid function pointer");
+    }
+    if (argCount > 0 && args == nullptr) {
+        reportRuntimeFatalError(ErrorCode::RUNTIME_NULL_REFERENCE, "Invalid arguments pointer");
+    }
+    for (int i = 0; i < argCount; i++) {
+        stack.push(args[i]);
+    }
+    callFunction(fun, argCount);
+    return run(CframeCount - 1);
+}
+
+Value AriaVM::newException(const char *msg)
+{
+    set_err_flag();
+    auto e = obj_val(newObjException(msg, gc));
+    E_REG = e;
+    return e;
+}
+
+Value AriaVM::newException(ErrorCode code, const char *msg)
+{
+    set_err_flag();
+    auto e = obj_val(newObjException(code, msg, gc));
+    E_REG = e;
+    return e;
+}
+
+Value AriaVM::newException(ErrorCode code, const String &msg)
+{
+    return newException(code, msg.c_str());
+}
+
+void AriaVM::pushCallFrame(ObjFunction *_function, uint8_t *_ip, Value *_stakBase)
+{
+    Cframes[CframeCount].init(_function, _ip, _stakBase);
+    CframeCount++;
+    frame = &Cframes[CframeCount - 1];
+}
+
+void AriaVM::pushExceptionFrame(
+    int CframeCount_, int RmoduleCount_, uint8_t *_ip, uint32_t _stackSize)
+{
+    Eframes[EframeCount].init(CframeCount_, RmoduleCount_, _ip, _stackSize);
+    EframeCount++;
+}
+
+void AriaVM::pushRunningModule(const ObjFunction *_function)
+{
+    Rmodules[RmoduleCount] = obj_val(_function->location);
+    RmoduleCount++;
+}
+
+void AriaVM::popCallFrame()
+{
+    CframeCount--;
+    if (CframeCount == 0) {
+        frame = nullptr;
+    } else {
+        frame = &Cframes[CframeCount - 1];
+    }
+}
+
+void AriaVM::popExceptionFrame()
+{
+    EframeCount--;
+}
+
+void AriaVM::popRunningModule()
+{
+    RmoduleCount--;
+#ifdef DEBUG_MODE
+    println("module exit: from {} to {}", RmoduleCount, RmoduleCount - 1);
+#endif
+}
+
+void AriaVM::packVarargs(int argCount, int arity)
+{
+    int count = argCount - arity;
+    if (count == 0) {
+        ObjList *emptyList = newObjList(nullptr, 0, gc);
+        stack.push(obj_val(emptyList));
+    } else {
+        Value *start = stack.getTopPtr() - count;
+        ObjList *list = newObjList(start, count, gc);
+        stack.pop_n(count);
+        stack.push(obj_val(list));
+    }
+}
+
+ObjModule *AriaVM::cacheModule(ObjFunction *moduleFn)
+{
+    gc->cache(obj_val(moduleFn));
+    auto module = obj_val(newObjModule(moduleFn, gc));
+    gc->cache(module);
+    cachedModules->insert(obj_val(moduleFn->location), module);
+    gc->releaseCache(2);
+    return as_ObjModule(module);
+}
+
+Value AriaVM::createCallFrame(ObjFunction *function)
+{
+    if (CframeCount == FRAME_SIZE) {
+        return newException(ErrorCode::RUNTIME_STACK_OVERFLOW, "Stack overflow.");
+    }
+    // Normal function frame base includes callee itself at slot 0.
+    auto arity = function->acceptsVarargs ? function->arity + 2 : function->arity + 1;
+    pushCallFrame(function, function->chunk->codes, stack.getTopPtr() - arity);
+    return nil_val;
+}
+
+Value AriaVM::returnFromCurrentModule(Value result)
+{
+    if (RmoduleCount > 1) {
+        result = obj_val(cacheModule(frame->function));
+    }
+    popRunningModule();
+    return result;
+}
+
+Value AriaVM::returnFromCurrentFrame(Value result)
+{
+#ifdef DEBUG_MODE
+    assert(CframeCount > 0 && "returnFromCurrentFrame called with empty frame stack.");
+    assert(RmoduleCount > 0 && "returnFromCurrentFrame called with empty running module stack.");
+#endif
+    closeUpvalues(frame->stakBase);
+    if (frame->function->type == FunctionType::SCRIPT) {
+        result = returnFromCurrentModule(result);
+    }
+    popCallFrame();
+    return result;
+}
+
+Value AriaVM::callValue(Value callee, int argCount)
+{
+    if (is_obj(callee)) {
+        switch (obj_type(callee)) {
+        case ObjType::FUNCTION:
+            return callFunction(as_ObjFunction(callee), argCount);
+        case ObjType::NATIVE_FN:
+            return callNativeFn(as_ObjNativeFn(callee), argCount);
+        case ObjType::CLASS:
+            return callNewInstance(as_ObjClass(callee), argCount);
+        case ObjType::BOUND_METHOD:
+            return callBoundMethod(as_ObjBoundMethod(callee), argCount);
+        default:
+            return as_obj(callee)->op_call(this, argCount);
+        }
+    }
+    return newException("Invalid call operation.");
+}
+
+Value AriaVM::callModule(ObjFunction *module)
+{
+    if (RmoduleCount == FRAME_SIZE) {
+        return newException(ErrorCode::RUNTIME_STACK_OVERFLOW, "RunningModule Stack overflow.");
+    }
+    pushRunningModule(module);
+    return callFunction(module, 0);
+}
+
+Value AriaVM::callFunction(ObjFunction *function, int argCount)
+{
+    if (function->acceptsVarargs && argCount >= function->arity) {
+        packVarargs(argCount, function->arity);
+    } else if (argCount == function->arity) {
+        // pass
+    } else {
+        String msg = format("Expected {} arguments but got {}.", function->arity, argCount);
+        return newException(ErrorCode::RUNTIME_MISMATCH_ARG_COUNT, msg);
+    }
+    return createCallFrame(function);
+}
+
+Value AriaVM::callNativeFn(ObjNativeFn *native, int argCount)
+{
+    if (native->acceptsVarargs && argCount >= native->arity) {
+        packVarargs(argCount, native->arity);
+    } else if (argCount == native->arity) {
+        // pass
+    } else {
+        String msg = format("Expected {} arguments but got {}.", native->arity, argCount);
+        return newException(ErrorCode::RUNTIME_MISMATCH_ARG_COUNT, msg);
+    }
+    // Native function args pointer starts from first argument.
+    auto arity = native->acceptsVarargs ? native->arity + 1 : native->arity;
+    Value result = native->function(this, argCount, stack.getTopPtr() - arity);
+    stack.pop_n(arity + 1);
+    stack.push(result);
+    return result;
+}
+
+Value AriaVM::callNewInstance(ObjClass *klass, int argCount)
+{
+    stack[stack.size() - argCount - 1] = obj_val(newObjInstance(klass, gc));
+    if (klass->initMethod != nullptr) {
+        return callFunction(klass->initMethod, argCount);
+    }
+    if (argCount != 0) {
+        String msg = format("Expected 0 argument but got {}.", argCount);
+        return newException(ErrorCode::RUNTIME_MISMATCH_ARG_COUNT, msg);
+    }
+    return nil_val;
+}
+
+Value AriaVM::callBoundMethod(const ObjBoundMethod *method, const int argCount)
+{
+    if (method->methodType == BoundMethodType::FUNCTION) {
+        stack[stack.size() - argCount - 1] = method->receiver;
+        return callFunction(method->method, argCount);
+    }
+    if (method->methodType == BoundMethodType::NATIVE_FN) {
+        stack[stack.size() - argCount - 1] = method->receiver;
+        return callNativeFn(method->native_method, argCount);
+    }
+    return newException(ErrorCode::RUNTIME_UNKNOWN, "Unknown bound method type.");
+}
+
+Value AriaVM::bindMethodIfNeeded(Value obj, Value value) const
+{
+    if (is_ObjFunction(value)
+        && (as_ObjFunction(value)->type == FunctionType::METHOD
+            || as_ObjFunction(value)->type == FunctionType::INIT_METHOD)) {
+        ObjFunction *unpackedMethod = as_ObjFunction(value);
+        ObjBoundMethod *boundMethod = newObjBoundMethod(obj, unpackedMethod, gc);
+        return obj_val(boundMethod);
+    }
+    if (is_ObjNativeFn(value) && (as_ObjNativeFn(value)->type == FunctionType::METHOD)) {
+        ObjNativeFn *unpackedMethod = as_ObjNativeFn(value);
+        ObjBoundMethod *boundMethod = newObjBoundMethod(obj, unpackedMethod, gc);
+        return obj_val(boundMethod);
+    }
+    return value;
+}
+
+ObjUpvalue *AriaVM::captureUpvalue(Value *local)
+{
+    ObjUpvalue *prevUpvalue = nullptr;
+    ObjUpvalue *upvalue = openUpvalues;
+    while (upvalue != nullptr && upvalue->location > local) {
+        prevUpvalue = upvalue;
+        upvalue = upvalue->nextUpvalue;
+    }
+
+    if (upvalue != nullptr && upvalue->location == local) {
+        return upvalue;
+    }
+    ObjUpvalue *createdUpvalue = newObjUpvalue(local, gc);
+    createdUpvalue->nextUpvalue = upvalue;
+
+    if (prevUpvalue == nullptr) {
+        openUpvalues = createdUpvalue;
+    } else {
+        prevUpvalue->nextUpvalue = createdUpvalue;
+    }
+    return createdUpvalue;
+}
+
+void AriaVM::closeUpvalues(const Value *last)
+{
+    while (openUpvalues != nullptr && openUpvalues->location >= last) {
+        ObjUpvalue *upvalue = openUpvalues;
+        upvalue->closed = *upvalue->location;
+        upvalue->location = &upvalue->closed;
+        openUpvalues = upvalue->nextUpvalue;
+    }
+}
+
+void AriaVM::registerNative() const
+{
+    for (const auto &entry : Native::nativeFnTable()) {
+        defineNativeFn(entry.name, entry.arity, entry.fn, entry.acceptsVarargs);
+    }
+
+    for (auto &var : Native::nativeVarTable()) {
+        defineNativeVar(var.name, var.initializer(gc));
+    }
+}
+
+void AriaVM::defineNativeFn(
+    const char *name, int arity, NativeFn_t function, bool acceptsVarargs) const
+{
+    Value key = obj_val(newObjString(name, gc));
+    gc->cache(key);
+    Value value = obj_val(newObjNativeFn(
+        FunctionType::FUNCTION, function, as_ObjString(key), arity, acceptsVarargs, gc));
+    gc->cache(value);
+    builtIn->insert(key, value);
+    gc->releaseCache(2);
+}
+
+void AriaVM::defineNativeVar(const char *name, Value value) const
+{
+    Value key = obj_val(newObjString(name, gc));
+    gc->cache(key);
+    gc->cache(value);
+    builtIn->insert(key, value);
+    gc->releaseCache(2);
+}
+
+bool AriaVM::isModuleRunning(const String &path) const
+{
+    for (int i = 0; i < RmoduleCount; i++) {
+        if (path == as_ObjString(Rmodules[i])->C_str_ref()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+ObjModule *AriaVM::getCachedModule(ObjString *path)
+{
+    Value value;
+    if (cachedModules->get(obj_val(path), value)) {
+        return as_ObjModule(value);
+    }
+    return nullptr;
+}
+
+ObjFunction *AriaVM::loadModule(const String &path, ObjString *moduleName)
+{
+    String source;
+    try {
+        source = readFile(path);
+    } catch ([[maybe_unused]] const std::exception &e) {
+        return nullptr;
+    }
+    return Compiler::compile(path, moduleName->C_str_ref(), std::move(source), gc);
+}
+
+Value AriaVM::run(int retFrame)
+{
+    if (retFrame < 0 || retFrame >= CframeCount)
+        reportRuntimeFatalError(ErrorCode::RUNTIME_INVALID_FRAME, "Invalid retFrame index");
+    for (;;) {
+        Chunk *chunk = frame->function->chunk;
+#ifdef DEBUG_TRACE_EXECUTION
+        stack.display(frame->stakBase - stack.base(), frame->function->toString());
+        Disassembler::disassembleInstruction(chunk, static_cast<uint32_t>(frame->ip - chunk->codes));
+#endif
+
+        switch (read_opcode(frame)) {
+        case opCode::LOAD_CONST:
+            stack.push(read_constant(frame));
+            break;
+        case opCode::LOAD_NIL:
+            stack.push(nil_val);
+            break;
+        case opCode::LOAD_TRUE:
+            stack.push(bool_val(true));
+            break;
+        case opCode::LOAD_FALSE:
+            stack.push(bool_val(false));
+            break;
+        case opCode::LOAD_LOCAL: {
+            uint16_t offset = read_word(frame);
+            stack.push(frame->stakBase[offset]);
+            break;
+        }
+        case opCode::STORE_LOCAL: {
+            uint16_t offset = read_word(frame);
+            frame->stakBase[offset] = stack.peek();
+            break;
+        }
+        case opCode::LOAD_UPVALUE: {
+            uint16_t slot = read_word(frame);
+            Value val = *(frame->function->upvalues[slot]->location);
+            stack.push(val);
+            break;
+        }
+        case opCode::STORE_UPVALUE: {
+            uint16_t slot = read_word(frame);
+            *frame->function->upvalues[slot]->location = stack.peek();
+            break;
+        }
+        case opCode::CLOSE_UPVALUE: {
+            closeUpvalues(stack.getTopPtr() - 1);
+            stack.pop(); // pop captured upvalue variable
+            break;
+        }
+        case opCode::DEF_GLOBAL: {
+            ObjString *name = read_ObjString(frame);
+            if (!chunk->globals->insert(obj_val(name), stack.peek())) {
+                String msg = format("Existed variable '{}'.", name->C_str_ref());
+                THROW_EXCEPTION(ErrorCode::RUNTIME_EXISTED_VARIABLE, msg);
+            }
+            stack.pop();
+            break;
+        }
+        case opCode::LOAD_GLOBAL: {
+            ObjString *name = read_ObjString(frame);
+            Value value = nil_val;
+            if (!chunk->globals->get(obj_val(name), value)) {
+                if (!builtIn->get(obj_val(name), value)) {
+                    String msg = format("Undefined variable '{}'.", name->C_str_ref());
+                    THROW_EXCEPTION(ErrorCode::RUNTIME_UNDEFINED_VARIABLE, msg);
+                }
+            }
+            stack.push(value);
+            break;
+        }
+        case opCode::STORE_GLOBAL: {
+            ObjString *name = read_ObjString(frame);
+            if (chunk->globals->insert(obj_val(name), stack.peek())) {
+                chunk->globals->remove(obj_val(name));
+                String msg = format("Undefined variable '{}'.", name->C_str_ref());
+                THROW_EXCEPTION(ErrorCode::RUNTIME_UNDEFINED_VARIABLE, msg);
+            }
+            break;
+        }
+        case opCode::LOAD_FIELD: {
+            if (!is_obj(stack.peek())) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_FIELD_OP, "Only objects have fields.");
+            }
+            Obj *obj = as_obj(stack.peek());
+            ObjString *name = read_ObjString(frame);
+            Value value;
+
+            // return true_val or false_val
+            auto result = obj->getByField(name, value);
+
+            if (is_false_val(result)) {
+                String msg = format(
+                    "this {} object does no have attribute {}.",
+                    obj->representation(),
+                    name->C_str_ref());
+                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
+            }
+
+            value = bindMethodIfNeeded(obj_val(obj), value);
+            stack.setTopVal(value);
+            break;
+        }
+        case opCode::STORE_FIELD: {
+            if (!is_obj(stack.peek())) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_FIELD_OP, "Only objects have fields.");
+            }
+            Obj *obj = as_obj(stack.pop());
+            ObjString *propertyName = read_ObjString(frame);
+
+            // return true_val or false_val
+            auto result = obj->setByField(propertyName, stack.peek());
+
+            if (is_false_val(result)) {
+                String msg = format(
+                    "this {} object does no support store field operation.",
+                    valueTypeString(stack.peek()));
+                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
+            }
+            break;
+        }
+        case opCode::LOAD_SUBSCR: {
+            if (!is_obj(stack.peek(1))) {
+                THROW_EXCEPTION(
+                    ErrorCode::RUNTIME_INVALID_INDEX_OP, "Only objects support index operation.");
+            }
+            Obj *obj = as_obj(stack.peek(1));
+            Value index = stack.peek();
+            Value value;
+
+            auto result = obj->getByIndex(index, value);
+
+            if (is_false_val(result)) {
+                String msg = format(
+                    "this {} object does not support subscript access with index '{}'.",
+                    valueTypeString(obj_val(obj)),
+                    valueString(index));
+                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_INDEX_OP, msg);
+            }
+
+            CHECK_EXCEPTION(result);
+
+            stack.pop_n(2);
+            stack.push(value);
+            break;
+        }
+        case opCode::STORE_SUBSCR: {
+            if (!is_obj(stack.peek(1))) {
+                THROW_EXCEPTION(
+                    ErrorCode::RUNTIME_INVALID_INDEX_OP, "Only objects support index operation.");
+            }
+
+            Obj *obj = as_obj(stack.peek(1));
+            Value index = stack.peek();
+            Value value = stack.peek(2);
+
+            auto result = obj->setByIndex(index, value);
+
+            if (is_false_val(result)) {
+                String msg = format(
+                    "this {} object does not support subscript assignment with index '{}'.",
+                    valueTypeString(obj_val(obj)),
+                    valueString(index));
+                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_INDEX_OP, msg);
+            }
+
+            CHECK_EXCEPTION(result);
+
+            stack.pop_n(2);
+            break;
+        }
+        case opCode::EQUAL: {
+            Value b = stack.pop();
+            Value a = stack.pop();
+            stack.push(bool_val(valuesSame(a, b)));
+            break;
+        }
+        case opCode::NOT_EQUAL: {
+            Value b = stack.pop();
+            Value a = stack.pop();
+            stack.push(bool_val(!valuesSame(a, b)));
+            break;
+        }
+        case opCode::GREATER: {
+            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+            }
+            double b = as_number(stack.pop());
+            double a = as_number(stack.pop());
+            stack.push(bool_val(a > b));
+            break;
+        }
+        case opCode::GREATER_EQUAL: {
+            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+            }
+            double b = as_number(stack.pop());
+            double a = as_number(stack.pop());
+            stack.push(bool_val(a >= b));
+            break;
+        }
+        case opCode::LESS: {
+            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+            }
+            double b = as_number(stack.pop());
+            double a = as_number(stack.pop());
+            stack.push(bool_val(a < b));
+            break;
+        }
+        case opCode::LESS_EQUAL: {
+            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+            }
+            double b = as_number(stack.pop());
+            double a = as_number(stack.pop());
+            stack.push(bool_val(a <= b));
+            break;
+        }
+        case opCode::ADD: {
+            if (is_number(stack.peek()) && is_number(stack.peek(1))) {
+                double b = as_number(stack.pop());
+                double a = as_number(stack.pop());
+                stack.push(number_val(a + b));
+                break;
+            }
+            if (is_ObjString(stack.peek()) && is_ObjString(stack.peek(1))) {
+                ObjString *b = as_ObjString(stack.peek(0));
+                ObjString *a = as_ObjString(stack.peek(1));
+                ObjString *result = concatenateString(a, b, gc);
+                if (result == nullptr) {
+                    fatalError(
+                        ErrorCode::RESOURCE_STRING_OVERFLOW,
+                        "String concatenation result exceeds maximum length。");
+                }
+                stack.pop_n(2);
+                stack.push(obj_val(result));
+                break;
+            }
+            THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers or strings.");
+        }
+        case opCode::SUBTRACT: {
+            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+            }
+            double b = as_number(stack.pop());
+            double a = as_number(stack.pop());
+            stack.push(number_val(a - b));
+            break;
+        }
+        case opCode::MULTIPLY: {
+            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+            }
+            double b = as_number(stack.pop());
+            double a = as_number(stack.pop());
+            stack.push(number_val(a * b));
+            break;
+        }
+        case opCode::DIVIDE: {
+            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+            }
+            double b = as_number(stack.pop());
+            if (isZero(b)) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_DIVISION_BY_ZERO, "Divide by zero.");
+            }
+            double a = as_number(stack.pop());
+            stack.push(number_val(a / b));
+            break;
+        }
+        case opCode::MOD: {
+            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+            }
+            double b = as_number(stack.pop());
+            double a = as_number(stack.pop());
+            if (isZero(b)) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_MODULO_BY_ZERO, "Modulo by zero.");
+            }
+            stack.push(number_val(std::fmod(a, b)));
+            break;
+        }
+        case opCode::NOT:
+            stack.push(bool_val(isFalsey(stack.pop())));
+            break;
+        case opCode::NEGATE: {
+            if (!is_number(stack.peek())) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operand must be number.");
+            }
+            stack.push(number_val(-as_number(stack.pop())));
+            break;
+        }
+        case opCode::POP:
+            stack.pop();
+            break;
+        case opCode::POP_N:
+            stack.pop_n(read_byte(frame));
+            break;
+        case opCode::PRINT:
+            std::cout << valueString(stack.pop()) << std::endl;
+            break;
+        case opCode::NOP:
+            break;
+        case opCode::JUMP_FWD: {
+            const uint16_t offset = read_word(frame);
+            frame->ip -= offset;
+            break;
+        }
+        case opCode::JUMP_BWD: {
+            const uint16_t offset = read_word(frame);
+            frame->ip += offset;
+            break;
+        }
+        case opCode::JUMP_TRUE: {
+            const uint16_t offset = read_word(frame);
+            if (!isFalsey(stack.pop()))
+                frame->ip += offset;
+            break;
+        }
+        case opCode::JUMP_TRUE_NOPOP: {
+            const uint16_t offset = read_word(frame);
+            if (!isFalsey(stack.peek(0)))
+                frame->ip += offset;
+            break;
+        }
+        case opCode::JUMP_FALSE: {
+            const uint16_t offset = read_word(frame);
+            if (isFalsey(stack.pop()))
+                frame->ip += offset;
+            break;
+        }
+        case opCode::JUMP_FALSE_NOPOP: {
+            const uint16_t offset = read_word(frame);
+            if (isFalsey(stack.peek(0)))
+                frame->ip += offset;
+            break;
+        }
+        case opCode::CALL: {
+            int argCount = read_byte(frame);
+            auto callee = stack.peek(argCount);
+            auto result = callValue(callee, argCount);
+            CHECK_EXCEPTION(result);
+            break;
+        }
+        case opCode::CLOSURE: {
+            ObjFunction *fun = as_ObjFunction(read_constant(frame));
+            for (int i = 0; i < fun->upvalueCount; i++) {
+                uint8_t isLocal = read_byte(frame);
+                uint16_t index = read_word(frame);
+                if (isLocal) {
+                    fun->upvalues[i] = captureUpvalue(frame->stakBase + index);
+                } else {
+                    fun->upvalues[i] = frame->function->upvalues[index];
+                }
+            }
+            break;
+        }
+        case opCode::MAKE_CLASS: {
+            ObjClass *klass = newObjClass(read_ObjString(frame), gc);
+            stack.push(obj_val(klass));
+            break;
+        }
+        case opCode::INHERIT: {
+            if (!is_ObjClass(stack.peek())) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Superclass must be a class.");
+            }
+            ObjClass *superKlass = as_ObjClass(stack.pop());
+            ObjClass *klass = as_ObjClass(stack.peek());
+            klass->superKlass = superKlass;
+            klass->methods.copy(&superKlass->methods);
+            break;
+        }
+        case opCode::MAKE_METHOD: {
+            Value methodName = obj_val(read_ObjString(frame));
+            Value method = stack.peek(0);
+            ObjClass *klass = as_ObjClass(stack.peek(1));
+            klass->methods.insert(methodName, method);
+            stack.pop();
+            break;
+        }
+        case opCode::MAKE_INIT_METHOD: {
+            Value method = stack.pop();
+            ObjClass *klass = as_ObjClass(stack.peek());
+            klass->initMethod = as_ObjFunction(method);
+            break;
+        }
+        case opCode::INVOKE_METHOD: {
+            error("Invoke_method not implemented");
+            exit(1);
+        }
+        case opCode::LOAD_SUPER_METHOD: {
+            ObjString *methodName = read_ObjString(frame);
+            Value instance = stack.peek();
+            ObjClass *superKlass = as_ObjInstance(instance)->klass->superKlass;
+            Value superMethod = nil_val;
+            if (!superKlass->methods.get(obj_val(methodName), superMethod)) {
+                if (superKlass->initMethod != nullptr && methodName->length == 4
+                    && memcmp(methodName->C_str_ref(), "init", 4) == 0) {
+                    superMethod = obj_val(superKlass->initMethod);
+                } else {
+                    String msg = format(
+                        "Superclass '{}' has no method '{}",
+                        superKlass->toString(),
+                        methodName->toString());
+                    THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
+                }
+            }
+            ObjFunction *unpackedMethod = as_ObjFunction(superMethod);
+            ObjBoundMethod *boundMethod = newObjBoundMethod(instance, unpackedMethod, gc);
+            superMethod = obj_val(boundMethod);
+
+            stack.setTopVal(superMethod);
+            break;
+        }
+        case opCode::MAKE_LIST: {
+            int listSize = read_word(frame);
+            ObjList *list = newObjList(stack.getTopPtr() - listSize, listSize, gc);
+            stack.pop_n(listSize);
+            stack.push(obj_val(list));
+            break;
+        }
+        case opCode::MAKE_MAP: {
+            int mapSize = read_word(frame);
+            ObjMap *map = newObjMap(stack.getTopPtr() - mapSize * 2, mapSize, gc);
+            stack.pop_n(mapSize * 2);
+            stack.push(obj_val(map));
+            break;
+        }
+        case opCode::IMPORT: {
+            ObjString *moduleName = read_ObjString(frame);
+            const char *currentModuleName = as_ObjString(*currentRmodule())->C_str_ref();
+            String absoluteModulePath;
+            absoluteModulePath = getAbsoluteModulePath(currentModuleName, moduleName->C_str_ref());
+            if (absoluteModulePath.empty()) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_MODULE_INIT_ERROR, "Invalid module path.");
+            }
+#ifdef DEBUG_MODE
+            println("Importing module {}", absoluteModulePath);
+#endif
+            if (isModuleRunning(absoluteModulePath)) {
+                THROW_EXCEPTION(
+                    ErrorCode::RUNTIME_MODULE_INIT_ERROR, "Circular module import detected.");
+            }
+
+            ObjString *path = newObjString(absoluteModulePath, gc);
+            if (auto module = getCachedModule(path)) {
+                stack.push(obj_val(module));
+                break;
+            }
+            if (auto moduleFn = loadModule(absoluteModulePath, moduleName)) {
+                stack.push(obj_val(moduleFn));
+                callModule(moduleFn);
+                break;
+            }
+            THROW_EXCEPTION(ErrorCode::RUNTIME_MODULE_INIT_ERROR, "Import module error.");
+        }
+        case opCode::GET_ITER: {
+            if (!is_obj(stack.peek())) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Expected an iterable object");
+            }
+            Value iter = as_obj(stack.peek())->createIter(gc);
+            if (is_nil(iter)) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Expected iterable object");
+            }
+            stack.setTopVal(iter);
+            break;
+        }
+        case opCode::ITER_HAS_NEXT: {
+            if (!is_ObjIterator(stack.peek())) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Expected an iterator object");
+            }
+            ObjIterator *iterator = as_ObjIterator(stack.peek());
+            Value result = bool_val(iterator->iter->hasNext());
+            stack.setTopVal(result);
+            break;
+        }
+        case opCode::ITER_GET_NEXT: {
+            if (!is_ObjIterator(stack.peek())) {
+                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Expected an iterator object");
+            }
+            ObjIterator *iterator = as_ObjIterator(stack.peek());
+            Value nextVal = iterator->iter->next();
+            stack.pop();
+            stack.push(nextVal);
+            break;
+        }
+        case opCode::SETUP_EXCEPT: {
+            uint16_t offset = read_word(frame);
+            uint8_t *newIp = frame->ip + offset;
+            if (EframeCount == FRAME_SIZE) {
+                reportRuntimeFatalError(ErrorCode::RUNTIME_STACK_OVERFLOW, "Estack overflow.");
+            }
+            pushExceptionFrame(CframeCount, RmoduleCount, newIp, stack.size());
+            break;
+        }
+        case opCode::END_EXCEPT: {
+            popExceptionFrame();
+            break;
+        }
+        case opCode::THROW: {
+            set_err_flag();
+            E_REG = stack.pop();
+            if (EframeCount == 0) {
+                reportRuntimeFatalError(
+                    ErrorCode::RUNTIME_UNCAUGHT_EXCEPTION, valueString(E_REG).c_str());
+            }
+            unwindToCatchPoint();
+            break;
+        }
+        case opCode::RETURN: {
+            Value result = stack.pop();
+            stack.resize(static_cast<uint32_t>(frame->stakBase - stack.base()));
+            result = returnFromCurrentFrame(result);
+            if (CframeCount == retFrame) {
+                return result;
+            }
+            stack.push(result);
+            break;
+        }
+        default:
+            reportRuntimeFatalError(ErrorCode::RUNTIME_INVALID_INSTRUCTION, "Invalid opcode.");
+        }
+    }
+}
+
+void AriaVM::reset()
+{
+    stack.reset();
+    CframeCount = 0;
+    EframeCount = 0;
+    openUpvalues = nullptr;
+    updateCallFrame();
+    E_REG = nil_val;
+    flags = 0;
+}
+
+void AriaVM::unwindToCatchPoint()
+{
+    auto ef = currentEframe();
+    CframeCount = ef->CframeCount;
+    updateCallFrame();
+    RmoduleCount = ef->RmoduleCount;
+    frame->ip = ef->ip;
+    stack.resize(ef->stackSize);
+    stack.push(E_REG);
+    E_REG = nil_val;
+    unset_err_flag();
+}
+
+void AriaVM::throwException(ObjException *e)
+{
+    throwException(e->code, e);
+}
+
+void AriaVM::throwException(ErrorCode code, ObjException *e)
+{
+    E_REG = obj_val(e);
+    if (EframeCount == 0) {
+        reportRuntimeFatalError(code, e->what());
+    }
+    unwindToCatchPoint();
+}
+
+void AriaVM::throwException(ErrorCode code, const char *message)
+{
+    throwException(newObjException(code, message, gc));
+}
+
+void AriaVM::throwException(ErrorCode code, const String &message)
+{
+    throwException(newObjException(code, message.c_str(), gc));
+}
+
+void AriaVM::reportRuntimeFatalError(ErrorCode code, const char *msg) const
+{
+    std::ostringstream oss;
+    println(oss, runtimeError(msg));
+    for (int i = CframeCount - 1; i >= 0; i--) {
+        const CallFrame *frame = &Cframes[i];
+        const ObjFunction *function = frame->function;
+        const char *location = function->location->C_str_ref();
+        const char *funName = function->name->C_str_ref();
+        const size_t offset = static_cast<uint32_t>(frame->ip - function->chunk->codes - 1);
+        uint32_t line = function->chunk->lines[offset];
+        println(oss, "{}:{} in {}", location, line, funName);
+    }
+    throw ariaRuntimeException(code, oss.str());
+}
+
+} // namespace aria

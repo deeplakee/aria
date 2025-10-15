@@ -1,0 +1,100 @@
+program        → declaration*
+
+declaration    → funDecl
+               | classDecl
+               | varDecl
+               | statement
+
+funDecl        → "fun" function
+
+function       → identifier "(" ( identifier ( "," identifier )* ( "," varargs )? | varargs )? ")" block
+
+varargs        → "..." identifier
+
+classDecl      → "class" identifier ( ":" identifier )?  "{" function* "}"
+
+varDecl        → "var" identifier ( "=" expression )? ( "," identifier ( "=" expression )? )* ";"
+
+statement      → printStmt
+               | ifStmt
+               | whileStmt
+               | forStmt
+               | breakStmt
+               | continueStmt
+               | returnStmt
+               | importStmt
+               | tryCatchStmt
+               | throwStmt
+               | block
+               | exprStmt
+
+printStmt      → "print" expression ";"
+
+ifStmt         → "if" "(" expression ")" statement ( "else" statement )?
+
+whileStmt      → "while" "(" expression ")" statement
+
+forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement
+
+forInStmt      → "for" "(" identifier "in" expression ")" statement
+
+breakStmt      → "break" ";"
+
+continueStmt   → "continue" ";"
+
+returnStmt     → "return" expression? ";"
+
+importStmt     → "import" string "as" identifier ";"
+
+tryCatchStmt   → "try" block "catch" "(" IDENTIFIER ")" block
+
+throwStmt      → "throw" expression ";"
+
+block          → "{" declaration* "}"
+
+exprStmt       → expression ";"
+
+expression     → assignment
+
+assignment     → logic_or ( ( "=" | "+=" | "-=" | "*=" | "/=" | "%=" ) assignment )?
+               | value "++"
+               | value "--"
+
+logic_or       → logic_and ( ( "or" | "||" ) logic_and )*
+
+logic_and      → equality ( ( "and" | "&&" ) equality )*
+
+equality       → comparison ( ( "!=" | "==" ) comparison )*
+
+comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )*
+
+term           → factor ( ( "-" | "+" ) factor )*
+
+factor         → unary ( ( "/" | "*" | "%" ) unary )*
+
+unary          → ( "-" | "!" | "not" ) unary
+               | value
+
+value         → primary ( args | "." identifier | "[" expression "]" )*
+
+args          → "(" ( expression ("," expression )* )? ")"
+
+primary        → number
+               | string
+               | identifier
+               | "nil"
+               | "false"
+               | "true"
+               | "this"
+               | "super"
+               | parenExpr
+               | listExpr
+               | mapExpr
+
+parenExpr    → "(" expression ")"
+
+listExpr     → "[" ( expression ("," expression )* )? "]"
+
+mapExpr      → "{" ( pair ("," pair)* )? "}"
+
+pair         →  expression ":" expression

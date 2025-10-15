@@ -1,0 +1,20 @@
+fun createCounter() {
+  var count = 0;
+  fun counter(){
+    count += 1;
+    return count;
+  }
+  return counter;
+}
+
+var counter = createCounter();
+
+println(counter()); # output: 1
+println(counter()); # output: 2
+println(counter()); # output: 3
+
+try{
+    import "./lib/math.aria" as math;
+}catch(e){
+    print e;
+}

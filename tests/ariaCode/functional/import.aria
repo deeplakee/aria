@@ -1,0 +1,6 @@
+import "./lib/math.aria" as m;
+
+var num1 = m.add(1,2);         # num1 = 3
+var num2 = m.add(-1,num1,-2);  # num2 = 0
+println("num1 is: {} , num2 is: {}.",num1,num2);
+println(m.max(1,2,3,4,num2));

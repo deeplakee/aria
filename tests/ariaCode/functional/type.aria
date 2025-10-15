@@ -1,0 +1,5 @@
+import "./lib/math.aria" as m;
+println(m);
+println(typeof(m));
+println(typeof(typeof(m)));
+println(m.add);

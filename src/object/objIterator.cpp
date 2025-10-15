@@ -1,0 +1,80 @@
+#include "object/objIterator.h"
+
+#include "memory/gc.h"
+#include "object/objString.h"
+#include "runtime/vm.h"
+#include "util/hash.h"
+#include "value/valueHashTable.h"
+
+namespace aria {
+
+#define genException(code, msg) gc->runningVM->newException((code), (msg))
+
+ObjIterator::ObjIterator(Iterator *iter, GC *_gc)
+    : Obj{ObjType::ITERATOR, hashObj(this, ObjType::ITERATOR), _gc}
+    , iter{iter}
+{}
+
+ObjIterator::~ObjIterator()
+{
+    delete iter;
+}
+
+String ObjIterator::toString(ValueStack *printStack)
+{
+    return format("<iter {}>", iter->typeString());
+}
+
+void ObjIterator::blacken()
+{
+    iter->blacken();
+}
+
+Value ObjIterator::getByField(ObjString *name, Value &value)
+{
+    if (gc->iteratorBuiltins->get(obj_val(name), value)) {
+        return true_val;
+    }
+    return false_val;
+}
+
+ObjIterator *newObjIterator(Iterator *iter, GC *gc)
+{
+    auto *obj = gc->allocate_object<ObjIterator>(iter, gc);
+#ifdef DEBUG_LOG_GC
+    println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
+#endif
+    return obj;
+}
+
+ObjIterator *newObjIterator(ObjList *list, GC *gc)
+{
+    auto iter = new ListIterator{list};
+    auto obj = gc->allocate_object<ObjIterator>(iter, gc);
+#ifdef DEBUG_LOG_GC
+    println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
+#endif
+    return obj;
+}
+
+ObjIterator *newObjIterator(ObjMap *map, GC *gc)
+{
+    auto iter = new MapIterator{map};
+    auto obj = gc->allocate_object<ObjIterator>(iter, gc);
+#ifdef DEBUG_LOG_GC
+    println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
+#endif
+    return obj;
+}
+
+ObjIterator *newObjIterator(ObjString *str, GC *gc)
+{
+    auto iter = new StringIterator{str};
+    auto obj = gc->allocate_object<ObjIterator>(iter, gc);
+#ifdef DEBUG_LOG_GC
+    println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
+#endif
+    return obj;
+}
+
+} // namespace aria
