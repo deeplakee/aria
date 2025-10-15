@@ -4,6 +4,9 @@
 #include "object/objFunction.h"
 #include "object/objString.h"
 
+#include <cstring>
+#include <cmath>
+
 namespace aria {
 
 static Map<TokenType, opCode> tokenToBinaryOpCode = {

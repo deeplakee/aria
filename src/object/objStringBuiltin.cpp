@@ -5,6 +5,8 @@
 #include "value/valueArray.h"
 #include "value/valueHashTable.h"
 
+#include <cstring>
+
 namespace aria {
 
 static Value builtin_length(AriaEnv *env, int argCount, Value *args)
@@ -139,13 +141,13 @@ static Value builtin_trim(AriaEnv *env, int argCount, Value *args)
         start++;
     }
     const char *end = self->C_str_ref() + self->length - 1;
-    while (end > start && std::isspace(*end)) {
+    while (end > start && isspace(*end)) {
         end--;
     }
     size_t length = end - start + 1;
     char *newStr = env->gc->allocate_array<char>(length + 1);
     newStr[length] = '\0';
-    std::memcpy(newStr, start, length);
+    memcpy(newStr, start, length);
     ObjString *newStrObj = NEW_OBJSTRING_FROM_RAW(newStr, length);
     return obj_val(newStrObj);
 }
@@ -161,7 +163,7 @@ static Value builtin_ltrim(AriaEnv *env, int argCount, Value *args)
     size_t length = end - start + 1;
     char *newStr = env->gc->allocate_array<char>(length + 1);
     newStr[length] = '\0';
-    std::memcpy(newStr, start, length);
+    memcpy(newStr, start, length);
     ObjString *newStrObj = NEW_OBJSTRING_FROM_RAW(newStr, length);
     return obj_val(newStrObj);
 }
@@ -171,13 +173,13 @@ static Value builtin_rtrim(AriaEnv *env, int argCount, Value *args)
     auto self = as_ObjString(args[-1]);
     const char *start = self->C_str_ref();
     const char *end = self->C_str_ref() + self->length - 1;
-    while (end > start && std::isspace(*end)) {
+    while (end > start && isspace(*end)) {
         end--;
     }
     size_t length = end - start + 1;
     char *newStr = env->gc->allocate_array<char>(length + 1);
     newStr[length] = '\0';
-    std::memcpy(newStr, start, length);
+    memcpy(newStr, start, length);
     ObjString *newStrObj = NEW_OBJSTRING_FROM_RAW(newStr, length);
     return obj_val(newStrObj);
 }

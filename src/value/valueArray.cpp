@@ -1,6 +1,8 @@
 #include "value/valueArray.h"
 #include "memory/gc.h"
 
+#include <cstring>
+
 namespace aria {
 ValueArray::ValueArray(GC *_gc)
     : capacity{0}

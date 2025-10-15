@@ -10,6 +10,7 @@ static_assert(sizeof(void *) == 8, "This program requires a 64-bit system.");
 #include <stack>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 namespace aria {
 

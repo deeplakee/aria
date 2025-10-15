@@ -8,6 +8,7 @@
 
 #include <ctime>
 #include <random>
+#include <cstring>
 
 namespace aria {
 

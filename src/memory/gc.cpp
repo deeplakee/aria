@@ -14,6 +14,8 @@
 #include "value/valueHashTable.h"
 #include "value/valueStack.h"
 
+#include <cstring>
+
 namespace aria {
 
 GC::GC()

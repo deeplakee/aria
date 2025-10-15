@@ -4,6 +4,8 @@
 #include "object/object.h"
 #include "value/value.h"
 
+#include <cstring>
+
 namespace aria {
 
 inline uint32_t hashNumber(double value)

@@ -89,12 +89,6 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug -DUSE_READLINE=OFF
 ctest --output-on-failure
 ```
 
-Or run the test executable directly:
-
-```bash
-./bin/all_tests
-```
-
 ### 2️⃣ Run Aria Source Code Tests
 
 The `.aria` files under `tests/ariaCode` are real Aria source files used to verify the interpreter’s functionality.

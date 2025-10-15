@@ -3,6 +3,8 @@
 #include "memory/gc.h"
 #include "object/objString.h"
 
+#include <cstring>
+
 namespace aria {
 
 StringPool::StringPool(GC *_gc)

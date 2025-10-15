@@ -19,6 +19,8 @@
 #include "runtime/native.h"
 #include "value/valueHashTable.h"
 
+#include <cstring>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <functional>

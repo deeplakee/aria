@@ -61,8 +61,8 @@ add_library(aria_core STATIC
         src/error/error.h
         src/chunk/disassembler.cpp
         src/chunk/disassembler.h
-        src/compile/FunctionContext.cpp
-        src/compile/FunctionContext.h
+        src/compile/functionContext.cpp
+        src/compile/functionContext.h
         src/compile/ast.cpp
         src/error/ariaException.h
         src/util/fileTable.h
@@ -78,9 +78,9 @@ add_library(aria_core STATIC
         src/runtime/exceptionFrame.h
         src/object/objUpvalue.cpp
         src/object/objUpvalue.h
-        src/compile/ByteCodeGenerator.cpp
-        src/compile/ByteCodeGenerator.h
-        src/compile/AstVisitor.h
+        src/compile/byteCodeGenerator.cpp
+        src/compile/byteCodeGenerator.h
+        src/compile/astVisitor.h
         src/util/lock.h
         src/object/objNativeFn.cpp
         src/object/objNativeFn.h

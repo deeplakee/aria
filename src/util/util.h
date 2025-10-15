@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+#include <format>
 #include <utility>
 
 namespace aria {
