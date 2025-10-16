@@ -973,7 +973,7 @@ Value AriaVM::run(int retFrame)
             uint16_t offset = read_word(frame);
             uint8_t *newIp = frame->ip + offset;
             if (EframeCount == FRAME_SIZE) {
-                reportRuntimeFatalError(ErrorCode::RUNTIME_STACK_OVERFLOW, "Estack overflow.");
+                reportRuntimeFatalError(ErrorCode::RUNTIME_STACK_OVERFLOW, "Exception Stack overflow.");
             }
             pushExceptionFrame(CframeCount, RmoduleCount, newIp, stack.size());
             break;
