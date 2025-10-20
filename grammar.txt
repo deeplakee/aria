@@ -75,9 +75,9 @@ factor         → unary ( ( "/" | "*" | "%" ) unary )*
 unary          → ( "-" | "!" | "not" ) unary
                | value
 
-value         → primary ( args | "." identifier | "[" expression "]" )*
+value          → primary ( args | "." identifier | "[" expression "]" )*
 
-args          → "(" ( expression ("," expression )* )? ")"
+args           → "(" ( expression ("," expression )* )? ")"
 
 primary        → number
                | string
@@ -91,10 +91,10 @@ primary        → number
                | listExpr
                | mapExpr
 
-parenExpr    → "(" expression ")"
+parenExpr     → "(" expression ")"
 
-listExpr     → "[" ( expression ("," expression )* )? "]"
+listExpr      → "[" ( expression ("," expression )* )? "]"
 
-mapExpr      → "{" ( pair ("," pair)* )? "}"
+mapExpr       → "{" ( pair ("," pair)* )? "}"
 
-pair         →  expression ":" expression
+pair          →  expression ":" expression

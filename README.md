@@ -59,6 +59,7 @@ Generated files:
 
 ```
 ./bin/aria             # Main interpreter executable
+./bin/ariadb           # aria debugger
 ./bin/all_tests        # All unit tests
 ./lib/libaria_core.a   # Static core library
 ```

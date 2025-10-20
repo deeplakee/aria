@@ -19,11 +19,14 @@
 #include "runtime/native.h"
 #include "value/valueHashTable.h"
 
-#include <cstring>
+// debugger header files
+#include "debugger/debugger.h"
+
+// std header files
 #include <cmath>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
-#include <functional>
 #include <sstream>
 #include <utility>
 
@@ -85,6 +88,7 @@ AriaVM::AriaVM()
     , cachedModules{new ValueHashTable{gc}}
     , openUpvalues{nullptr}
     , globals{new ValueHashTable{gc}}
+    , debugger{nullptr}
 {
     gc->bindVM(this);
     registerNative();
@@ -161,6 +165,11 @@ Value AriaVM::runFunction(ObjFunction *fun, int argCount, const Value *args)
     }
     callFunction(fun, argCount);
     return run(CframeCount - 1);
+}
+
+void AriaVM::setDebugger(AriaDebugger *_debugger)
+{
+    debugger = _debugger;
 }
 
 Value AriaVM::newException(const char *msg)
@@ -488,9 +497,11 @@ Value AriaVM::run(int retFrame)
         reportRuntimeFatalError(ErrorCode::RUNTIME_INVALID_FRAME, "Invalid retFrame index");
     for (;;) {
         Chunk *chunk = frame->function->chunk;
+        auto offset = static_cast<uint32_t>(frame->ip - chunk->codes);
+        maybeDebugStep(offset);
 #ifdef DEBUG_TRACE_EXECUTION
         stack.display(frame->stakBase - stack.base(), frame->function->toString());
-        Disassembler::disassembleInstruction(chunk, static_cast<uint32_t>(frame->ip - chunk->codes));
+        Disassembler::disassembleInstruction(chunk, offset, true);
 #endif
 
         switch (read_opcode(frame)) {
@@ -929,6 +940,7 @@ Value AriaVM::run(int retFrame)
 
             ObjString *path = newObjString(absoluteModulePath, gc);
             if (auto module = getCachedModule(path)) {
+                module->name = moduleName;
                 stack.push(obj_val(module));
                 break;
             }
@@ -973,7 +985,8 @@ Value AriaVM::run(int retFrame)
             uint16_t offset = read_word(frame);
             uint8_t *newIp = frame->ip + offset;
             if (EframeCount == FRAME_SIZE) {
-                reportRuntimeFatalError(ErrorCode::RUNTIME_STACK_OVERFLOW, "Exception Stack overflow.");
+                reportRuntimeFatalError(
+                    ErrorCode::RUNTIME_STACK_OVERFLOW, "Exception Stack overflow.");
             }
             pushExceptionFrame(CframeCount, RmoduleCount, newIp, stack.size());
             break;
@@ -1070,6 +1083,13 @@ void AriaVM::reportRuntimeFatalError(ErrorCode code, const char *msg) const
         println(oss, "{}:{} in {}", location, line, funName);
     }
     throw ariaRuntimeException(code, oss.str());
+}
+
+void AriaVM::maybeDebugStep(const uint32_t offset) const
+{
+    if (debugger) {
+        debugger->hookBeforeExec(frame, offset);
+    }
 }
 
 } // namespace aria

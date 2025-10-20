@@ -11,6 +11,7 @@ static_assert(sizeof(void *) == 8, "This program requires a 64-bit system.");
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace aria {
 
@@ -26,6 +27,9 @@ using Stack = std::stack<T>;
 
 template<typename T1, typename T2>
 using Map = std::unordered_map<T1, T2>;
+
+template<typename T>
+using Set = std::unordered_set<T>;
 
 template<typename T1, typename T2>
 using Pair = std::pair<T1, T2>;

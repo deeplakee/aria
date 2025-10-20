@@ -106,10 +106,15 @@ add_library(aria_core STATIC
         src/ariaApi.h
         src/runtime/vmState.h
         src/runtime/vmState.cpp
+        src/debugger/debugger.cpp
+        src/debugger/debugger.h
+        src/debugger/breakpoint.cpp
+        src/debugger/breakpoint.h
 )
 
 # 设置头文件路径
 target_include_directories(aria_core PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(aria_core PUBLIC ${CMAKE_SOURCE_DIR})
 
 # 在 Debug 模式下设置 DEBUG_MODE 宏
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -137,8 +142,8 @@ target_compile_features(aria_core PUBLIC cxx_std_20)
 #############
 # aria 构建 ##
 #############
-add_executable(aria src/main.cpp
-)
+add_executable(aria
+        src/main.cpp)
 target_include_directories(aria PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(aria PRIVATE aria_core)
 
@@ -162,6 +167,14 @@ else ()
     message(STATUS "USE_READLINE is OFF — readline support disabled")
     target_compile_definitions(aria PRIVATE ENABLE_READLINE=0)
 endif ()
+
+################
+# debugger 构建 #
+################
+add_executable(ariadb
+        src/debugger/main.cpp)
+target_include_directories(ariadb PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ariadb PRIVATE aria_core)
 
 
 # 测试

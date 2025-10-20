@@ -1,4 +1,4 @@
-import "./lib/math.aria" as m;
+import "lib.math" as m;
 println(m);
 println(typeof(m));
 println(typeof(typeof(m)));

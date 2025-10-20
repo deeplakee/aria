@@ -17,6 +17,7 @@ namespace aria {
 class ObjModule;
 class ObjUpvalue;
 class ValueHashTable;
+class AriaDebugger;
 
 enum class interpretResult { SUCCESS, SRC_FILE_ERROR, COMPILE_ERROR, RUNTIME_ERROR };
 
@@ -34,6 +35,8 @@ public:
     interpretResult interpretFromFile(const String &srcFilePath);
 
     Value runFunction(ObjFunction *fun, int argCount, const Value *args);
+
+    void setDebugger(AriaDebugger *_debugger);
 
     void defineNativeFn(
         const char *name, int arity, NativeFn_t function, bool acceptsVarargs = false) const;
@@ -102,6 +105,7 @@ private:
     ObjUpvalue *openUpvalues;
     String ariaDir;
     ValueHashTable *globals;
+    AriaDebugger *debugger;
 
     ExceptionFrame *currentEframe() { return &Eframes[EframeCount - 1]; }
 
@@ -162,6 +166,8 @@ private:
     void reset();
 
     void unwindToCatchPoint();
+
+    void maybeDebugStep(uint32_t offset) const;
 };
 
 } // namespace aria

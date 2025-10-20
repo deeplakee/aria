@@ -23,13 +23,18 @@ void Disassembler::disassembleChunk(const Chunk *chunk, StringView name)
     println("  ======== {:^10} ========", "chunk end");
 }
 
-uint32_t Disassembler::disassembleInstruction(const Chunk *chunk, uint32_t offset)
+uint32_t Disassembler::disassembleInstruction(
+    const Chunk *chunk, uint32_t offset, bool alwaysPrintLine)
 {
     print("{:06} ", offset);
-    if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
-        print("     | ");
-    } else {
+    if (alwaysPrintLine) {
         print("{:6} ", chunk->lines[offset]);
+    } else {
+        if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
+            print("     | ");
+        } else {
+            print("{:6} ", chunk->lines[offset]);
+        }
     }
 
     switch (auto instruction = static_cast<opCode>((*chunk)[offset])) {
@@ -220,6 +225,135 @@ uint32_t Disassembler::closureInstruction(const Chunk *chunk, const uint32_t off
         println("{:06}      |{:<20}{}({})", _offset - 3, " ——————", varType, index);
     }
     return _offset;
+}
+
+uint32_t Disassembler::readInstruction(const Chunk *chunk, const uint32_t offset)
+{
+    if (offset >= chunk->count) {
+        return 0;
+    }
+    switch (auto instruction = static_cast<opCode>((*chunk)[offset])) {
+    case opCode::LOAD_CONST:
+        return offset + 3;
+    case opCode::LOAD_NIL:
+        return offset + 1;
+    case opCode::LOAD_TRUE:
+        return offset + 1;
+    case opCode::LOAD_FALSE:
+        return offset + 1;
+    case opCode::LOAD_LOCAL:
+        return offset + 3;
+    case opCode::STORE_LOCAL:
+        return offset + 3;
+    case opCode::LOAD_UPVALUE:
+        return offset + 3;
+    case opCode::STORE_UPVALUE:
+        return offset + 3;
+    case opCode::CLOSE_UPVALUE:
+        return offset + 1;
+    case opCode::DEF_GLOBAL:
+        return offset + 3;
+    case opCode::LOAD_GLOBAL:
+        return offset + 3;
+    case opCode::STORE_GLOBAL:
+        return offset + 3;
+    case opCode::LOAD_FIELD:
+        return offset + 3;
+    case opCode::STORE_FIELD:
+        return offset + 3;
+    case opCode::LOAD_SUBSCR:
+        return offset + 1;
+    case opCode::STORE_SUBSCR:
+        return offset + 1;
+    case opCode::EQUAL:
+        return offset + 1;
+    case opCode::NOT_EQUAL:
+        return offset + 1;
+    case opCode::GREATER:
+        return offset + 1;
+    case opCode::GREATER_EQUAL:
+        return offset + 1;
+    case opCode::LESS:
+        return offset + 1;
+    case opCode::LESS_EQUAL:
+        return offset + 1;
+    case opCode::ADD:
+        return offset + 1;
+    case opCode::SUBTRACT:
+        return offset + 1;
+    case opCode::MULTIPLY:
+        return offset + 1;
+    case opCode::DIVIDE:
+        return offset + 1;
+    case opCode::MOD:
+        return offset + 1;
+    case opCode::NOT:
+        return offset + 1;
+    case opCode::NEGATE:
+        return offset + 1;
+    case opCode::POP:
+        return offset + 1;
+    case opCode::POP_N:
+        return offset + 2;
+    case opCode::PRINT:
+        return offset + 1;
+    case opCode::NOP:
+        return offset + 1;
+    case opCode::JUMP_FWD:
+        return offset + 3;
+    case opCode::JUMP_BWD:
+        return offset + 3;
+    case opCode::JUMP_TRUE:
+        return offset + 3;
+    case opCode::JUMP_TRUE_NOPOP:
+        return offset + 3;
+    case opCode::JUMP_FALSE:
+        return offset + 3;
+    case opCode::JUMP_FALSE_NOPOP:
+        return offset + 3;
+    case opCode::CALL:
+        return offset + 2;
+    case opCode::CLOSURE: {
+        uint32_t _offset = offset;
+        uint16_t funIndex = getU16data(chunk->codes, _offset + 1);
+        _offset += 3;
+        ObjFunction *function = as_ObjFunction(chunk->consts[funIndex]);
+        _offset += 2 * function->upvalueCount;
+        return _offset;
+    }
+    case opCode::MAKE_CLASS:
+        return offset + 3;
+    case opCode::INHERIT:
+        return offset + 1;
+    case opCode::MAKE_METHOD:
+        return offset + 3;
+    case opCode::MAKE_INIT_METHOD:
+        return offset + 1;
+    case opCode::LOAD_SUPER_METHOD:
+        return offset + 3;
+    case opCode::MAKE_LIST:
+        return offset + 3;
+    case opCode::MAKE_MAP:
+        return offset + 3;
+    case opCode::IMPORT:
+        return offset + 3;
+    case opCode::GET_ITER:
+        return offset + 1;
+    case opCode::ITER_HAS_NEXT:
+        return offset + 1;
+    case opCode::ITER_GET_NEXT:
+        return offset + 1;
+    case opCode::SETUP_EXCEPT:
+        return offset + 3;
+    case opCode::END_EXCEPT:
+        return offset + 1;
+    case opCode::THROW:
+        return offset + 1;
+    case opCode::RETURN:
+        return offset + 1;
+    default:
+        return offset + 1;
+    }
 }
 
 } // namespace aria
