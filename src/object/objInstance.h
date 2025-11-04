@@ -33,6 +33,7 @@ public:
 
     ObjClass *klass;
     ValueHashTable fields;
+    ValueHashTable *cachedMethods;
 };
 
 inline bool is_ObjInstance(Value value)

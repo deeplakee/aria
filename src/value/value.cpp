@@ -86,6 +86,7 @@ String valueRepresentation(Value value, ValueStack *printStack)
         return std::format("{}", as_number(value));
     }
     if (is_obj(value)) {
+        auto obj = as_obj(value);
         return as_obj(value)->representation(printStack);
     }
     return "unknown value";

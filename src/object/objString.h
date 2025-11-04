@@ -34,7 +34,7 @@ public:
 
     Value createIter(GC *gc) override;
 
-    void blacken() override {}
+    void blacken() override;
 
     char *C_str() { return isLong ? longChars : shortChars; }
 

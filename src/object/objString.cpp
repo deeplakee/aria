@@ -3,9 +3,12 @@
 #include "memory/gc.h"
 #include "object/objException.h"
 #include "object/objIterator.h"
+#include "object/objNativeFn.h"
 #include "runtime/vm.h"
 #include "util/hash.h"
 #include "value/valueHashTable.h"
+
+#include <cassert>
 
 namespace aria {
 
@@ -68,6 +71,9 @@ String ObjString::representation(ValueStack *printStack)
 Value ObjString::getByField(ObjString *name, Value &value)
 {
     if (gc->stringBuiltins->get(obj_val(name), value)) {
+        assert(is_ObjNativeFn(value) && "string builtin method is nativeFn");
+        auto boundMethod = newObjBoundMethod(obj_val(this), as_ObjNativeFn(value), gc);
+        value = obj_val(boundMethod);
         return true_val;
     }
     return false_val;
@@ -94,6 +100,8 @@ Value ObjString::createIter(GC *gc)
 {
     return obj_val(newObjIterator(this, gc));
 }
+
+void ObjString::blacken() {}
 
 ObjString *newObjString(const String &str, GC *gc)
 {

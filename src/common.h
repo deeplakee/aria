@@ -99,7 +99,7 @@ using Tuple = std::tuple<Args...>;
 
 ///////////////////////
 #ifdef DEBUG_MODE
-#define DISABLE_DEBUG_LOG_GC
+//#define DISABLE_DEBUG_LOG_GC
 #endif
 
 #ifdef DISABLE_DEBUG_LOG_GC

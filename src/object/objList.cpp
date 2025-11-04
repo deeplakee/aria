@@ -3,6 +3,7 @@
 #include "memory/gc.h"
 #include "object/objException.h"
 #include "object/objIterator.h"
+#include "object/objNativeFn.h"
 #include "object/objString.h"
 #include "runtime/vm.h"
 #include "util/hash.h"
@@ -11,6 +12,8 @@
 #include "value/valueHashTable.h"
 #include "value/valueStack.h"
 
+#include <cassert>
+
 namespace aria {
 
 #define genException(code, msg) gc->runningVM->newException((code), (msg))
@@ -18,21 +21,25 @@ namespace aria {
 ObjList::ObjList(GC *_gc)
     : Obj{ObjType::LIST, hashObj(this, ObjType::LIST), _gc}
     , list{new ValueArray{_gc}}
+    , cachedMethods{new ValueHashTable{_gc}}
 {}
 
 ObjList::ObjList(Value *_values, uint32_t _count, GC *_gc)
     : Obj{ObjType::LIST, hashObj(this, ObjType::LIST), _gc}
     , list{new ValueArray{_values, _count, _gc}}
+    , cachedMethods{new ValueHashTable{_gc}}
 {}
 
 ObjList::ObjList(uint32_t begin, uint32_t end, const ObjList *other, GC *_gc)
     : Obj{ObjType::LIST, hashObj(this, ObjType::LIST), _gc}
     , list{new ValueArray{begin, end, other->list, _gc}}
+    , cachedMethods{new ValueHashTable{_gc}}
 {}
 
 ObjList::~ObjList()
 {
     delete list;
+    delete cachedMethods;
 }
 
 String ObjList::toString(ValueStack *printStack)
@@ -61,11 +68,21 @@ String ObjList::representation(ValueStack *printStack)
 void ObjList::blacken()
 {
     list->mark();
+    cachedMethods->mark();
 }
 
 Value ObjList::getByField(ObjString *name, Value &value)
 {
+    if (cachedMethods->get(obj_val(name), value)) {
+        return true_val;
+    }
     if (gc->listBuiltins->get(obj_val(name), value)) {
+        assert(is_ObjNativeFn(value) && "list builtin method is nativeFn");
+        auto boundMethod = newObjBoundMethod(obj_val(this), as_ObjNativeFn(value), gc);
+        value = obj_val(boundMethod);
+        gc->cache(value);
+        cachedMethods->insert(obj_val(name), value);
+        gc->releaseCache(1);
         return true_val;
     }
     return false_val;

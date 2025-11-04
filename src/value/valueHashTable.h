@@ -58,9 +58,9 @@ public:
 
     void mark();
 
-    int64_t getNextIndex(int64_t pre);
+    int64_t getNextIndex(int64_t pre) const;
 
-    Value getByIndex(int64_t index);
+    Value getByIndex(int64_t index) const;
 
     [[nodiscard]] ObjList *createPair(uint32_t index) const;
 
@@ -82,7 +82,9 @@ private:
     uint8_t *ctrl;
     GC *gc;
 
-    static uint8_t hash_fragment(uint32_t h) { return (h >> (8 * sizeof(h) - 7)) & 0b01111111; }
+    static uint8_t get_hash_h2(uint32_t h) { return (h >> 25) & 0x7F; }
+
+    static uint32_t get_hash_h1(uint32_t h) { return h & 0x1FFFFFF; }
 
     static bool ctrl_is_full(uint8_t ctrl) { return (ctrl & 0b10000000) == 0; }
 

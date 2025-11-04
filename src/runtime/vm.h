@@ -147,8 +147,6 @@ private:
 
     Value callBoundMethod(const ObjBoundMethod *method, int argCount);
 
-    Value bindMethodIfNeeded(Value obj, Value value) const;
-
     ObjUpvalue *captureUpvalue(Value *local);
 
     void closeUpvalues(const Value *last);

@@ -23,9 +23,7 @@ void Obj::mark()
     if (isMarked)
         return;
 #ifdef DEBUG_MODE
-    if (type == ObjType::BASE) {
-        error("error type");
-    }
+    assert(type != ObjType::BASE && "Invalid Object Type");
 #endif
 #ifdef DEBUG_LOG_GC
     print("{:p} mark {}\n", toVoidPtr(this), this->toString());

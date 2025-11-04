@@ -31,6 +31,7 @@ public:
     Value getByField(ObjString *name, Value &value) override;
 
     Iterator *iter;
+    ValueHashTable *cachedMethods;
 
     static void init(GC *_gc, ValueHashTable *builtins);
 };

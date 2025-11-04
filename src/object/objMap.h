@@ -41,6 +41,7 @@ public:
     void blacken() override;
 
     ValueHashTable *map;
+    ValueHashTable *cachedMethods;
 
     static void init(GC *_gc,ValueHashTable *builtins);
 };

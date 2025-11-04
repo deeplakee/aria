@@ -1,10 +1,13 @@
 #include "object/objIterator.h"
 
 #include "memory/gc.h"
+#include "object/objNativeFn.h"
 #include "object/objString.h"
 #include "runtime/vm.h"
 #include "util/hash.h"
 #include "value/valueHashTable.h"
+
+#include <cassert>
 
 namespace aria {
 
@@ -13,11 +16,13 @@ namespace aria {
 ObjIterator::ObjIterator(Iterator *iter, GC *_gc)
     : Obj{ObjType::ITERATOR, hashObj(this, ObjType::ITERATOR), _gc}
     , iter{iter}
+    , cachedMethods{new ValueHashTable{_gc}}
 {}
 
 ObjIterator::~ObjIterator()
 {
     delete iter;
+    delete cachedMethods;
 }
 
 String ObjIterator::toString(ValueStack *printStack)
@@ -28,11 +33,21 @@ String ObjIterator::toString(ValueStack *printStack)
 void ObjIterator::blacken()
 {
     iter->blacken();
+    cachedMethods->mark();
 }
 
 Value ObjIterator::getByField(ObjString *name, Value &value)
 {
+    if (cachedMethods->get(obj_val(name), value)) {
+        return true_val;
+    }
     if (gc->iteratorBuiltins->get(obj_val(name), value)) {
+        assert(is_ObjNativeFn(value) && "iterator builtin method is nativeFn");
+        auto boundMethod = newObjBoundMethod(obj_val(this), as_ObjNativeFn(value), gc);
+        value = obj_val(boundMethod);
+        gc->cache(value);
+        cachedMethods->insert(obj_val(name), value);
+        gc->releaseCache(1);
         return true_val;
     }
     return false_val;

@@ -88,6 +88,15 @@ bool StringPool::remove(ObjString *obj)
     }
 }
 
+void StringPool::mark()
+{
+    for (auto i = 0;i < capacity; i++) {
+        if (table[i]!=nullptr && table[i] != TOMBSTONE) {
+            table[i]->mark();
+        }
+    }
+}
+
 ObjStringPtr *StringPool::findPosition(ObjStringPtr *s_table, ObjString *s, uint32_t table_capacity)
 {
     uint32_t index = s->hash & (table_capacity - 1);

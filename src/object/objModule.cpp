@@ -35,8 +35,8 @@ Value ObjModule::getByField(ObjString *name, Value &value)
 
 void ObjModule::blacken()
 {
-    module->mark();
     name->mark();
+    module->mark();
 }
 
 ObjModule *newObjModule(ObjFunction *module, GC *gc)

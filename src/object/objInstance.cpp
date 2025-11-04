@@ -1,7 +1,10 @@
 #include "object/objInstance.h"
 
 #include "memory/gc.h"
+#include "object/objBoundMethod.h"
 #include "object/objClass.h"
+#include "object/objFunction.h"
+#include "object/objNativeFn.h"
 #include "object/objString.h"
 #include "util/hash.h"
 #include "util/util.h"
@@ -12,9 +15,13 @@ ObjInstance::ObjInstance(ObjClass *_klass, GC *_gc)
     : Obj{ObjType::INSTANCE, hashObj(this, ObjType::INSTANCE), _gc}
     , klass{_klass}
     , fields{_gc}
+    , cachedMethods{new ValueHashTable{_gc}}
 {}
 
-ObjInstance::~ObjInstance() = default;
+ObjInstance::~ObjInstance()
+{
+    delete cachedMethods;
+}
 
 String ObjInstance::toString(ValueStack *printStack)
 {
@@ -30,6 +37,7 @@ void ObjInstance::blacken()
 {
     klass->mark();
     fields.mark();
+    cachedMethods->mark();
 }
 
 Value ObjInstance::getByField(ObjString *name, Value &value)
@@ -37,7 +45,20 @@ Value ObjInstance::getByField(ObjString *name, Value &value)
     if (fields.get(obj_val(name), value)) {
         return true_val;
     }
+    if (cachedMethods->get(obj_val(name), value)) {
+        return true_val;
+    }
     if (klass->methods.get(obj_val(name), value)) {
+        ObjBoundMethod *boundMethod = nullptr;
+        if (is_ObjNativeFn(value)) {
+            boundMethod = newObjBoundMethod(obj_val(this), as_ObjNativeFn(value), gc);
+        } else {
+            boundMethod = newObjBoundMethod(obj_val(this), as_ObjFunction(value), gc);
+        }
+        value = obj_val(boundMethod);
+        gc->cache(value);
+        cachedMethods->insert(obj_val(name), value);
+        gc->releaseCache(1);
         return true_val;
     }
     return false_val;

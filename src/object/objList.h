@@ -44,6 +44,7 @@ public:
     Value copy(GC *gc) override;
 
     ValueArray *list;
+    ValueHashTable *cachedMethods;
 
     static void init(GC *_gc, ValueHashTable *builtins);
 };

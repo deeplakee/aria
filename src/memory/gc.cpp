@@ -92,6 +92,7 @@ void GC::markRoots()
     stringBuiltins->mark();
     iteratorBuiltins->mark();
     tempVars->mark();
+    //conStrPool->mark();
 }
 
 void GC::traceReferences()
@@ -144,8 +145,6 @@ void GC::collectGarbage()
     markRoots();
 
     traceReferences();
-
-    // conStrPool->removeWhite();
 
     sweep();
 

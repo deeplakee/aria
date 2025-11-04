@@ -60,7 +60,7 @@ bool ValueHashTable::insert(Value k, Value v)
         }
     }
 
-    ctrl[dest_index] = hash_fragment(hash);
+    ctrl[dest_index] = get_hash_h2(hash);
     entry[dest_index].key = k;
     entry[dest_index].value = v;
     return notFull;
@@ -176,65 +176,80 @@ String ValueHashTable::toString(ValueStack *printStack) const
 
 int64_t ValueHashTable::findExist(Value key) const
 {
-    uint32_t hash = valueHash(key);
-    uint8_t target = (hash >> (8 * sizeof(hash) - 7)) & 0b01111111;
-    uint32_t index = hash & (capacity - 1);
+    const uint32_t hash = valueHash(key);
+    const uint32_t groupCount = capacity >> 3;
+    const uint32_t h1 = get_hash_h1(hash);
+    const uint8_t h2 = get_hash_h2(hash);
+    uint32_t index = (h1 & (groupCount - 1)) << 3;
     for (;;) {
-        auto c = ctrl[index];
-        if (c == kEmpty) {
-            return -1;
+        for (uint8_t i = 0; i < 8; i++) {
+            const uint32_t offset = index + i;
+            const auto c = ctrl[offset];
+            if (c == kEmpty) {
+                return -1;
+            }
+            if (c == kDeleted) {
+                // pass
+            } else if (c == h2 && valuesSame(entry[offset].key, key)) {
+                return offset;
+            }
         }
-        if (c == kDeleted) {
-            // pass
-        } else if (c == target && valuesSame(entry[index].key, key)) {
-            return index;
-        }
-        index = (index + 1) & (capacity - 1);
+        index = ((index + 1) & (groupCount - 1)) << 3;
     }
 }
 
 uint32_t ValueHashTable::findPosition(Value key, uint32_t hash) const
 {
-    uint8_t target = hash_fragment(hash);
-    uint32_t index = hash & (capacity - 1);
+    const uint32_t groupCount = capacity >> 3;
+    const uint32_t h1 = get_hash_h1(hash);
+    const uint8_t h2 = get_hash_h2(hash);
+    uint32_t index = (h1 & (groupCount - 1)) << 3;
     for (;;) {
-        auto c = ctrl[index];
-        if (c == kEmpty) {
-            return index;
+        for (uint8_t i = 0; i < 8; i++) {
+            const uint32_t offset = index + i;
+            const auto c = ctrl[offset];
+            if (c == kEmpty) {
+                return offset;
+            }
+            if (c == kDeleted) {
+                return offset;
+            }
+            if (c == h2 && valuesSame(entry[offset].key, key)) {
+                return offset;
+            }
         }
-        if (c == kDeleted) {
-            return index;
-        }
-        if (c == target && valuesSame(entry[index].key, key)) {
-            return index;
-        }
-        index = (index + 1) & (capacity - 1);
+        index = ((index + 1) & (groupCount - 1)) << 3;
     }
 }
 
 uint32_t ValueHashTable::findNew(
     const KVPair *h_entry, const uint8_t *h_ctrl, uint32_t h_capacity, Value key)
 {
-    uint32_t hash = valueHash(key);
-    uint8_t target = hash_fragment(hash);
-    uint32_t index = hash & (h_capacity - 1);
+    const uint32_t hash = valueHash(key);
+    const uint32_t h_capacityCount = h_capacity >> 3;
+    const uint32_t h1 = get_hash_h1(hash);
+    const uint8_t h2 = get_hash_h2(hash);
+    uint32_t index = (h1 & (h_capacityCount - 1)) << 3;
 
     for (;;) {
-        auto c = h_ctrl[index];
-        if (c == kEmpty) {
-            return index;
+        for (uint8_t i = 0; i < 8; i++) {
+            const uint32_t offset = index + i;
+            const auto c = h_ctrl[offset];
+            if (c == kEmpty) {
+                return offset;
+            }
+            if (c == kDeleted) {
+                return offset;
+            }
+            if (c == h2 && valuesSame(h_entry[offset].key, key)) {
+                return offset;
+            }
         }
-        if (c == kDeleted) {
-            return index;
-        }
-        if (c == target && valuesSame(h_entry[index].key, key)) {
-            return index;
-        }
-        index = (index + 1) & (h_capacity - 1);
+        index = ((index + 1) & (h_capacityCount - 1)) << 3;
     }
 }
 
-void ValueHashTable::adjustCapacity(uint32_t newCapacity)
+void ValueHashTable::adjustCapacity(const uint32_t newCapacity)
 {
     auto *newEntry = gc->allocate_array<KVPair>(newCapacity);
     auto *newCtrl = gc->allocate_array<uint8_t>(newCapacity);
@@ -273,7 +288,7 @@ void ValueHashTable::mark()
     }
 }
 
-int64_t ValueHashTable::getNextIndex(int64_t pre)
+int64_t ValueHashTable::getNextIndex(const int64_t pre) const
 {
     // -2 means reach the end
     if (pre == -2) {
@@ -302,7 +317,7 @@ int64_t ValueHashTable::getNextIndex(int64_t pre)
     return -2;
 }
 
-Value ValueHashTable::getByIndex(int64_t index)
+Value ValueHashTable::getByIndex(const int64_t index) const
 {
     if (index < 0 || index >= capacity) {
         return nil_val;
@@ -311,7 +326,7 @@ Value ValueHashTable::getByIndex(int64_t index)
     return obj_val(obj);
 }
 
-ObjList *ValueHashTable::createPair(uint32_t index) const
+ObjList *ValueHashTable::createPair(const uint32_t index) const
 {
     ObjList *list = newObjList(gc);
     gc->cache(obj_val(list));

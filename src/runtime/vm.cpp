@@ -379,23 +379,6 @@ Value AriaVM::callBoundMethod(const ObjBoundMethod *method, const int argCount)
     return newException(ErrorCode::RUNTIME_UNKNOWN, "Unknown bound method type.");
 }
 
-Value AriaVM::bindMethodIfNeeded(Value obj, Value value) const
-{
-    if (is_ObjFunction(value)
-        && (as_ObjFunction(value)->type == FunctionType::METHOD
-            || as_ObjFunction(value)->type == FunctionType::INIT_METHOD)) {
-        ObjFunction *unpackedMethod = as_ObjFunction(value);
-        ObjBoundMethod *boundMethod = newObjBoundMethod(obj, unpackedMethod, gc);
-        return obj_val(boundMethod);
-    }
-    if (is_ObjNativeFn(value) && (as_ObjNativeFn(value)->type == FunctionType::METHOD)) {
-        ObjNativeFn *unpackedMethod = as_ObjNativeFn(value);
-        ObjBoundMethod *boundMethod = newObjBoundMethod(obj, unpackedMethod, gc);
-        return obj_val(boundMethod);
-    }
-    return value;
-}
-
 ObjUpvalue *AriaVM::captureUpvalue(Value *local)
 {
     ObjUpvalue *prevUpvalue = nullptr;
@@ -497,11 +480,11 @@ Value AriaVM::run(int retFrame)
         reportRuntimeFatalError(ErrorCode::RUNTIME_INVALID_FRAME, "Invalid retFrame index");
     for (;;) {
         Chunk *chunk = frame->function->chunk;
-        auto offset = static_cast<uint32_t>(frame->ip - chunk->codes);
-        maybeDebugStep(offset);
+        auto codeOffset = static_cast<uint32_t>(frame->ip - chunk->codes);
+        maybeDebugStep(codeOffset);
 #ifdef DEBUG_TRACE_EXECUTION
         stack.display(frame->stakBase - stack.base(), frame->function->toString());
-        Disassembler::disassembleInstruction(chunk, offset, true);
+        Disassembler::disassembleInstruction(chunk, codeOffset, true);
 #endif
 
         switch (read_opcode(frame)) {
@@ -592,7 +575,7 @@ Value AriaVM::run(int retFrame)
                 THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
             }
 
-            value = bindMethodIfNeeded(obj_val(obj), value);
+            // value = bindMethodIfNeeded(obj_val(obj), value);
             stack.setTopVal(value);
             break;
         }

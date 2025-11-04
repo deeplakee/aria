@@ -25,6 +25,8 @@ public:
 
     bool remove(ObjString *obj);
 
+    void mark();
+
 private:
     static constexpr double TABLE_MAX_LOAD = 0.75;
     inline static ObjStringPtr TOMBSTONE = reinterpret_cast<ObjString *>(-1);
