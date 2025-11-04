@@ -56,7 +56,11 @@ inline bool is_ObjList(Value value)
 
 inline ObjList *as_ObjList(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjList *>(as_obj(value));
+#else
+    return static_cast<ObjList *>(as_obj(value));
+#endif
 }
 
 ObjList *newObjList(GC *gc);

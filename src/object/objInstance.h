@@ -43,7 +43,11 @@ inline bool is_ObjInstance(Value value)
 
 inline ObjInstance *as_ObjInstance(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjInstance *>(as_obj(value));
+#else
+    return static_cast<ObjInstance *>(as_obj(value));
+#endif
 }
 
 ObjInstance *newObjInstance(ObjClass *klass, GC *gc);

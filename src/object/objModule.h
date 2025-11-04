@@ -37,7 +37,11 @@ inline bool is_ObjModule(Value value)
 
 inline ObjModule *as_ObjModule(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjModule *>(as_obj(value));
+#else
+    return static_cast<ObjModule *>(as_obj(value));
+#endif
 }
 
 ObjModule *newObjModule(ObjFunction *module, GC *gc);

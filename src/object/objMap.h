@@ -53,7 +53,11 @@ inline bool is_ObjMap(Value value)
 
 inline ObjMap *as_ObjMap(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjMap *>(as_obj(value));
+#else
+    return static_cast<ObjMap *>(as_obj(value));
+#endif
 }
 
 ObjMap *newObjMap(GC *gc);

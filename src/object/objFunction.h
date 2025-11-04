@@ -62,7 +62,11 @@ inline bool is_ObjFunction(Value value)
 
 inline ObjFunction *as_ObjFunction(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjFunction *>(as_obj(value));
+#else
+    return static_cast<ObjFunction *>(as_obj(value));
+#endif
 }
 
 // function object for runfile mode

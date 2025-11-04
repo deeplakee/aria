@@ -47,12 +47,16 @@ inline bool is_ObjNativeFn(Value value)
 
 inline ObjNativeFn *as_ObjNativeFn(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjNativeFn *>(as_obj(value));
+#else
+    return static_cast<ObjNativeFn *>(as_obj(value));
+#endif
 }
 
 inline NativeFn_t as_NativeFn(Value value)
 {
-    return dynamic_cast<ObjNativeFn *>(as_obj(value))->function;
+    return as_ObjNativeFn(value)->function;
 }
 
 ObjNativeFn *newObjNativeFn(

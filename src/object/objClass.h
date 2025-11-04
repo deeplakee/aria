@@ -38,7 +38,11 @@ inline bool is_ObjClass(Value value)
 
 inline ObjClass *as_ObjClass(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjClass *>(as_obj(value));
+#else
+    return static_cast<ObjClass *>(as_obj(value));
+#endif
 }
 
 ObjClass *newObjClass(ObjString *name, GC *gc);

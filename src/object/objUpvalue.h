@@ -34,7 +34,11 @@ inline bool is_ObjUpvalue(Value value)
 
 inline ObjUpvalue *as_ObjUpvalue(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjUpvalue *>(as_obj(value));
+#else
+    return static_cast<ObjUpvalue *>(as_obj(value));
+#endif
 }
 
 ObjUpvalue *newObjUpvalue(Value *location, GC *gc);

@@ -59,7 +59,11 @@ inline bool is_ObjString(Value value)
 
 inline ObjString *as_ObjString(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjString *>(as_obj(value));
+#else
+    return static_cast<ObjString *>(as_obj(value));
+#endif
 }
 
 inline char *as_c_string(Value value)

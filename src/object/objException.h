@@ -40,7 +40,11 @@ inline bool is_ObjException(Value value)
 
 inline ObjException *as_ObjException(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjException *>(as_obj(value));
+#else
+    return static_cast<ObjException *>(as_obj(value));
+#endif
 }
 
 ObjException *newObjException(const char *msg, GC *gc);

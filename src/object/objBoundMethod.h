@@ -41,7 +41,11 @@ inline bool is_ObjBoundMethod(Value value)
 
 inline ObjBoundMethod *as_ObjBoundMethod(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjBoundMethod *>(as_obj(value));
+#else
+    return static_cast<ObjBoundMethod *>(as_obj(value));
+#endif
 }
 
 ObjBoundMethod *newObjBoundMethod(Value receiver, ObjFunction *method, GC *gc);

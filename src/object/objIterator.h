@@ -43,7 +43,11 @@ inline bool is_ObjIterator(Value value)
 
 inline ObjIterator *as_ObjIterator(Value value)
 {
+#ifdef DEBUG_MODE
     return dynamic_cast<ObjIterator *>(as_obj(value));
+#else
+    return static_cast<ObjIterator *>(as_obj(value));
+#endif
 }
 
 ObjIterator *newObjIterator(Iterator *iter, GC *gc);
