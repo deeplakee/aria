@@ -20,7 +20,7 @@ Value Native::_aria_clock_(AriaEnv *env, int argCount, Value *args)
 Value Native::_aria_random_(AriaEnv *env, int argCount, Value *args)
 {
     static std::mt19937 gen(std::random_device{}());
-    static std::uniform_int_distribution<> dis(0, UINT32_MAX);
+    static std::uniform_int_distribution<> dis(std::mt19937::min(), std::mt19937::max());
 
     return number_val(dis(gen));
 }
