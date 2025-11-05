@@ -40,14 +40,24 @@ inline uint32_t hashObj(Obj *obj, ObjType type)
     return hash;
 }
 
-static uint32_t hashString(const char *key, const size_t length)
+static uint32_t hashString(const char *str, const size_t length)
 {
     uint32_t hash = 2166136261u;
     for (size_t i = 0; i < length; i++) {
-        hash ^= static_cast<uint8_t>(key[i]);
+        hash ^= static_cast<uint8_t>(str[i]);
         hash *= 16777619;
     }
     return hash;
+}
+
+// hash two strings
+static uint32_t hashString(uint32_t hashA, const char *strB, const size_t lenB)
+{
+    for (size_t i = 0; i < lenB; i++) {
+        hashA ^= static_cast<uint8_t>(strB[i]);
+        hashA *= 16777619;
+    }
+    return hashA;
 }
 
 } // namespace aria

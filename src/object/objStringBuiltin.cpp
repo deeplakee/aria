@@ -8,14 +8,9 @@
 #include <cstring>
 
 #define BUILTIN_INIT_BUFFER(bufferName, length) \
-    char *bufferName = nullptr; \
-    bool __useBuffer__ = false; \
-    if (length > GC::GC_BUFFER_SIZE) { \
-        bufferName = env->gc->allocate_array<char>(length + 1); \
-    } else { \
-        __useBuffer__ = true; \
-        bufferName = env->gc->buffer; \
-    } \
+    bool __useBuffer__ = length < GC::GC_BUFFER_SIZE; \
+    char *bufferName = __useBuffer__ ? env->gc->buffer \
+                                     : env->gc->allocate_array<char>(length + 1); \
     bufferName[length] = '\0';
 
 #define BUILTIN_DESTROY_BUFFER(bufferName, length) \
