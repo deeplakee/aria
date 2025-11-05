@@ -3,8 +3,8 @@
 
 #include "aria.h"
 #include "error/error.h"
-#include "object/object.h"
 #include "memory/stringPool.h"
+#include "object/object.h"
 #include "util/lock.h"
 #include "util/util.h"
 #include "value/valueStack.h"
@@ -132,6 +132,7 @@ public:
 
     static constexpr int GC_INITIAL_SIZE = 1024 * 1024;
     static constexpr int GC_HEAP_GROW_FACTOR = 2;
+    static constexpr int GC_BUFFER_SIZE = 1024 * 4;
 
     size_t bytesAllocated;
     size_t nextGC;
@@ -146,6 +147,8 @@ public:
     ValueHashTable *mapBuiltins;
     ValueHashTable *stringBuiltins;
     ValueHashTable *iteratorBuiltins;
+
+    char *buffer;
 
     Lock gcLock;
     bool inGC;

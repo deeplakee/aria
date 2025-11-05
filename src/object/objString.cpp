@@ -186,16 +186,29 @@ ObjString *concatenateString(const ObjString *a, const ObjString *b, GC *gc)
     if (length < a->length) {
         return nullptr;
     }
-    char *newStr = gc->allocate_array<char>(length + 1);
-    memcpy(newStr, a->C_str_ref(), a->length);
-    memcpy(newStr + a->length, b->C_str_ref(), b->length);
-    newStr[length] = '\0';
-    uint32_t hash = hashString(newStr, length);
-    if (auto interned = gc->getStr(newStr, length, hash); interned != nullptr) {
-        gc->free_array<char>(newStr, length + 1);
-        return interned;
+    ObjString *obj = nullptr;
+    if (length > GC::GC_BUFFER_SIZE) {
+        char *newStr = gc->allocate_array<char>(length + 1);
+        memcpy(newStr, a->C_str_ref(), a->length);
+        memcpy(newStr + a->length, b->C_str_ref(), b->length);
+        newStr[length] = '\0';
+        uint32_t hash = hashString(newStr, length);
+        if (auto interned = gc->getStr(newStr, length, hash); interned != nullptr) {
+            gc->free_array<char>(newStr, length + 1);
+            return interned;
+        }
+        obj = gc->allocate_object<ObjString>(newStr, length, hash, true, gc);
+    } else {
+        char *dest = gc->buffer;
+        memcpy(dest, a->C_str_ref(), a->length);
+        memcpy(dest + a->length, b->C_str_ref(), b->length);
+        dest[length] = '\0';
+        uint32_t hash = hashString(dest, length);
+        if (auto interned = gc->getStr(dest, length, hash); interned != nullptr) {
+            return interned;
+        }
+        obj = gc->allocate_object<ObjString>(dest, length, hash, false, gc);
     }
-    auto obj = gc->allocate_object<ObjString>(newStr, length, hash, true, gc);
     gc->insertStr(obj);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object STRING)", toVoidPtr(obj), sizeof(ObjString));

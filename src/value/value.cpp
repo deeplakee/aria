@@ -117,7 +117,7 @@ bool valuesEqual(Value a, Value b)
 uint32_t valueHash(Value value)
 {
     if (is_bool(value))
-        return static_cast<uint32_t>(as_bool(value)) | 0x200030611;
+        return static_cast<uint32_t>(as_bool(value)) | 0x1da55dda;
     if (is_nil(value))
         return 0;
     if (is_number(value))

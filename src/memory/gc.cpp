@@ -24,6 +24,7 @@ GC::GC()
     , objList{nullptr}
     , strList{nullptr}
     , tempVars{new ValueStack{}}
+    , buffer{new char[GC_BUFFER_SIZE]}
     , inGC{false}
     , runningVM{nullptr}
     , compilingContext{nullptr}
@@ -45,6 +46,7 @@ GC::GC()
 
 GC::~GC()
 {
+    delete[] buffer;
     delete tempVars;
     delete listBuiltins;
     delete mapBuiltins;

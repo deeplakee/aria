@@ -7,6 +7,22 @@
 
 #include <cstring>
 
+#define BUILTIN_INIT_BUFFER(bufferName, length) \
+    char *bufferName = nullptr; \
+    bool __useBuffer__ = false; \
+    if (length > GC::GC_BUFFER_SIZE) { \
+        bufferName = env->gc->allocate_array<char>(length + 1); \
+    } else { \
+        __useBuffer__ = true; \
+        bufferName = env->gc->buffer; \
+    } \
+    bufferName[length] = '\0';
+
+#define BUILTIN_DESTROY_BUFFER(bufferName, length) \
+    if (!__useBuffer__) { \
+        env->gc->free_array<char>(bufferName, length + 1); \
+    }
+
 namespace aria {
 
 static Value builtin_length(AriaEnv *env, int argCount, Value *args)
@@ -27,7 +43,6 @@ static Value builtin_at(AriaEnv *env, int argCount, Value *args)
 static Value builtin_substr(AriaEnv *env, int argCount, Value *args)
 {
     auto self = as_ObjString(args[-1]);
-
     CHECK_INTEGER(args[0], start, Start index);
     CHECK_INTEGER(args[1], end, End index);
     auto size = self->length;
@@ -86,11 +101,11 @@ static Value builtin_endWith(AriaEnv *env, int argCount, Value *args)
         return false_val;
     }
 
-    int result = memcmp(
-                     self->C_str_ref() + self->length - substr->length,
-                     substr->C_str_ref(),
-                     substr->length)
-                 == 0;
+    auto result = memcmp(
+                      self->C_str_ref() + self->length - substr->length,
+                      substr->C_str_ref(),
+                      substr->length)
+                  == 0;
     return bool_val(result);
 }
 
@@ -98,12 +113,13 @@ static Value builtin_reverse(AriaEnv *env, int argCount, Value *args)
 {
     auto self = as_ObjString(args[-1]);
     auto length = self->length;
-    char *newStr = env->gc->allocate_array<char>(length + 1);
-    newStr[length] = '\0';
+    const char *src = self->C_str_ref();
+    BUILTIN_INIT_BUFFER(dst, length);
     for (int i = 0; i < length; i++) {
-        newStr[i] = self->C_str_ref()[length - i - 1];
+        dst[i] = src[length - i - 1];
     }
-    ObjString *newStrObj = NEW_OBJSTRING(newStr, length);
+    ObjString *newStrObj = NEW_OBJSTRING(dst, length);
+    BUILTIN_DESTROY_BUFFER(dst, length);
     return obj_val(newStrObj);
 }
 
@@ -111,25 +127,27 @@ static Value builtin_upper(AriaEnv *env, int argCount, Value *args)
 {
     auto self = as_ObjString(args[-1]);
     auto length = self->length;
-    char *newStr = env->gc->allocate_array<char>(length + 1);
-    newStr[length] = '\0';
+    const char *src = self->C_str_ref();
+    BUILTIN_INIT_BUFFER(dst, length);
     for (int i = 0; i < length; i++) {
-        newStr[i] = static_cast<char>(toupper(self->C_str_ref()[i]));
+        dst[i] = static_cast<char>(toupper(src[i]));
     }
-    ObjString *newStrObj = NEW_OBJSTRING_FROM_RAW(newStr, length);
+    ObjString *newStrObj = NEW_OBJSTRING(dst, length);
+    BUILTIN_DESTROY_BUFFER(dst, length);
     return obj_val(newStrObj);
 }
 
 static Value builtin_lower(AriaEnv *env, int argCount, Value *args)
 {
     auto self = as_ObjString(args[-1]);
-    size_t length = self->length;
-    char *newStr = env->gc->allocate_array<char>(length + 1);
-    newStr[length] = '\0';
+    auto length = self->length;
+    const char *src = self->C_str_ref();
+    BUILTIN_INIT_BUFFER(dst, length);
     for (int i = 0; i < length; i++) {
-        newStr[i] = static_cast<char>(tolower(self->C_str_ref()[i]));
+        dst[i] = static_cast<char>(tolower(src[i]));
     }
-    ObjString *newStrObj = NEW_OBJSTRING_FROM_RAW(newStr, length);
+    ObjString *newStrObj = NEW_OBJSTRING(dst, length);
+    BUILTIN_DESTROY_BUFFER(dst, length);
     return obj_val(newStrObj);
 }
 
@@ -145,10 +163,10 @@ static Value builtin_trim(AriaEnv *env, int argCount, Value *args)
         end--;
     }
     size_t length = end - start + 1;
-    char *newStr = env->gc->allocate_array<char>(length + 1);
-    newStr[length] = '\0';
-    memcpy(newStr, start, length);
-    ObjString *newStrObj = NEW_OBJSTRING_FROM_RAW(newStr, length);
+    BUILTIN_INIT_BUFFER(dst, length);
+    memcpy(dst, start, length);
+    ObjString *newStrObj = NEW_OBJSTRING(dst, length);
+    BUILTIN_DESTROY_BUFFER(dst, length);
     return obj_val(newStrObj);
 }
 
@@ -161,10 +179,10 @@ static Value builtin_ltrim(AriaEnv *env, int argCount, Value *args)
     }
     const char *end = self->C_str_ref() + self->length - 1;
     size_t length = end - start + 1;
-    char *newStr = env->gc->allocate_array<char>(length + 1);
-    newStr[length] = '\0';
-    memcpy(newStr, start, length);
-    ObjString *newStrObj = NEW_OBJSTRING_FROM_RAW(newStr, length);
+    BUILTIN_INIT_BUFFER(dst, length);
+    memcpy(dst, start, length);
+    ObjString *newStrObj = NEW_OBJSTRING(dst, length);
+    BUILTIN_DESTROY_BUFFER(dst, length);
     return obj_val(newStrObj);
 }
 
@@ -177,10 +195,10 @@ static Value builtin_rtrim(AriaEnv *env, int argCount, Value *args)
         end--;
     }
     size_t length = end - start + 1;
-    char *newStr = env->gc->allocate_array<char>(length + 1);
-    newStr[length] = '\0';
-    memcpy(newStr, start, length);
-    ObjString *newStrObj = NEW_OBJSTRING_FROM_RAW(newStr, length);
+    BUILTIN_INIT_BUFFER(dst, length);
+    memcpy(dst, start, length);
+    ObjString *newStrObj = NEW_OBJSTRING(dst, length);
+    BUILTIN_DESTROY_BUFFER(dst, length);
     return obj_val(newStrObj);
 }
 
