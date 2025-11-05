@@ -21,6 +21,7 @@ ObjString::ObjString(char *_chars, size_t _length, uint32_t _hash, bool _ownChar
     if (length <= SHORT_CAPACITY) {
         isLong = false;
         memcpy(shortChars, _chars, length);
+        shortChars[length] = '\0';
         if (_ownChars) {
             gc->free_array<char>(_chars, length + 1);
         }
@@ -43,6 +44,7 @@ ObjString::ObjString(const char *_chars, size_t _length, uint32_t _hash, GC *_gc
     if (length <= SHORT_CAPACITY) {
         isLong = false;
         memcpy(shortChars, _chars, length);
+        shortChars[length] = '\0';
     } else {
         isLong = true;
         longChars = gc->allocate_array<char>(length + 1);
