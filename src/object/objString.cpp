@@ -167,28 +167,13 @@ ObjString *newObjString(char ch, GC *gc)
     return obj;
 }
 
-ObjString *newObjStringFromRaw(char *str, size_t length, GC *gc)
-{
-    uint32_t hash = hashString(str, length);
-    if (auto interned = gc->getStr(str, length, hash); interned != nullptr) {
-        gc->free_array<char>(str, length + 1);
-        return interned;
-    }
-    auto obj = gc->allocate_object<ObjString>(str, length, hash, true, gc);
-    gc->insertStr(obj);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object STRING)", toVoidPtr(obj), sizeof(ObjString));
-#endif
-    return obj;
-}
-
 ObjString *concatenateString(const ObjString *a, const ObjString *b, GC *gc)
 {
     const size_t length = a->length + b->length;
     if (length < a->length) {
         return nullptr;
     }
-    uint32_t hash = hashString(a->hash, b->C_str_ref(), b->length);
+    uint32_t hash = hashString(b->C_str_ref(), b->length, a->hash);
     bool useGCBuffer = length < GC::GC_BUFFER_SIZE;
     char *dest = useGCBuffer ? gc->buffer : gc->allocate_array<char>(length + 1);
     memcpy(dest, a->C_str_ref(), a->length);

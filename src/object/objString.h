@@ -49,7 +49,7 @@ public:
     };
     size_t length;
 
-    static void init(GC *_gc,ValueHashTable *builtins);
+    static void init(GC *_gc, ValueHashTable *builtins);
 };
 
 inline bool is_ObjString(Value value)
@@ -82,9 +82,6 @@ ObjString *newObjString(char *str, size_t length, GC *gc);
 
 // construct from ref
 ObjString *newObjString(char ch, GC *gc);
-
-// construct from raw c-style string
-ObjString *newObjStringFromRaw(char *str, size_t length, GC *gc);
 
 ObjString *concatenateString(const ObjString *a, const ObjString *b, GC *gc);
 

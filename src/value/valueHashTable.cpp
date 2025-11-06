@@ -176,76 +176,63 @@ String ValueHashTable::toString(ValueStack *printStack) const
 
 int64_t ValueHashTable::findExist(Value key) const
 {
-    const uint32_t hash = valueHash(key);
-    const uint32_t groupCount = capacity >> 3;
-    const uint32_t h1 = get_hash_h1(hash);
-    const uint8_t h2 = get_hash_h2(hash);
-    uint32_t index = (h1 & (groupCount - 1)) << 3;
+    uint32_t hash = valueHash(key);
+    uint8_t h2 = get_hash_h2(hash);
+    uint32_t index = hash & (capacity - 1);
+
     for (;;) {
-        for (uint8_t i = 0; i < 8; i++) {
-            const uint32_t offset = index + i;
-            const auto c = ctrl[offset];
-            if (c == kEmpty) {
-                return -1;
-            }
-            if (c == kDeleted) {
-                // pass
-            } else if (c == h2 && valuesSame(entry[offset].key, key)) {
-                return offset;
-            }
+        auto c = ctrl[index];
+        if (c == kEmpty) {
+            return -1;
         }
-        index = ((index + 1) & (groupCount - 1)) << 3;
+        if (c == kDeleted) {
+            // pass
+        } else if (c == h2 && valuesSame(entry[index].key, key)) {
+            return index;
+        }
+        index = (index + 1) & (capacity - 1);
     }
 }
 
 uint32_t ValueHashTable::findPosition(Value key, uint32_t hash) const
 {
-    const uint32_t groupCount = capacity >> 3;
-    const uint32_t h1 = get_hash_h1(hash);
-    const uint8_t h2 = get_hash_h2(hash);
-    uint32_t index = (h1 & (groupCount - 1)) << 3;
+    uint8_t h2 = get_hash_h2(hash);
+    uint32_t index = hash & (capacity - 1);
+
     for (;;) {
-        for (uint8_t i = 0; i < 8; i++) {
-            const uint32_t offset = index + i;
-            const auto c = ctrl[offset];
-            if (c == kEmpty) {
-                return offset;
-            }
-            if (c == kDeleted) {
-                return offset;
-            }
-            if (c == h2 && valuesSame(entry[offset].key, key)) {
-                return offset;
-            }
+        auto c = ctrl[index];
+        if (c == kEmpty) {
+            return index;
         }
-        index = ((index + 1) & (groupCount - 1)) << 3;
+        if (c == kDeleted) {
+            return index;
+        }
+        if (c == h2 && valuesSame(entry[index].key, key)) {
+            return index;
+        }
+        index = (index + 1) & (capacity - 1);
     }
 }
 
 uint32_t ValueHashTable::findNew(
     const KVPair *h_entry, const uint8_t *h_ctrl, uint32_t h_capacity, Value key)
 {
-    const uint32_t hash = valueHash(key);
-    const uint32_t h_capacityCount = h_capacity >> 3;
-    const uint32_t h1 = get_hash_h1(hash);
-    const uint8_t h2 = get_hash_h2(hash);
-    uint32_t index = (h1 & (h_capacityCount - 1)) << 3;
+    uint32_t hash = valueHash(key);
+    uint8_t h2 = get_hash_h2(hash);
+    uint32_t index = hash & (h_capacity - 1);
 
     for (;;) {
-        for (uint8_t i = 0; i < 8; i++) {
-            const uint32_t offset = index + i;
-            const auto c = h_ctrl[offset];
-            if (c == kEmpty) {
-                return offset;
-            }
-            if (c == kDeleted) {
-                return offset;
-            }
-            if (c == h2 && valuesSame(h_entry[offset].key, key)) {
-                return offset;
-            }
+        auto c = h_ctrl[index];
+        if (c == kEmpty) {
+            return index;
         }
-        index = ((index + 1) & (h_capacityCount - 1)) << 3;
+        if (c == kDeleted) {
+            return index;
+        }
+        if (c == h2 && valuesSame(h_entry[index].key, key)) {
+            return index;
+        }
+        index = (index + 1) & (h_capacity - 1);
     }
 }
 

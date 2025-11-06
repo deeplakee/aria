@@ -59,6 +59,17 @@ namespace aria {
 
 #define NEW_OBJSTRING_FROM_RAW(...) newObjStringFromRaw(__VA_ARGS__ __VA_OPT__(, ) env->gc)
 
+#define BUILTIN_INIT_BUFFER(bufferName, length) \
+    bool __useBuffer__ = length < GC::GC_BUFFER_SIZE; \
+    char *bufferName = __useBuffer__ ? env->gc->buffer \
+                                     : env->gc->allocate_array<char>(length + 1); \
+    bufferName[length] = '\0';
+
+#define BUILTIN_DESTROY_BUFFER(bufferName, length) \
+    if (!__useBuffer__) { \
+        env->gc->free_array<char>(bufferName, length + 1); \
+    }
+
 } // namespace aria
 
 #endif //NATIVEUTIL_H

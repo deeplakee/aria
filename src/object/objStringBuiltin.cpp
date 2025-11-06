@@ -7,17 +7,6 @@
 
 #include <cstring>
 
-#define BUILTIN_INIT_BUFFER(bufferName, length) \
-    bool __useBuffer__ = length < GC::GC_BUFFER_SIZE; \
-    char *bufferName = __useBuffer__ ? env->gc->buffer \
-                                     : env->gc->allocate_array<char>(length + 1); \
-    bufferName[length] = '\0';
-
-#define BUILTIN_DESTROY_BUFFER(bufferName, length) \
-    if (!__useBuffer__) { \
-        env->gc->free_array<char>(bufferName, length + 1); \
-    }
-
 namespace aria {
 
 static Value builtin_length(AriaEnv *env, int argCount, Value *args)
@@ -71,6 +60,11 @@ static Value builtin_concat(AriaEnv *env, int argCount, Value *args)
     CHECK_OBJSTRING(args[0], Argument);
     const ObjString *b = as_ObjString(args[0]);
     ObjString *concatenatedStr = concatenateString(self, b, env->gc);
+    if (concatenatedStr == nullptr) {
+        fatalError(
+            ErrorCode::RESOURCE_STRING_OVERFLOW,
+            "String concatenation result exceeds maximum length。");
+    }
     return obj_val(concatenatedStr);
 }
 
@@ -253,7 +247,13 @@ static Value builtin___add__(AriaEnv *env, int argCount, Value *args)
 {
     const ObjString *left = as_ObjString(args[-1]);
     const ObjString *right = as_ObjString(args[0]);
-    return obj_val(concatenateString(left, right, env->gc));
+    auto concatenatedStr = concatenateString(left, right, env->gc);
+    if (concatenatedStr == nullptr) {
+        fatalError(
+            ErrorCode::RESOURCE_STRING_OVERFLOW,
+            "String concatenation result exceeds maximum length。");
+    }
+    return obj_val(concatenatedStr);
 }
 
 void ObjString::init(GC *_gc, ValueHashTable *builtins)

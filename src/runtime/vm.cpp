@@ -627,9 +627,8 @@ Value AriaVM::run(int retFrame)
                 THROW_EXCEPTION(
                     ErrorCode::RUNTIME_INVALID_INDEX_OP, "Only objects support index operation.");
             }
-
-            Obj *obj = as_obj(stack.peek(1));
             Value index = stack.peek();
+            Obj *obj = as_obj(stack.peek(1));
             Value value = stack.peek(2);
 
             auto result = obj->setByIndex(index, value);
