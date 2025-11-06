@@ -17,7 +17,9 @@ static Value builtin_extend(AriaEnv *env, int argCount, Value *args)
 {
     auto self = as_ObjList(args[-1]);
     CHECK_OBJLIST(args[0], Argument);
+    env->gc->cache(args[0]);
     self->list->extend(as_ObjList(args[0])->list);
+    env->gc->releaseCache();
     return nil_val;
 }
 

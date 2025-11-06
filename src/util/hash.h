@@ -59,6 +59,26 @@ inline uint32_t hashString(const char *str, const size_t length, uint32_t hash =
     return hash;
 }
 
+// constexpr uint32_t kHASH_P = 31; // 质数基数，可换成131, 1315423911等
+// constexpr uint32_t kHASH_MOD = 0xFFFFFFFFu; // 32位环
+//
+// inline uint32_t hashString(const char* str, size_t len) {
+//     uint32_t h = 2166136261u;
+//     for (size_t i = 0; i < len; i++) {
+//         h = (h * kHASH_P + static_cast<uint8_t>(str[i])) & kHASH_MOD;
+//     }
+//     return h;
+// }
+//
+// // 用于组合两个 finalized hash
+// inline uint32_t hashString(uint32_t hashB, size_t lenB,uint32_t hashA) {
+//     uint64_t powP = 1;
+//     for (size_t i = 0; i < lenB; ++i)
+//         powP = (powP * kHASH_P) & kHASH_MOD;
+//     return (hashA * powP + hashB) & kHASH_MOD;
+// }
+
+
 
 } // namespace aria
 
