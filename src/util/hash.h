@@ -42,22 +42,22 @@ inline uint32_t hashObj(Obj *obj, ObjType type)
     return hash;
 }
 
-inline uint32_t hashString(const char *str, const size_t length, uint32_t hash = 2166136261u)
-{
-    for (size_t i = 0; i < length; i++) {
-        hash ^= static_cast<uint8_t>(str[i]);
-        hash *= 16777619;
-    }
-    return hash;
-}
-
 // inline uint32_t hashString(const char *str, const size_t length, uint32_t hash = 2166136261u)
 // {
 //     for (size_t i = 0; i < length; i++) {
-//         hash = 31 * hash + static_cast<uint8_t>(str[i]);
+//         hash ^= static_cast<uint8_t>(str[i]);
+//         hash *= 16777619;
 //     }
 //     return hash;
 // }
+
+inline uint32_t hashString(const char *str, const size_t length, uint32_t hash = 2166136261u)
+{
+    for (size_t i = 0; i < length; i++) {
+        hash = 31 * hash + static_cast<uint8_t>(str[i]);
+    }
+    return hash;
+}
 
 
 } // namespace aria
