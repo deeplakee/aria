@@ -107,10 +107,11 @@ bool ValueArray::insert(uint32_t index, Value v)
 
 void ValueArray::extend(ValueArray *other)
 {
-    uint32_t newSize = next_power_of_2(count + other->count);
-    reserve(newSize);
+    uint32_t newCount = count + other->count;
+    uint32_t newCapacity = next_power_of_2(newCount);
+    reserve(newCapacity);
     memcpy(values + count, other->values, other->count * sizeof(Value));
-    count = newSize;
+    count = newCount;
 }
 
 void ValueArray::copy(ValueArray *other)
@@ -140,8 +141,7 @@ uint32_t ValueArray::size() const
 
 void ValueArray::reserve(const uint32_t newCapacity)
 {
-    uint32_t oldCapacity = capacity;
-    values = gc->grow_array<Value>(values, oldCapacity, newCapacity);
+    values = gc->grow_array<Value>(values, capacity, newCapacity);
     capacity = newCapacity;
 }
 
