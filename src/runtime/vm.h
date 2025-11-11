@@ -95,6 +95,7 @@ private:
     int EframeCount;
     int RmoduleCount;
     CallFrame *frame;
+    Chunk *chunk;
 
     Value E_REG;
     uint8_t flags;
@@ -111,7 +112,7 @@ private:
 
     Value *currentRmodule() { return &Rmodules[RmoduleCount - 1]; }
 
-    void updateCallFrame() { frame = CframeCount == 0 ? nullptr : &Cframes[CframeCount - 1]; }
+    void updateCallFrame();
 
     void pushCallFrame(ObjFunction *_function, uint8_t *_ip, Value *_stakBase);
 

@@ -32,21 +32,6 @@
 
 namespace aria {
 
-#define THROW_EXCEPTION(code, err) \
-    throwException(code, err); \
-    break;
-
-// we consider exception is created with newException or throwException,
-// so the err_flag is set and err is ObjException
-#define CHECK_EXCEPTION(err) \
-    if (get_err_flag()) { \
-        if (!is_ObjException(err)) { \
-            reportRuntimeFatalError(ErrorCode::RUNTIME_UNKNOWN, "Invalid return value"); \
-        } \
-        throwException(as_ObjException(err)); \
-        break; \
-    }
-
 uint8_t read_byte(CallFrame *frame)
 {
     return *frame->ip++;
@@ -82,6 +67,7 @@ AriaVM::AriaVM()
     , EframeCount{0}
     , RmoduleCount{0}
     , frame{nullptr}
+    , chunk{nullptr}
     , E_REG{nil_val}
     , flags{0}
     , builtIn{new ValueHashTable{gc}}
@@ -193,11 +179,23 @@ Value AriaVM::newException(ErrorCode code, const String &msg)
     return newException(code, msg.c_str());
 }
 
+void AriaVM::updateCallFrame()
+{
+    if (CframeCount > 0) {
+        frame = &Cframes[CframeCount - 1];
+        chunk = frame->function->chunk;
+    } else {
+        frame = nullptr;
+        chunk = nullptr;
+    }
+}
+
 void AriaVM::pushCallFrame(ObjFunction *_function, uint8_t *_ip, Value *_stakBase)
 {
     Cframes[CframeCount].init(_function, _ip, _stakBase);
     CframeCount++;
     frame = &Cframes[CframeCount - 1];
+    chunk = frame->function->chunk;
 }
 
 void AriaVM::pushExceptionFrame(
@@ -218,8 +216,10 @@ void AriaVM::popCallFrame()
     CframeCount--;
     if (CframeCount == 0) {
         frame = nullptr;
+        chunk = nullptr;
     } else {
         frame = &Cframes[CframeCount - 1];
+        chunk = frame->function->chunk;
     }
 }
 
@@ -476,10 +476,10 @@ ObjFunction *AriaVM::loadModule(const String &path, ObjString *moduleName)
 
 Value AriaVM::run(int retFrame)
 {
-    if (retFrame < 0 || retFrame >= CframeCount)
+    if (retFrame < 0 || retFrame >= CframeCount) {
         reportRuntimeFatalError(ErrorCode::RUNTIME_INVALID_FRAME, "Invalid retFrame index");
+    }
     for (;;) {
-        Chunk *chunk = frame->function->chunk;
         auto codeOffset = static_cast<uint32_t>(frame->ip - chunk->codes);
         maybeDebugStep(codeOffset);
 #ifdef DEBUG_TRACE_EXECUTION
@@ -530,7 +530,8 @@ Value AriaVM::run(int retFrame)
             ObjString *name = read_ObjString(frame);
             if (!chunk->globals->insert(obj_val(name), stack.peek())) {
                 String msg = format("Existed variable '{}'.", name->C_str_ref());
-                THROW_EXCEPTION(ErrorCode::RUNTIME_EXISTED_VARIABLE, msg);
+                throwException(ErrorCode::RUNTIME_EXISTED_VARIABLE, msg);
+                break;
             }
             stack.pop();
             break;
@@ -541,7 +542,8 @@ Value AriaVM::run(int retFrame)
             if (!chunk->globals->get(obj_val(name), value)) {
                 if (!builtIn->get(obj_val(name), value)) {
                     String msg = format("Undefined variable '{}'.", name->C_str_ref());
-                    THROW_EXCEPTION(ErrorCode::RUNTIME_UNDEFINED_VARIABLE, msg);
+                    throwException(ErrorCode::RUNTIME_UNDEFINED_VARIABLE, msg);
+                    break;
                 }
             }
             stack.push(value);
@@ -552,55 +554,53 @@ Value AriaVM::run(int retFrame)
             if (chunk->globals->insert(obj_val(name), stack.peek())) {
                 chunk->globals->remove(obj_val(name));
                 String msg = format("Undefined variable '{}'.", name->C_str_ref());
-                THROW_EXCEPTION(ErrorCode::RUNTIME_UNDEFINED_VARIABLE, msg);
+                throwException(ErrorCode::RUNTIME_UNDEFINED_VARIABLE, msg);
+                break;
             }
             break;
         }
         case opCode::LOAD_FIELD: {
             if (!is_obj(stack.peek())) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_FIELD_OP, "Only objects have fields.");
+                throwException(ErrorCode::RUNTIME_INVALID_FIELD_OP, "Only objects have fields.");
+                break;
             }
             Obj *obj = as_obj(stack.peek());
             ObjString *name = read_ObjString(frame);
             Value value;
 
-            // return true_val or false_val
-            auto result = obj->getByField(name, value);
-
-            if (is_false_val(result)) {
+            if (auto result = obj->getByField(name, value); is_false_val(result)) {
                 String msg = format(
                     "this {} object does no have attribute {}.",
                     obj->representation(),
                     name->C_str_ref());
-                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
+                throwException(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
+                break;
             }
-
-            // value = bindMethodIfNeeded(obj_val(obj), value);
             stack.setTopVal(value);
             break;
         }
         case opCode::STORE_FIELD: {
             if (!is_obj(stack.peek())) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_FIELD_OP, "Only objects have fields.");
+                throwException(ErrorCode::RUNTIME_INVALID_FIELD_OP, "Only objects have fields.");
+                break;
             }
             Obj *obj = as_obj(stack.pop());
             ObjString *propertyName = read_ObjString(frame);
 
-            // return true_val or false_val
-            auto result = obj->setByField(propertyName, stack.peek());
-
-            if (is_false_val(result)) {
+            if (auto result = obj->setByField(propertyName, stack.peek()); is_false_val(result)) {
                 String msg = format(
                     "this {} object does no support store field operation.",
                     valueTypeString(stack.peek()));
-                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
+                throwException(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
+                break;
             }
             break;
         }
         case opCode::LOAD_SUBSCR: {
             if (!is_obj(stack.peek(1))) {
-                THROW_EXCEPTION(
+                throwException(
                     ErrorCode::RUNTIME_INVALID_INDEX_OP, "Only objects support index operation.");
+                break;
             }
             Obj *obj = as_obj(stack.peek(1));
             Value index = stack.peek();
@@ -613,10 +613,16 @@ Value AriaVM::run(int retFrame)
                     "this {} object does not support subscript access with index '{}'.",
                     valueTypeString(obj_val(obj)),
                     valueString(index));
-                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_INDEX_OP, msg);
+                throwException(ErrorCode::RUNTIME_INVALID_INDEX_OP, msg);
+                break;
             }
-
-            CHECK_EXCEPTION(result);
+            if (get_err_flag()) {
+                if (!is_ObjException(result)) {
+                    reportRuntimeFatalError(ErrorCode::RUNTIME_UNKNOWN, "Invalid return value");
+                }
+                throwException(as_ObjException(result));
+                break;
+            }
 
             stack.pop_n(2);
             stack.push(value);
@@ -624,8 +630,9 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::STORE_SUBSCR: {
             if (!is_obj(stack.peek(1))) {
-                THROW_EXCEPTION(
+                throwException(
                     ErrorCode::RUNTIME_INVALID_INDEX_OP, "Only objects support index operation.");
+                break;
             }
             Value index = stack.peek();
             Obj *obj = as_obj(stack.peek(1));
@@ -638,10 +645,16 @@ Value AriaVM::run(int retFrame)
                     "this {} object does not support subscript assignment with index '{}'.",
                     valueTypeString(obj_val(obj)),
                     valueString(index));
-                THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_INDEX_OP, msg);
+                throwException(ErrorCode::RUNTIME_INVALID_INDEX_OP, msg);
+                break;
             }
-
-            CHECK_EXCEPTION(result);
+            if (get_err_flag()) {
+                if (!is_ObjException(result)) {
+                    reportRuntimeFatalError(ErrorCode::RUNTIME_UNKNOWN, "Invalid return value");
+                }
+                throwException(as_ObjException(result));
+                break;
+            }
 
             stack.pop_n(2);
             break;
@@ -660,7 +673,8 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::GREATER: {
             if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                break;
             }
             double b = as_number(stack.pop());
             double a = as_number(stack.pop());
@@ -669,7 +683,8 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::GREATER_EQUAL: {
             if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                break;
             }
             double b = as_number(stack.pop());
             double a = as_number(stack.pop());
@@ -678,7 +693,8 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::LESS: {
             if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                break;
             }
             double b = as_number(stack.pop());
             double a = as_number(stack.pop());
@@ -687,7 +703,8 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::LESS_EQUAL: {
             if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                break;
             }
             double b = as_number(stack.pop());
             double a = as_number(stack.pop());
@@ -714,11 +731,13 @@ Value AriaVM::run(int retFrame)
                 stack.push(obj_val(result));
                 break;
             }
-            THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers or strings.");
+            throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers or strings.");
+            break;
         }
         case opCode::SUBTRACT: {
             if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                break;
             }
             double b = as_number(stack.pop());
             double a = as_number(stack.pop());
@@ -727,7 +746,8 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::MULTIPLY: {
             if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                break;
             }
             double b = as_number(stack.pop());
             double a = as_number(stack.pop());
@@ -736,11 +756,13 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::DIVIDE: {
             if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                break;
             }
             double b = as_number(stack.pop());
             if (isZero(b)) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_DIVISION_BY_ZERO, "Divide by zero.");
+                throwException(ErrorCode::RUNTIME_DIVISION_BY_ZERO, "Divide by zero.");
+                break;
             }
             double a = as_number(stack.pop());
             stack.push(number_val(a / b));
@@ -748,12 +770,14 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::MOD: {
             if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
+                break;
             }
             double b = as_number(stack.pop());
             double a = as_number(stack.pop());
             if (isZero(b)) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_MODULO_BY_ZERO, "Modulo by zero.");
+                throwException(ErrorCode::RUNTIME_MODULO_BY_ZERO, "Modulo by zero.");
+                break;
             }
             stack.push(number_val(std::fmod(a, b)));
             break;
@@ -763,7 +787,8 @@ Value AriaVM::run(int retFrame)
             break;
         case opCode::NEGATE: {
             if (!is_number(stack.peek())) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Operand must be number.");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operand must be number.");
+                break;
             }
             stack.push(number_val(-as_number(stack.pop())));
             break;
@@ -817,7 +842,12 @@ Value AriaVM::run(int retFrame)
             int argCount = read_byte(frame);
             auto callee = stack.peek(argCount);
             auto result = callValue(callee, argCount);
-            CHECK_EXCEPTION(result);
+            if (get_err_flag()) {
+                if (!is_ObjException(result)) {
+                    reportRuntimeFatalError(ErrorCode::RUNTIME_UNKNOWN, "Invalid return value");
+                }
+                throwException(as_ObjException(result));
+            }
             break;
         }
         case opCode::CLOSURE: {
@@ -840,7 +870,8 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::INHERIT: {
             if (!is_ObjClass(stack.peek())) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Superclass must be a class.");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Superclass must be a class.");
+                break;
             }
             ObjClass *superKlass = as_ObjClass(stack.pop());
             ObjClass *klass = as_ObjClass(stack.peek());
@@ -880,7 +911,8 @@ Value AriaVM::run(int retFrame)
                         "Superclass '{}' has no method '{}",
                         superKlass->toString(),
                         methodName->toString());
-                    THROW_EXCEPTION(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
+                    throwException(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
+                    break;
                 }
             }
             ObjFunction *unpackedMethod = as_ObjFunction(superMethod);
@@ -910,14 +942,16 @@ Value AriaVM::run(int retFrame)
             String absoluteModulePath;
             absoluteModulePath = getAbsoluteModulePath(currentModuleName, moduleName->C_str_ref());
             if (absoluteModulePath.empty()) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_MODULE_INIT_ERROR, "Invalid module path.");
+                throwException(ErrorCode::RUNTIME_MODULE_INIT_ERROR, "Invalid module path.");
+                break;
             }
 #ifdef DEBUG_MODE
             println("Importing module {}", absoluteModulePath);
 #endif
             if (isModuleRunning(absoluteModulePath)) {
-                THROW_EXCEPTION(
+                throwException(
                     ErrorCode::RUNTIME_MODULE_INIT_ERROR, "Circular module import detected.");
+                break;
             }
 
             ObjString *path = newObjString(absoluteModulePath, gc);
@@ -931,22 +965,26 @@ Value AriaVM::run(int retFrame)
                 callModule(moduleFn);
                 break;
             }
-            THROW_EXCEPTION(ErrorCode::RUNTIME_MODULE_INIT_ERROR, "Import module error.");
+            throwException(ErrorCode::RUNTIME_MODULE_INIT_ERROR, "Import module error.");
+            break;
         }
         case opCode::GET_ITER: {
             if (!is_obj(stack.peek())) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Expected an iterable object");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Expected an iterable object");
+                break;
             }
             Value iter = as_obj(stack.peek())->createIter(gc);
             if (is_nil(iter)) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Expected iterable object");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Expected iterable object");
+                break;
             }
             stack.setTopVal(iter);
             break;
         }
         case opCode::ITER_HAS_NEXT: {
             if (!is_ObjIterator(stack.peek())) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Expected an iterator object");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Expected an iterator object");
+                break;
             }
             ObjIterator *iterator = as_ObjIterator(stack.peek());
             Value result = bool_val(iterator->iter->hasNext());
@@ -955,7 +993,8 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::ITER_GET_NEXT: {
             if (!is_ObjIterator(stack.peek())) {
-                THROW_EXCEPTION(ErrorCode::RUNTIME_TYPE_ERROR, "Expected an iterator object");
+                throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Expected an iterator object");
+                break;
             }
             ObjIterator *iterator = as_ObjIterator(stack.peek());
             Value nextVal = iterator->iter->next();
