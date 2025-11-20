@@ -51,18 +51,18 @@ bool ValueHashTable::insert(Value k, Value v)
         adjustCapacity(newCapacity);
     }
     uint32_t hash = valueHash(k);
-    uint32_t dest_index = findPosition(k, hash);
-    const bool notFull = ctrl_not_full(ctrl[dest_index]);
+    uint32_t destIndex = findPosition(k, hash);
+    const bool notFull = ctrlNotFull(ctrl[destIndex]);
     if (notFull) {
         count++;
-        if (ctrl[dest_index] == kEmpty) {
+        if (ctrl[destIndex] == kEmpty) {
             used++;
         }
     }
 
-    ctrl[dest_index] = get_hash_h2(hash);
-    entry[dest_index].key = k;
-    entry[dest_index].value = v;
+    ctrl[destIndex] = getHashH2(hash);
+    entry[destIndex].key = k;
+    entry[destIndex].value = v;
     return notFull;
 }
 
@@ -71,11 +71,11 @@ bool ValueHashTable::get(Value k, Value &v) const
     if (count == 0) {
         return false;
     }
-    int64_t dest_index = findExist(k);
-    if (dest_index == -1) {
+    int64_t destIndex = findExist(k);
+    if (destIndex == -1) {
         return false;
     }
-    v = entry[dest_index].value;
+    v = entry[destIndex].value;
     return true;
 }
 
@@ -84,8 +84,8 @@ bool ValueHashTable::has(Value k) const
     if (count == 0) {
         return false;
     }
-    int64_t dest_index = findExist(k);
-    if (dest_index == -1) {
+    int64_t destIndex = findExist(k);
+    if (destIndex == -1) {
         return false;
     }
     return true;
@@ -97,27 +97,27 @@ bool ValueHashTable::remove(Value k)
         return false;
     }
 
-    int64_t dest_index = findExist(k);
-    if (dest_index == -1) {
+    int64_t destIndex = findExist(k);
+    if (destIndex == -1) {
         return false;
     }
 
-    ctrl[dest_index] = kDeleted;
-    entry[dest_index].key = NanBox::NilValue;
-    entry[dest_index].value = NanBox::NilValue;
+    ctrl[destIndex] = kDeleted;
+    entry[destIndex].key = NanBox::NilValue;
+    entry[destIndex].value = NanBox::NilValue;
     count--;
     return true;
 }
 
 void ValueHashTable::copy(const ValueHashTable *other)
 {
-    auto other_entry = other->entry;
-    auto other_ctrl = other->ctrl;
+    auto otherEntry = other->entry;
+    auto otherCtrl = other->ctrl;
     for (int i = 0; i < other->capacity; i++) {
-        if (ctrl_not_full(other_ctrl[i])) {
+        if (ctrlNotFull(otherCtrl[i])) {
             continue;
         }
-        insert(other_entry[i].key, other_entry[i].value);
+        insert(otherEntry[i].key, otherEntry[i].value);
     }
 }
 
@@ -127,7 +127,7 @@ bool ValueHashTable::equals(const ValueHashTable *other) const
         return false;
     }
     for (int i = 0; i < capacity; i++) {
-        if (ctrl_not_full(ctrl[i])) {
+        if (ctrlNotFull(ctrl[i])) {
             continue;
         }
         Value v = NanBox::NilValue;
@@ -158,7 +158,7 @@ String ValueHashTable::toString(ValueStack *printStack) const
     str += "{";
     bool first = true;
     for (int i = 0; i < capacity; i++) {
-        if (ctrl_not_full(ctrl[i])) {
+        if (ctrlNotFull(ctrl[i])) {
             continue;
         }
         if (!first) {
@@ -177,7 +177,7 @@ String ValueHashTable::toString(ValueStack *printStack) const
 int64_t ValueHashTable::findExist(Value key) const
 {
     uint32_t hash = valueHash(key);
-    uint8_t h2 = get_hash_h2(hash);
+    uint8_t h2 = getHashH2(hash);
     uint32_t index = hash & (capacity - 1);
 
     for (;;) {
@@ -196,7 +196,7 @@ int64_t ValueHashTable::findExist(Value key) const
 
 uint32_t ValueHashTable::findPosition(Value key, uint32_t hash) const
 {
-    uint8_t h2 = get_hash_h2(hash);
+    uint8_t h2 = getHashH2(hash);
     uint32_t index = hash & (capacity - 1);
 
     for (;;) {
@@ -218,7 +218,7 @@ uint32_t ValueHashTable::findNew(
     const KVPair *h_entry, const uint8_t *h_ctrl, uint32_t h_capacity, Value key)
 {
     uint32_t hash = valueHash(key);
-    uint8_t h2 = get_hash_h2(hash);
+    uint8_t h2 = getHashH2(hash);
     uint32_t index = hash & (h_capacity - 1);
 
     for (;;) {
@@ -247,12 +247,12 @@ void ValueHashTable::adjustCapacity(const uint32_t newCapacity)
 
     used = 0;
     for (int i = 0; i < capacity; i++) {
-        if (ctrl_not_full(ctrl[i])) {
+        if (ctrlNotFull(ctrl[i])) {
             continue;
         }
-        uint32_t dest_index = findNew(newEntry, newCtrl, newCapacity, entry[i].key);
-        initKVPair(newEntry + dest_index, entry[i].key, entry[i].value);
-        newCtrl[dest_index] = ctrl[i];
+        uint32_t destIndex = findNew(newEntry, newCtrl, newCapacity, entry[i].key);
+        initKVPair(newEntry + destIndex, entry[i].key, entry[i].value);
+        newCtrl[destIndex] = ctrl[i];
         used++;
     }
 
@@ -267,7 +267,7 @@ void ValueHashTable::adjustCapacity(const uint32_t newCapacity)
 void ValueHashTable::mark()
 {
     for (int i = 0; i < capacity; i++) {
-        if (ctrl_not_full(ctrl[i])) {
+        if (ctrlNotFull(ctrl[i])) {
             continue;
         }
         markValue(entry[i].key);
@@ -284,7 +284,7 @@ int64_t ValueHashTable::getNextIndex(const int64_t pre) const
     // -1 means begin
     if (pre == -1) {
         for (int i = 0; i < capacity; i++) {
-            if (ctrl_not_full(ctrl[i])) {
+            if (ctrlNotFull(ctrl[i])) {
                 continue;
             }
             return i;
@@ -296,7 +296,7 @@ int64_t ValueHashTable::getNextIndex(const int64_t pre) const
         return -2;
     }
     for (auto i = pre + 1; i < capacity; i++) {
-        if (ctrl_not_full(ctrl[i])) {
+        if (ctrlNotFull(ctrl[i])) {
             continue;
         }
         return i;
@@ -327,9 +327,9 @@ ObjList *ValueHashTable::createPairList() const
 {
     ObjList *list = newObjList(gc);
     gc->cache(NanBox::fromObj(list));
-    list->list->reserve(next_power_of_2(count));
+    list->list->reserve(nextPowerOf2(count));
     for (uint32_t i = 0; i < capacity; i++) {
-        if (ctrl_not_full(ctrl[i])) {
+        if (ctrlNotFull(ctrl[i])) {
             continue;
         }
         auto pair = NanBox::fromObj(createPair(i));
@@ -343,9 +343,9 @@ ObjList *ValueHashTable::createKeyList() const
 {
     ObjList *list = newObjList(gc);
     gc->cache(NanBox::fromObj(list));
-    list->list->reserve(next_power_of_2(count));
+    list->list->reserve(nextPowerOf2(count));
     for (uint32_t i = 0; i < capacity; i++) {
-        if (ctrl_not_full(ctrl[i])) {
+        if (ctrlNotFull(ctrl[i])) {
             continue;
         }
         list->list->push(entry[i].key);
@@ -358,9 +358,9 @@ ObjList *ValueHashTable::createValueList() const
 {
     ObjList *list = newObjList(gc);
     gc->cache(NanBox::fromObj(list));
-    list->list->reserve(next_power_of_2(count));
+    list->list->reserve(nextPowerOf2(count));
     for (uint32_t i = 0; i < capacity; i++) {
-        if (ctrl_not_full(ctrl[i])) {
+        if (ctrlNotFull(ctrl[i])) {
             continue;
         }
         list->list->push(entry[i].value);

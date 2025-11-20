@@ -90,9 +90,9 @@ inline bool isZero(double x)
     return std::abs(x) < epsilon;
 }
 
-uint32_t next_power_of_2(uint32_t a);
+uint32_t nextPowerOf2(uint32_t a);
 
-String escape_braces(String s);
+String escapeBraces(String s);
 
 String readFile(const String &path);
 

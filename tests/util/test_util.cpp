@@ -113,39 +113,39 @@ TEST(UtilTest, IsZeroTest) {
 TEST(UtilTest, NextPowerOf2Test) {
     // 这个函数最小返回16
     // 测试已经是2的幂的情况
-    EXPECT_EQ(next_power_of_2(1), 16);
-    EXPECT_EQ(next_power_of_2(2), 16);
-    EXPECT_EQ(next_power_of_2(4), 16);
-    EXPECT_EQ(next_power_of_2(1024), 1024);
+    EXPECT_EQ(nextPowerOf2(1), 16);
+    EXPECT_EQ(nextPowerOf2(2), 16);
+    EXPECT_EQ(nextPowerOf2(4), 16);
+    EXPECT_EQ(nextPowerOf2(1024), 1024);
 
     // 测试不是2的幂的情况
-    EXPECT_EQ(next_power_of_2(3), 16);
-    EXPECT_EQ(next_power_of_2(5), 16);
-    EXPECT_EQ(next_power_of_2(15), 16);
-    EXPECT_EQ(next_power_of_2(31), 32);
-    EXPECT_EQ(next_power_of_2(1023), 1024);
+    EXPECT_EQ(nextPowerOf2(3), 16);
+    EXPECT_EQ(nextPowerOf2(5), 16);
+    EXPECT_EQ(nextPowerOf2(15), 16);
+    EXPECT_EQ(nextPowerOf2(31), 32);
+    EXPECT_EQ(nextPowerOf2(1023), 1024);
 
     // 测试边界情况
-    EXPECT_EQ(next_power_of_2(0), 16);  // 0的特殊处理
-    EXPECT_EQ(next_power_of_2(0x7FFFFFFF), 0x80000000);
+    EXPECT_EQ(nextPowerOf2(0), 16);  // 0的特殊处理
+    EXPECT_EQ(nextPowerOf2(0x7FFFFFFF), 0x80000000);
 }
 
 TEST(UtilTest,EscapeBracesTest) {
     // 1. 普通字符串（无花括号）
-    EXPECT_EQ(escape_braces("Hello, World!"), "Hello, World!");
+    EXPECT_EQ(escapeBraces("Hello, World!"), "Hello, World!");
 
     // 2. 包含 { 的字符串
-    EXPECT_EQ(escape_braces("This is a { test"), "This is a {{ test");
+    EXPECT_EQ(escapeBraces("This is a { test"), "This is a {{ test");
 
     // 3. 包含 } 的字符串
-    EXPECT_EQ(escape_braces("This is a } test"), "This is a }} test");
+    EXPECT_EQ(escapeBraces("This is a } test"), "This is a }} test");
 
     // 4. 同时包含 { 和 } 的字符串
-    EXPECT_EQ(escape_braces("This { is a } test"), "This {{ is a }} test");
+    EXPECT_EQ(escapeBraces("This { is a } test"), "This {{ is a }} test");
 
     // 5. 空字符串
-    EXPECT_EQ(escape_braces(""), "");
+    EXPECT_EQ(escapeBraces(""), "");
 
     // 6. 连续多个 { 或 }
-    EXPECT_EQ(escape_braces("{{{}}}"), "{{{{{{}}}}}}");
+    EXPECT_EQ(escapeBraces("{{{}}}"), "{{{{{{}}}}}}");
 }

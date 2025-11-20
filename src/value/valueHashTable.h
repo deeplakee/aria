@@ -82,13 +82,13 @@ private:
     uint8_t *ctrl;
     GC *gc;
 
-    static uint8_t get_hash_h2(uint32_t h) { return (h >> 25) & 0x7F; }
+    static uint8_t getHashH2(uint32_t h) { return (h >> 25) & 0x7F; }
 
-    static uint32_t get_hash_h1(uint32_t h) { return h & 0x1FFFFFF; }
+    static uint32_t getHashH1(uint32_t h) { return h & 0x1FFFFFF; }
 
-    static bool ctrl_is_full(uint8_t ctrl) { return (ctrl & 0b10000000) == 0; }
+    static bool ctrlIsFull(uint8_t ctrl) { return (ctrl & 0b10000000) == 0; }
 
-    static bool ctrl_not_full(uint8_t ctrl) { return (ctrl & 0b10000000) == 0b10000000; }
+    static bool ctrlNotFull(uint8_t ctrl) { return (ctrl & 0b10000000) == 0b10000000; }
 
     int64_t findExist(Value key) const;
 

@@ -102,7 +102,7 @@ public:
 
     String info() const
     {
-        return format("{}:{}:{} `{}`", filename.get(), line, column, escape_braces(text));
+        return format("{}:{}:{} `{}`", filename.get(), line, column, escapeBraces(text));
     }
 
     String posInfo() const { return format("{}:{}:{}", filename.get(), line, column); }

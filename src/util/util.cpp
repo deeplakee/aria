@@ -19,7 +19,7 @@ namespace aria {
 
 namespace fs = std::filesystem;
 
-uint32_t next_power_of_2(uint32_t a)
+uint32_t nextPowerOf2(uint32_t a)
 {
     if (a == UINT32_MAX) {
         return UINT32_MAX;
@@ -31,7 +31,7 @@ uint32_t next_power_of_2(uint32_t a)
     return begin;
 }
 
-String escape_braces(String s)
+String escapeBraces(String s)
 {
     size_t pos = 0;
     while ((pos = s.find('{', pos)) != std::string::npos) {

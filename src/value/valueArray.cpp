@@ -18,7 +18,7 @@ ValueArray::ValueArray(const uint32_t begin, const uint32_t end, const ValueArra
     , gc{_gc}
 {
     uint32_t size = end - begin;
-    reserve(next_power_of_2(size));
+    reserve(nextPowerOf2(size));
     if (size > 0 && (other == nullptr || other->values == nullptr)) {
         fatalError(
             ErrorCode::RESOURCE_LIST_CONSTRUCT_FAIL,
@@ -38,7 +38,7 @@ ValueArray::ValueArray(Value *_values, uint32_t _count, GC *_gc)
     , values{nullptr}
     , gc{_gc}
 {
-    reserve(next_power_of_2(_count));
+    reserve(nextPowerOf2(_count));
     if (_count > 0 && _values == nullptr) {
         fatalError(
             ErrorCode::RESOURCE_LIST_CONSTRUCT_FAIL,
@@ -108,7 +108,7 @@ bool ValueArray::insert(uint32_t index, Value v)
 void ValueArray::extend(ValueArray *other)
 {
     uint32_t newCount = count + other->count;
-    uint32_t newCapacity = next_power_of_2(newCount);
+    uint32_t newCapacity = nextPowerOf2(newCount);
     reserve(newCapacity);
     memcpy(values + count, other->values, other->count * sizeof(Value));
     count = newCount;
