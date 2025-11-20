@@ -8,7 +8,7 @@ namespace aria {
 
 class ValueStack;
 
-using Value = nan_boxing_t;
+using Value = NanBox_t;
 
 String valueTypeString(Value value);
 
@@ -18,8 +18,8 @@ String valueRepresentation(Value value, ValueStack *printStack = nullptr);
 
 inline bool valuesSame(Value a, Value b)
 {
-    if (is_number(a) && is_number(b)) {
-        return as_number(a) == as_number(b);
+    if (NanBox::isNumber(a) && NanBox::isNumber(b)) {
+        return NanBox::toNumber(a) == NanBox::toNumber(b);
     }
     return a == b;
 }
@@ -32,7 +32,7 @@ void markValue(Value value);
 
 inline bool isFalsey(Value value)
 {
-    return is_nil(value) || (is_bool(value) && !as_bool(value));
+    return NanBox::isNil(value) || (NanBox::isBool(value) && !NanBox::toBool(value));
 }
 
 } // namespace aria

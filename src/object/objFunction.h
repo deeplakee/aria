@@ -63,9 +63,9 @@ inline bool is_ObjFunction(Value value)
 inline ObjFunction *as_ObjFunction(Value value)
 {
 #ifdef DEBUG_MODE
-    return dynamic_cast<ObjFunction *>(as_obj(value));
+    return dynamic_cast<ObjFunction *>(NanBox::toObj(value));
 #else
-    return static_cast<ObjFunction *>(as_obj(value));
+    return static_cast<ObjFunction *>(NanBox::toObj(value));
 #endif
 }
 

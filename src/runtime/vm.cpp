@@ -68,7 +68,7 @@ AriaVM::AriaVM()
     , RmoduleCount{0}
     , frame{nullptr}
     , chunk{nullptr}
-    , E_REG{nil_val}
+    , E_REG{NanBox::NilValue}
     , flags{0}
     , builtIn{new ValueHashTable{gc}}
     , cachedModules{new ValueHashTable{gc}}
@@ -105,7 +105,7 @@ interpretResult AriaVM::interpret(String srcFilePath, String source)
     }
     reset();
     try {
-        stack.push(obj_val(script));
+        stack.push(NanBox::fromObj(script));
         callModule(script);
         if (get_err_flag()) {
             return interpretResult::RUNTIME_ERROR;
@@ -139,7 +139,7 @@ interpretResult AriaVM::interpretFromFile(const String &srcFilePath)
 
 Value AriaVM::runFunction(ObjFunction *fun, int argCount, const Value *args)
 {
-    stack.push(obj_val(fun));
+    stack.push(NanBox::fromObj(fun));
     if (fun == nullptr) {
         reportRuntimeFatalError(ErrorCode::RUNTIME_NULL_REFERENCE, "Invalid function pointer");
     }
@@ -161,7 +161,7 @@ void AriaVM::setDebugger(AriaDebugger *_debugger)
 Value AriaVM::newException(const char *msg)
 {
     set_err_flag();
-    auto e = obj_val(newObjException(msg, gc));
+    auto e = NanBox::fromObj(newObjException(msg, gc));
     E_REG = e;
     return e;
 }
@@ -169,7 +169,7 @@ Value AriaVM::newException(const char *msg)
 Value AriaVM::newException(ErrorCode code, const char *msg)
 {
     set_err_flag();
-    auto e = obj_val(newObjException(code, msg, gc));
+    auto e = NanBox::fromObj(newObjException(code, msg, gc));
     E_REG = e;
     return e;
 }
@@ -207,7 +207,7 @@ void AriaVM::pushExceptionFrame(
 
 void AriaVM::pushRunningModule(const ObjFunction *_function)
 {
-    Rmodules[RmoduleCount] = obj_val(_function->location);
+    Rmodules[RmoduleCount] = NanBox::fromObj(_function->location);
     RmoduleCount++;
 }
 
@@ -241,21 +241,21 @@ void AriaVM::packVarargs(int argCount, int arity)
     int count = argCount - arity;
     if (count == 0) {
         ObjList *emptyList = newObjList(nullptr, 0, gc);
-        stack.push(obj_val(emptyList));
+        stack.push(NanBox::fromObj(emptyList));
     } else {
         Value *start = stack.getTopPtr() - count;
         ObjList *list = newObjList(start, count, gc);
         stack.pop_n(count);
-        stack.push(obj_val(list));
+        stack.push(NanBox::fromObj(list));
     }
 }
 
 ObjModule *AriaVM::cacheModule(ObjFunction *moduleFn)
 {
-    gc->cache(obj_val(moduleFn));
-    auto module = obj_val(newObjModule(moduleFn, gc));
+    gc->cache(NanBox::fromObj(moduleFn));
+    auto module = NanBox::fromObj(newObjModule(moduleFn, gc));
     gc->cache(module);
-    cachedModules->insert(obj_val(moduleFn->location), module);
+    cachedModules->insert(NanBox::fromObj(moduleFn->location), module);
     gc->releaseCache(2);
     return as_ObjModule(module);
 }
@@ -268,13 +268,13 @@ Value AriaVM::createCallFrame(ObjFunction *function)
     // Normal function frame base includes callee itself at slot 0.
     auto arity = function->acceptsVarargs ? function->arity + 2 : function->arity + 1;
     pushCallFrame(function, function->chunk->codes, stack.getTopPtr() - arity);
-    return nil_val;
+    return NanBox::NilValue;
 }
 
 Value AriaVM::returnFromCurrentModule(Value result)
 {
     if (RmoduleCount > 1) {
-        result = obj_val(cacheModule(frame->function));
+        result = NanBox::fromObj(cacheModule(frame->function));
     }
     popRunningModule();
     return result;
@@ -296,7 +296,7 @@ Value AriaVM::returnFromCurrentFrame(Value result)
 
 Value AriaVM::callValue(Value callee, int argCount)
 {
-    if (is_obj(callee)) {
+    if (NanBox::isObj(callee)) {
         switch (obj_type(callee)) {
         case ObjType::FUNCTION:
             return callFunction(as_ObjFunction(callee), argCount);
@@ -307,7 +307,7 @@ Value AriaVM::callValue(Value callee, int argCount)
         case ObjType::BOUND_METHOD:
             return callBoundMethod(as_ObjBoundMethod(callee), argCount);
         default:
-            return as_obj(callee)->op_call(this, argCount);
+            return NanBox::toObj(callee)->op_call(this, argCount);
         }
     }
     return newException("Invalid call operation.");
@@ -355,7 +355,7 @@ Value AriaVM::callNativeFn(ObjNativeFn *native, int argCount)
 
 Value AriaVM::callNewInstance(ObjClass *klass, int argCount)
 {
-    stack[stack.size() - argCount - 1] = obj_val(newObjInstance(klass, gc));
+    stack[stack.size() - argCount - 1] = NanBox::fromObj(newObjInstance(klass, gc));
     if (klass->initMethod != nullptr) {
         return callFunction(klass->initMethod, argCount);
     }
@@ -363,7 +363,7 @@ Value AriaVM::callNewInstance(ObjClass *klass, int argCount)
         String msg = format("Expected 0 argument but got {}.", argCount);
         return newException(ErrorCode::RUNTIME_MISMATCH_ARG_COUNT, msg);
     }
-    return nil_val;
+    return NanBox::NilValue;
 }
 
 Value AriaVM::callBoundMethod(const ObjBoundMethod *method, const int argCount)
@@ -426,9 +426,9 @@ void AriaVM::registerNative() const
 void AriaVM::defineNativeFn(
     const char *name, int arity, NativeFn_t function, bool acceptsVarargs) const
 {
-    Value key = obj_val(newObjString(name, gc));
+    Value key = NanBox::fromObj(newObjString(name, gc));
     gc->cache(key);
-    Value value = obj_val(newObjNativeFn(
+    Value value = NanBox::fromObj(newObjNativeFn(
         FunctionType::FUNCTION, function, as_ObjString(key), arity, acceptsVarargs, gc));
     gc->cache(value);
     builtIn->insert(key, value);
@@ -437,7 +437,7 @@ void AriaVM::defineNativeFn(
 
 void AriaVM::defineNativeVar(const char *name, Value value) const
 {
-    Value key = obj_val(newObjString(name, gc));
+    Value key = NanBox::fromObj(newObjString(name, gc));
     gc->cache(key);
     gc->cache(value);
     builtIn->insert(key, value);
@@ -457,7 +457,7 @@ bool AriaVM::isModuleRunning(const String &path) const
 ObjModule *AriaVM::getCachedModule(ObjString *path)
 {
     Value value;
-    if (cachedModules->get(obj_val(path), value)) {
+    if (cachedModules->get(NanBox::fromObj(path), value)) {
         return as_ObjModule(value);
     }
     return nullptr;
@@ -492,13 +492,13 @@ Value AriaVM::run(int retFrame)
             stack.push(read_constant(frame));
             break;
         case opCode::LOAD_NIL:
-            stack.push(nil_val);
+            stack.push(NanBox::NilValue);
             break;
         case opCode::LOAD_TRUE:
-            stack.push(bool_val(true));
+            stack.push(NanBox::TrueValue);
             break;
         case opCode::LOAD_FALSE:
-            stack.push(bool_val(false));
+            stack.push(NanBox::FalseValue);
             break;
         case opCode::LOAD_LOCAL: {
             uint16_t offset = read_word(frame);
@@ -528,7 +528,7 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::DEF_GLOBAL: {
             ObjString *name = read_ObjString(frame);
-            if (!chunk->globals->insert(obj_val(name), stack.peek())) {
+            if (!chunk->globals->insert(NanBox::fromObj(name), stack.peek())) {
                 String msg = format("Existed variable '{}'.", name->C_str_ref());
                 throwException(ErrorCode::RUNTIME_EXISTED_VARIABLE, msg);
                 break;
@@ -538,9 +538,9 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::LOAD_GLOBAL: {
             ObjString *name = read_ObjString(frame);
-            Value value = nil_val;
-            if (!chunk->globals->get(obj_val(name), value)) {
-                if (!builtIn->get(obj_val(name), value)) {
+            Value value = NanBox::NilValue;
+            if (!chunk->globals->get(NanBox::fromObj(name), value)) {
+                if (!builtIn->get(NanBox::fromObj(name), value)) {
                     String msg = format("Undefined variable '{}'.", name->C_str_ref());
                     throwException(ErrorCode::RUNTIME_UNDEFINED_VARIABLE, msg);
                     break;
@@ -551,8 +551,8 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::STORE_GLOBAL: {
             ObjString *name = read_ObjString(frame);
-            if (chunk->globals->insert(obj_val(name), stack.peek())) {
-                chunk->globals->remove(obj_val(name));
+            if (chunk->globals->insert(NanBox::fromObj(name), stack.peek())) {
+                chunk->globals->remove(NanBox::fromObj(name));
                 String msg = format("Undefined variable '{}'.", name->C_str_ref());
                 throwException(ErrorCode::RUNTIME_UNDEFINED_VARIABLE, msg);
                 break;
@@ -560,15 +560,15 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::LOAD_FIELD: {
-            if (!is_obj(stack.peek())) {
+            if (!NanBox::isObj(stack.peek())) {
                 throwException(ErrorCode::RUNTIME_INVALID_FIELD_OP, "Only objects have fields.");
                 break;
             }
-            Obj *obj = as_obj(stack.peek());
+            Obj *obj = NanBox::toObj(stack.peek());
             ObjString *name = read_ObjString(frame);
             Value value;
 
-            if (auto result = obj->getByField(name, value); is_false_val(result)) {
+            if (auto result = obj->getByField(name, value); NanBox::isFalse(result)) {
                 String msg = format(
                     "this {} object does no have attribute {}.",
                     obj->representation(),
@@ -580,14 +580,14 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::STORE_FIELD: {
-            if (!is_obj(stack.peek())) {
+            if (!NanBox::isObj(stack.peek())) {
                 throwException(ErrorCode::RUNTIME_INVALID_FIELD_OP, "Only objects have fields.");
                 break;
             }
-            Obj *obj = as_obj(stack.pop());
+            Obj *obj = NanBox::toObj(stack.pop());
             ObjString *propertyName = read_ObjString(frame);
 
-            if (auto result = obj->setByField(propertyName, stack.peek()); is_false_val(result)) {
+            if (auto result = obj->setByField(propertyName, stack.peek()); NanBox::isFalse(result)) {
                 String msg = format(
                     "this {} object does no support store field operation.",
                     valueTypeString(stack.peek()));
@@ -597,21 +597,21 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::LOAD_SUBSCR: {
-            if (!is_obj(stack.peek(1))) {
+            if (!NanBox::isObj(stack.peek(1))) {
                 throwException(
                     ErrorCode::RUNTIME_INVALID_INDEX_OP, "Only objects support index operation.");
                 break;
             }
-            Obj *obj = as_obj(stack.peek(1));
+            Obj *obj = NanBox::toObj(stack.peek(1));
             Value index = stack.peek();
             Value value;
 
             auto result = obj->getByIndex(index, value);
 
-            if (is_false_val(result)) {
+            if (NanBox::isFalse(result)) {
                 String msg = format(
                     "this {} object does not support subscript access with index '{}'.",
-                    valueTypeString(obj_val(obj)),
+                    valueTypeString(NanBox::fromObj(obj)),
                     valueString(index));
                 throwException(ErrorCode::RUNTIME_INVALID_INDEX_OP, msg);
                 break;
@@ -629,21 +629,21 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::STORE_SUBSCR: {
-            if (!is_obj(stack.peek(1))) {
+            if (!NanBox::isObj(stack.peek(1))) {
                 throwException(
                     ErrorCode::RUNTIME_INVALID_INDEX_OP, "Only objects support index operation.");
                 break;
             }
             Value index = stack.peek();
-            Obj *obj = as_obj(stack.peek(1));
+            Obj *obj = NanBox::toObj(stack.peek(1));
             Value value = stack.peek(2);
 
             auto result = obj->setByIndex(index, value);
 
-            if (is_false_val(result)) {
+            if (NanBox::isFalse(result)) {
                 String msg = format(
                     "this {} object does not support subscript assignment with index '{}'.",
-                    valueTypeString(obj_val(obj)),
+                    valueTypeString(NanBox::fromObj(obj)),
                     valueString(index));
                 throwException(ErrorCode::RUNTIME_INVALID_INDEX_OP, msg);
                 break;
@@ -662,60 +662,60 @@ Value AriaVM::run(int retFrame)
         case opCode::EQUAL: {
             Value b = stack.pop();
             Value a = stack.pop();
-            stack.push(bool_val(valuesSame(a, b)));
+            stack.push(NanBox::fromBool(valuesSame(a, b)));
             break;
         }
         case opCode::NOT_EQUAL: {
             Value b = stack.pop();
             Value a = stack.pop();
-            stack.push(bool_val(!valuesSame(a, b)));
+            stack.push(NanBox::fromBool(!valuesSame(a, b)));
             break;
         }
         case opCode::GREATER: {
-            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+            if (!NanBox::isNumber(stack.peek(0)) || !NanBox::isNumber(stack.peek(1))) {
                 throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
                 break;
             }
-            double b = as_number(stack.pop());
-            double a = as_number(stack.pop());
-            stack.push(bool_val(a > b));
+            double b = NanBox::toNumber(stack.pop());
+            double a = NanBox::toNumber(stack.pop());
+            stack.push(NanBox::fromBool(a > b));
             break;
         }
         case opCode::GREATER_EQUAL: {
-            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+            if (!NanBox::isNumber(stack.peek(0)) || !NanBox::isNumber(stack.peek(1))) {
                 throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
                 break;
             }
-            double b = as_number(stack.pop());
-            double a = as_number(stack.pop());
-            stack.push(bool_val(a >= b));
+            double b = NanBox::toNumber(stack.pop());
+            double a = NanBox::toNumber(stack.pop());
+            stack.push(NanBox::fromBool(a >= b));
             break;
         }
         case opCode::LESS: {
-            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+            if (!NanBox::isNumber(stack.peek(0)) || !NanBox::isNumber(stack.peek(1))) {
                 throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
                 break;
             }
-            double b = as_number(stack.pop());
-            double a = as_number(stack.pop());
-            stack.push(bool_val(a < b));
+            double b = NanBox::toNumber(stack.pop());
+            double a = NanBox::toNumber(stack.pop());
+            stack.push(NanBox::fromBool(a < b));
             break;
         }
         case opCode::LESS_EQUAL: {
-            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+            if (!NanBox::isNumber(stack.peek(0)) || !NanBox::isNumber(stack.peek(1))) {
                 throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
                 break;
             }
-            double b = as_number(stack.pop());
-            double a = as_number(stack.pop());
-            stack.push(bool_val(a <= b));
+            double b = NanBox::toNumber(stack.pop());
+            double a = NanBox::toNumber(stack.pop());
+            stack.push(NanBox::fromBool(a <= b));
             break;
         }
         case opCode::ADD: {
-            if (is_number(stack.peek()) && is_number(stack.peek(1))) {
-                double b = as_number(stack.pop());
-                double a = as_number(stack.pop());
-                stack.push(number_val(a + b));
+            if (NanBox::isNumber(stack.peek()) && NanBox::isNumber(stack.peek(1))) {
+                double b = NanBox::toNumber(stack.pop());
+                double a = NanBox::toNumber(stack.pop());
+                stack.push(NanBox::fromNumber(a + b));
                 break;
             }
             if (is_ObjString(stack.peek()) && is_ObjString(stack.peek(1))) {
@@ -728,69 +728,69 @@ Value AriaVM::run(int retFrame)
                         "String concatenation result exceeds maximum length。");
                 }
                 stack.pop_n(2);
-                stack.push(obj_val(result));
+                stack.push(NanBox::fromObj(result));
                 break;
             }
             throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers or strings.");
             break;
         }
         case opCode::SUBTRACT: {
-            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+            if (!NanBox::isNumber(stack.peek(0)) || !NanBox::isNumber(stack.peek(1))) {
                 throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
                 break;
             }
-            double b = as_number(stack.pop());
-            double a = as_number(stack.pop());
-            stack.push(number_val(a - b));
+            double b = NanBox::toNumber(stack.pop());
+            double a = NanBox::toNumber(stack.pop());
+            stack.push(NanBox::fromNumber(a - b));
             break;
         }
         case opCode::MULTIPLY: {
-            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+            if (!NanBox::isNumber(stack.peek(0)) || !NanBox::isNumber(stack.peek(1))) {
                 throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
                 break;
             }
-            double b = as_number(stack.pop());
-            double a = as_number(stack.pop());
-            stack.push(number_val(a * b));
+            double b = NanBox::toNumber(stack.pop());
+            double a = NanBox::toNumber(stack.pop());
+            stack.push(NanBox::fromNumber(a * b));
             break;
         }
         case opCode::DIVIDE: {
-            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+            if (!NanBox::isNumber(stack.peek(0)) || !NanBox::isNumber(stack.peek(1))) {
                 throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
                 break;
             }
-            double b = as_number(stack.pop());
+            double b = NanBox::toNumber(stack.pop());
             if (isZero(b)) {
                 throwException(ErrorCode::RUNTIME_DIVISION_BY_ZERO, "Divide by zero.");
                 break;
             }
-            double a = as_number(stack.pop());
-            stack.push(number_val(a / b));
+            double a = NanBox::toNumber(stack.pop());
+            stack.push(NanBox::fromNumber(a / b));
             break;
         }
         case opCode::MOD: {
-            if (!is_number(stack.peek(0)) || !is_number(stack.peek(1))) {
+            if (!NanBox::isNumber(stack.peek(0)) || !NanBox::isNumber(stack.peek(1))) {
                 throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operands must be numbers.");
                 break;
             }
-            double b = as_number(stack.pop());
-            double a = as_number(stack.pop());
+            double b = NanBox::toNumber(stack.pop());
+            double a = NanBox::toNumber(stack.pop());
             if (isZero(b)) {
                 throwException(ErrorCode::RUNTIME_MODULO_BY_ZERO, "Modulo by zero.");
                 break;
             }
-            stack.push(number_val(std::fmod(a, b)));
+            stack.push(NanBox::fromNumber(std::fmod(a, b)));
             break;
         }
         case opCode::NOT:
-            stack.push(bool_val(isFalsey(stack.pop())));
+            stack.push(NanBox::fromBool(isFalsey(stack.pop())));
             break;
         case opCode::NEGATE: {
-            if (!is_number(stack.peek())) {
+            if (!NanBox::isNumber(stack.peek())) {
                 throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Operand must be number.");
                 break;
             }
-            stack.push(number_val(-as_number(stack.pop())));
+            stack.push(NanBox::fromNumber(-NanBox::toNumber(stack.pop())));
             break;
         }
         case opCode::POP:
@@ -865,7 +865,7 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::MAKE_CLASS: {
             ObjClass *klass = newObjClass(read_ObjString(frame), gc);
-            stack.push(obj_val(klass));
+            stack.push(NanBox::fromObj(klass));
             break;
         }
         case opCode::INHERIT: {
@@ -880,7 +880,7 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::MAKE_METHOD: {
-            Value methodName = obj_val(read_ObjString(frame));
+            Value methodName = NanBox::fromObj(read_ObjString(frame));
             Value method = stack.peek(0);
             ObjClass *klass = as_ObjClass(stack.peek(1));
             klass->methods.insert(methodName, method);
@@ -901,11 +901,11 @@ Value AriaVM::run(int retFrame)
             ObjString *methodName = read_ObjString(frame);
             Value instance = stack.peek();
             ObjClass *superKlass = as_ObjInstance(instance)->klass->superKlass;
-            Value superMethod = nil_val;
-            if (!superKlass->methods.get(obj_val(methodName), superMethod)) {
+            Value superMethod = NanBox::NilValue;
+            if (!superKlass->methods.get(NanBox::fromObj(methodName), superMethod)) {
                 if (superKlass->initMethod != nullptr && methodName->length == 4
                     && memcmp(methodName->C_str_ref(), "init", 4) == 0) {
-                    superMethod = obj_val(superKlass->initMethod);
+                    superMethod = NanBox::fromObj(superKlass->initMethod);
                 } else {
                     String msg = format(
                         "Superclass '{}' has no method '{}",
@@ -917,7 +917,7 @@ Value AriaVM::run(int retFrame)
             }
             ObjFunction *unpackedMethod = as_ObjFunction(superMethod);
             ObjBoundMethod *boundMethod = newObjBoundMethod(instance, unpackedMethod, gc);
-            superMethod = obj_val(boundMethod);
+            superMethod = NanBox::fromObj(boundMethod);
 
             stack.setTopVal(superMethod);
             break;
@@ -926,14 +926,14 @@ Value AriaVM::run(int retFrame)
             int listSize = read_word(frame);
             ObjList *list = newObjList(stack.getTopPtr() - listSize, listSize, gc);
             stack.pop_n(listSize);
-            stack.push(obj_val(list));
+            stack.push(NanBox::fromObj(list));
             break;
         }
         case opCode::MAKE_MAP: {
             int mapSize = read_word(frame);
             ObjMap *map = newObjMap(stack.getTopPtr() - mapSize * 2, mapSize, gc);
             stack.pop_n(mapSize * 2);
-            stack.push(obj_val(map));
+            stack.push(NanBox::fromObj(map));
             break;
         }
         case opCode::IMPORT: {
@@ -957,11 +957,11 @@ Value AriaVM::run(int retFrame)
             ObjString *path = newObjString(absoluteModulePath, gc);
             if (auto module = getCachedModule(path)) {
                 module->name = moduleName;
-                stack.push(obj_val(module));
+                stack.push(NanBox::fromObj(module));
                 break;
             }
             if (auto moduleFn = loadModule(absoluteModulePath, moduleName)) {
-                stack.push(obj_val(moduleFn));
+                stack.push(NanBox::fromObj(moduleFn));
                 callModule(moduleFn);
                 break;
             }
@@ -969,12 +969,12 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::GET_ITER: {
-            if (!is_obj(stack.peek())) {
+            if (!NanBox::isObj(stack.peek())) {
                 throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Expected an iterable object");
                 break;
             }
-            Value iter = as_obj(stack.peek())->createIter(gc);
-            if (is_nil(iter)) {
+            Value iter = NanBox::toObj(stack.peek())->createIter(gc);
+            if (NanBox::isNil(iter)) {
                 throwException(ErrorCode::RUNTIME_TYPE_ERROR, "Expected iterable object");
                 break;
             }
@@ -987,7 +987,7 @@ Value AriaVM::run(int retFrame)
                 break;
             }
             ObjIterator *iterator = as_ObjIterator(stack.peek());
-            Value result = bool_val(iterator->iter->hasNext());
+            Value result = NanBox::fromBool(iterator->iter->hasNext());
             stack.setTopVal(result);
             break;
         }
@@ -1049,7 +1049,7 @@ void AriaVM::reset()
     EframeCount = 0;
     openUpvalues = nullptr;
     updateCallFrame();
-    E_REG = nil_val;
+    E_REG = NanBox::NilValue;
     flags = 0;
 }
 
@@ -1062,7 +1062,7 @@ void AriaVM::unwindToCatchPoint()
     frame->ip = ef->ip;
     stack.resize(ef->stackSize);
     stack.push(E_REG);
-    E_REG = nil_val;
+    E_REG = NanBox::NilValue;
     unset_err_flag();
 }
 
@@ -1073,7 +1073,7 @@ void AriaVM::throwException(ObjException *e)
 
 void AriaVM::throwException(ErrorCode code, ObjException *e)
 {
-    E_REG = obj_val(e);
+    E_REG = NanBox::fromObj(e);
     if (EframeCount == 0) {
         reportRuntimeFatalError(code, e->what());
     }

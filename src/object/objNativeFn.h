@@ -48,9 +48,9 @@ inline bool is_ObjNativeFn(Value value)
 inline ObjNativeFn *as_ObjNativeFn(Value value)
 {
 #ifdef DEBUG_MODE
-    return dynamic_cast<ObjNativeFn *>(as_obj(value));
+    return dynamic_cast<ObjNativeFn *>(NanBox::toObj(value));
 #else
-    return static_cast<ObjNativeFn *>(as_obj(value));
+    return static_cast<ObjNativeFn *>(NanBox::toObj(value));
 #endif
 }
 

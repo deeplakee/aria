@@ -4,8 +4,8 @@
 #include "object/objFunction.h"
 #include "object/objString.h"
 
-#include <cstring>
 #include <cmath>
+#include <cstring>
 
 namespace aria {
 
@@ -107,13 +107,13 @@ void ByteCodeGenerator::defineFunction(FunDeclNode *node, FunctionContext *inner
     auto endLine = node->endLine;
     ObjFunction *fun = innerCtx->fun;
 
-    chunk->emitOpData(opCode::LOAD_CONST, obj_val(fun), endLine);
+    chunk->emitOpData(opCode::LOAD_CONST, NanBox::fromObj(fun), endLine);
     if (context->scopeDepth > 0) {
         checkDefine(context, node->token_name);
         declareLocalVariable(context, node->token_name);
         context->finalizeLocal();
     } else {
-        chunk->emitOpData(opCode::DEF_GLOBAL, obj_val(fun->name), endLine);
+        chunk->emitOpData(opCode::DEF_GLOBAL, NanBox::fromObj(fun->name), endLine);
     }
 }
 
@@ -131,7 +131,7 @@ void ByteCodeGenerator::emitClosure(Chunk *chunk, ObjFunction *fun, uint32_t lin
 {
     fun->initUpvalues(context->gc);
     if (fun->upvalueCount != 0) {
-        chunk->emitOpData(opCode::CLOSURE, obj_val(fun), line);
+        chunk->emitOpData(opCode::CLOSURE, NanBox::fromObj(fun), line);
         for (int i = 0; i < fun->upvalueCount; i++) {
             chunk->emitByte(context->upvalues[i].isLocal ? 1 : 0, line);
             chunk->emitWord(context->upvalues[i].index, line);
@@ -188,7 +188,7 @@ ObjString *ByteCodeGenerator::genMethodCode(ASTNode *node)
     FunctionContext *innerCtx = createLocalFunctionContext(method, methodType);
     context = innerCtx;
     ObjFunction *function = context->fun;
-    chunk->emitOpData(opCode::LOAD_CONST, obj_val(function), chunk->lastOpLine());
+    chunk->emitOpData(opCode::LOAD_CONST, NanBox::fromObj(function), chunk->lastOpLine());
 
     context->beginScope();
 
@@ -222,8 +222,8 @@ void ByteCodeGenerator::defineAndLoadClass(const Token &className)
         int localSlot = context->findLocalVariable(className.text);
         chunk->emitOpArg16(opCode::LOAD_LOCAL, static_cast<uint16_t>(localSlot), chunk->lastOpLine());
     } else {
-        chunk->emitOpData(opCode::DEF_GLOBAL, obj_val(classNameObj), chunk->lastOpLine());
-        chunk->emitOpData(opCode::LOAD_GLOBAL, obj_val(classNameObj), chunk->lastOpLine());
+        chunk->emitOpData(opCode::DEF_GLOBAL, NanBox::fromObj(classNameObj), chunk->lastOpLine());
+        chunk->emitOpData(opCode::LOAD_GLOBAL, NanBox::fromObj(classNameObj), chunk->lastOpLine());
     }
 }
 
@@ -233,7 +233,7 @@ void ByteCodeGenerator::visitClassDeclNode(ClassDeclNode *node)
     auto token_name = node->token_name;
     auto token_super_name = node->token_super_name;
     ObjString *className = newObjString(token_name.text, context->gc);
-    chunk->emitOpData(opCode::MAKE_CLASS, obj_val(className), token_name.line);
+    chunk->emitOpData(opCode::MAKE_CLASS, NanBox::fromObj(className), token_name.line);
 
     auto thisClass = new ClassContext{context->currentClass, false};
     context->currentClass = thisClass;
@@ -250,7 +250,7 @@ void ByteCodeGenerator::visitClassDeclNode(ClassDeclNode *node)
         if (methodName->length == 4 && memcmp(methodName->C_str_ref(), "init", 4) == 0) {
             chunk->emitOp(opCode::MAKE_INIT_METHOD);
         } else {
-            chunk->emitOpData(opCode::MAKE_METHOD, obj_val(methodName), chunk->lastOpLine());
+            chunk->emitOpData(opCode::MAKE_METHOD, NanBox::fromObj(methodName), chunk->lastOpLine());
         }
     }
 
@@ -279,7 +279,7 @@ void ByteCodeGenerator::defineGlobalVar(const VarDeclNode *node, int index)
 
     node->exprs[index]->accept(*this);
 
-    const Value name_obj = obj_val(newObjString(varName, context->gc));
+    const Value name_obj = NanBox::fromObj(newObjString(varName, context->gc));
     context->chunk->emitOpData(opCode::DEF_GLOBAL, name_obj, varLine);
 }
 
@@ -515,7 +515,7 @@ void ByteCodeGenerator::visitImportStmtNode(ImportStmtNode *node)
     ObjString *module = newObjString(node->token_module.text, context->gc);
     Token tk_name = node->token_name;
     uint32_t line = chunk->lastOpLine();
-    chunk->emitOpData(opCode::IMPORT, obj_val(module), node->token_import.line);
+    chunk->emitOpData(opCode::IMPORT, NanBox::fromObj(module), node->token_import.line);
 
     if (context->scopeDepth > 0) {
         checkDefine(context, tk_name);
@@ -523,7 +523,7 @@ void ByteCodeGenerator::visitImportStmtNode(ImportStmtNode *node)
         context->finalizeLocal();
     } else {
         ObjString *name = newObjString(tk_name.text, context->gc);
-        chunk->emitOpData(opCode::DEF_GLOBAL, obj_val(name), line);
+        chunk->emitOpData(opCode::DEF_GLOBAL, NanBox::fromObj(name), line);
     }
 }
 
@@ -594,7 +594,7 @@ void ByteCodeGenerator::visitIncExprNode(IncExprNode *node)
     auto &expr = node->expr;
     Token op = node->op;
     expr->accept(*this);
-    chunk->emitOpData(opCode::LOAD_CONST, number_val(1), op.line);
+    chunk->emitOpData(opCode::LOAD_CONST, NanBox::fromNumber(1), op.line);
     chunk->emitOp(tokenToBinaryOpCode[op.type], op.line);
     try {
         expr->asLvalue = true;
@@ -662,7 +662,7 @@ void ByteCodeGenerator::genLoadFieldNodeCode(FieldExprNode *node)
 
     node->receiver->accept(*this);
 
-    Value name = obj_val(newObjString(tk_fieldName.text, context->gc));
+    Value name = NanBox::fromObj(newObjString(tk_fieldName.text, context->gc));
 
     if (isSuperVarNode(node->receiver.get())) {
         chunk->emitOpData(opCode::LOAD_SUPER_METHOD, name, tk_fieldName.line);
@@ -684,7 +684,7 @@ void ByteCodeGenerator::genStoreFieldNodeCode(FieldExprNode *node)
 
     node->receiver->accept(*this);
 
-    Value name = obj_val(newObjString(tk_fieldName.text, context->gc));
+    Value name = NanBox::fromObj(newObjString(tk_fieldName.text, context->gc));
     chunk->emitOpData(opCode::STORE_FIELD, name, tk_fieldName.line);
 }
 
@@ -781,7 +781,7 @@ void ByteCodeGenerator::genStoreVarNodeCode(const VarNode *node) const
             return;
         }
         if (upvalueSlot == -1) {
-            Value name = obj_val(newObjString(varName, chunk->gc));
+            Value name = NanBox::fromObj(newObjString(varName, chunk->gc));
             chunk->emitOpData(opCode::STORE_GLOBAL, name, line);
             return;
         }
@@ -837,7 +837,7 @@ void ByteCodeGenerator::genLoadVarNodeCode(const VarNode *node) const
             return;
         }
         if (upvalueSlot == -1) {
-            Value name = obj_val(newObjString(varName, context->gc));
+            Value name = NanBox::fromObj(newObjString(varName, context->gc));
             chunk->emitOpData(opCode::LOAD_GLOBAL, name, line);
             return;
         }
@@ -874,14 +874,14 @@ void ByteCodeGenerator::visitNumberNode(NumberNode *node)
         String msg = semanticError("Number out of range.\n{}", num.info());
         throw ariaCompilingException(ErrorCode::SEMANTIC_LITERAL_OVERFLOW, msg);
     }
-    context->chunk->emitOpData(opCode::LOAD_CONST, number_val(value), num.line);
+    context->chunk->emitOpData(opCode::LOAD_CONST, NanBox::fromNumber(value), num.line);
 }
 
 void ByteCodeGenerator::visitStringNode(StringNode *node)
 {
     checkAssignFlag(node);
     auto &str = node->str;
-    Value strObj = obj_val(newObjString(str.text, context->gc));
+    Value strObj = NanBox::fromObj(newObjString(str.text, context->gc));
     context->chunk->emitOpData(opCode::LOAD_CONST, strObj, str.line);
 }
 

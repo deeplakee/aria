@@ -21,7 +21,7 @@ void ListIterator::blacken()
 
 String ListIterator::typeString()
 {
-    return valueTypeString(obj_val(obj));
+    return valueTypeString(NanBox::fromObj(obj));
 }
 
 bool ListIterator::hasNext()
@@ -32,7 +32,7 @@ bool ListIterator::hasNext()
 Value ListIterator::next()
 {
     if (!hasNext()) {
-        return nil_val;
+        return NanBox::NilValue;
     }
     return (*obj->list)[nextIndex++];
 }
@@ -53,7 +53,7 @@ void MapIterator::blacken()
 
 String MapIterator::typeString()
 {
-    return valueTypeString(obj_val(obj));
+    return valueTypeString(NanBox::fromObj(obj));
 }
 
 bool MapIterator::hasNext()
@@ -64,7 +64,7 @@ bool MapIterator::hasNext()
 Value MapIterator::next()
 {
     if (!hasNext()) {
-        return nil_val;
+        return NanBox::NilValue;
     }
     Value value = obj->map->getByIndex(nextIndex);
     nextIndex = obj->map->getNextIndex(nextIndex);
@@ -84,7 +84,7 @@ void StringIterator::blacken()
 
 String StringIterator::typeString()
 {
-    return valueTypeString(obj_val(obj));
+    return valueTypeString(NanBox::fromObj(obj));
 }
 
 bool StringIterator::hasNext()
@@ -95,9 +95,9 @@ bool StringIterator::hasNext()
 Value StringIterator::next()
 {
     if (!hasNext()) {
-        return nil_val;
+        return NanBox::NilValue;
     }
-    return obj_val(newObjString(obj->C_str_ref()[nextIndex++], obj->gc));
+    return NanBox::fromObj(newObjString(obj->C_str_ref()[nextIndex++], obj->gc));
 }
 
 } // namespace aria

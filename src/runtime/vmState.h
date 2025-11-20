@@ -25,7 +25,7 @@ struct VMState
         , frame{nullptr}
         , stackSize{0}
         , flags{0}
-        , E_REG{nil_val}
+        , E_REG{NanBox::NilValue}
     {}
 };
 

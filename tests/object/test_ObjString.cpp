@@ -8,7 +8,7 @@ TEST_F(ObjectTestFixture, ValidObjectString)
 {
     const char *msg1 = "Hello World";
     auto str1 = aria::newObjString(msg1, gc);
-    aria::Value str1_value = aria::obj_val(str1);
+    aria::Value str1_value = aria::NanBox::fromObj(str1);
     EXPECT_TRUE(aria::is_ObjString(str1_value));
 
     std::ostringstream oss;
@@ -18,7 +18,7 @@ TEST_F(ObjectTestFixture, ValidObjectString)
 
 TEST(ObjectTest, InvalidObjectString)
 {
-    aria::Value not_a_string = aria::number_val(42);
+    aria::Value not_a_string = aria::NanBox::fromNumber(42);
     EXPECT_FALSE(aria::is_ObjString(not_a_string));
 }
 
@@ -44,5 +44,5 @@ TEST_F(ObjectTestFixture, ObjectStringCreation)
     EXPECT_EQ(str2, str3);
     EXPECT_EQ(str3, str5);
 
-    EXPECT_TRUE(aria::valuesEqual(aria::obj_val(str1), aria::obj_val(str2)));
+    EXPECT_TRUE(aria::valuesEqual(aria::NanBox::fromObj(str1), aria::NanBox::fromObj(str2)));
 }

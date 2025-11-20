@@ -44,9 +44,9 @@ inline bool is_ObjInstance(Value value)
 inline ObjInstance *as_ObjInstance(Value value)
 {
 #ifdef DEBUG_MODE
-    return dynamic_cast<ObjInstance *>(as_obj(value));
+    return dynamic_cast<ObjInstance *>(NanBox::toObj(value));
 #else
-    return static_cast<ObjInstance *>(as_obj(value));
+    return static_cast<ObjInstance *>(NanBox::toObj(value));
 #endif
 }
 

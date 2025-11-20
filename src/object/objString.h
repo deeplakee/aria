@@ -60,9 +60,9 @@ inline bool is_ObjString(Value value)
 inline ObjString *as_ObjString(Value value)
 {
 #ifdef DEBUG_MODE
-    return dynamic_cast<ObjString *>(as_obj(value));
+    return dynamic_cast<ObjString *>(NanBox::toObj(value));
 #else
-    return static_cast<ObjString *>(as_obj(value));
+    return static_cast<ObjString *>(NanBox::toObj(value));
 #endif
 }
 

@@ -13,9 +13,9 @@ FunctionContext::FunctionContext(
     , scopeDepth{0}
 {
     auto fnNameObj = newObjString(_fnName, gc);
-    gc->cache(obj_val(fnNameObj));
+    gc->cache(NanBox::fromObj(fnNameObj));
     auto fnLocationObj = newObjString(_fnLocation, gc);
-    gc->cache(obj_val(fnLocationObj));
+    gc->cache(NanBox::fromObj(fnLocationObj));
     if (_globals == nullptr) {
         fun = newObjFunction(FunctionType::SCRIPT, fnLocationObj, fnNameObj, _gc);
     } else {
@@ -41,7 +41,7 @@ FunctionContext::FunctionContext(
 {
     auto globals = enclosing->fun->chunk->globals;
     auto fnNameObj = newObjString(_fnName, gc);
-    gc->cache(obj_val(fnNameObj));
+    gc->cache(NanBox::fromObj(fnNameObj));
     _arity = _acceptsVarargs ? _arity - 1 : _arity;
     fun = newObjFunction(
         _type, enclosing->fun->location, fnNameObj, _arity, globals, _acceptsVarargs, gc);

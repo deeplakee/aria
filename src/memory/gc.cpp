@@ -192,7 +192,7 @@ void GC::free_objects()
 
 bool GC::insertStr(ObjString *obj)
 {
-    cache(obj_val(obj));
+    cache(NanBox::fromObj(obj));
     bool res = conStrPool->insert(obj);
     releaseCache();
     return res;

@@ -42,41 +42,41 @@ void ObjInstance::blacken()
 
 Value ObjInstance::getByField(ObjString *name, Value &value)
 {
-    if (fields.get(obj_val(name), value)) {
-        return true_val;
+    if (fields.get(NanBox::fromObj(name), value)) {
+        return NanBox::TrueValue;
     }
-    if (cachedMethods->get(obj_val(name), value)) {
-        return true_val;
+    if (cachedMethods->get(NanBox::fromObj(name), value)) {
+        return NanBox::TrueValue;
     }
-    if (klass->methods.get(obj_val(name), value)) {
+    if (klass->methods.get(NanBox::fromObj(name), value)) {
         ObjBoundMethod *boundMethod = nullptr;
         if (is_ObjNativeFn(value)) {
-            boundMethod = newObjBoundMethod(obj_val(this), as_ObjNativeFn(value), gc);
+            boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjNativeFn(value), gc);
         } else {
-            boundMethod = newObjBoundMethod(obj_val(this), as_ObjFunction(value), gc);
+            boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjFunction(value), gc);
         }
-        value = obj_val(boundMethod);
+        value = NanBox::fromObj(boundMethod);
         gc->cache(value);
-        cachedMethods->insert(obj_val(name), value);
+        cachedMethods->insert(NanBox::fromObj(name), value);
         gc->releaseCache(1);
-        return true_val;
+        return NanBox::TrueValue;
     }
-    return false_val;
+    return NanBox::FalseValue;
 }
 
 Value ObjInstance::setByField(ObjString *name, Value value)
 {
-    fields.insert(obj_val(name), value);
-    return true_val;
+    fields.insert(NanBox::fromObj(name), value);
+    return NanBox::TrueValue;
 }
 
 Value ObjInstance::copy(GC *gc)
 {
     ObjInstance *newObj = newObjInstance(klass, gc);
-    gc->cache(obj_val(newObj));
+    gc->cache(NanBox::fromObj(newObj));
     newObj->fields.copy(&fields);
     gc->releaseCache(1);
-    return obj_val(newObj);
+    return NanBox::fromObj(newObj);
 }
 
 ObjInstance *newObjInstance(ObjClass *klass, GC *gc)

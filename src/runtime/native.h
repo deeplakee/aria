@@ -11,8 +11,8 @@ class GC;
 using VarInitFn_t = Value (*)(GC *);
 
 #define val_wrap(initExpr) [](GC *gc) { return (initExpr); }
-#define num_wrap(initExpr) [](GC *gc) { return number_val(initExpr); }
-#define obj_wrap(initExpr) [](GC *gc) { return obj_val(initExpr); }
+#define num_wrap(initExpr) [](GC *gc) { return NanBox::fromNumber(initExpr); }
+#define obj_wrap(initExpr) [](GC *gc) { return NanBox::fromObj(initExpr); }
 
 struct NativeFnEntry
 {

@@ -10,7 +10,7 @@ static Value builtin_append(AriaEnv *env, int argCount, Value *args)
 {
     auto self = as_ObjList(args[-1]);
     self->list->push(args[0]);
-    return nil_val;
+    return NanBox::NilValue;
 }
 
 static Value builtin_extend(AriaEnv *env, int argCount, Value *args)
@@ -20,19 +20,19 @@ static Value builtin_extend(AriaEnv *env, int argCount, Value *args)
     env->gc->cache(args[0]);
     self->list->extend(as_ObjList(args[0])->list);
     env->gc->releaseCache();
-    return nil_val;
+    return NanBox::NilValue;
 }
 
 static Value builtin_size(AriaEnv *env, int argCount, Value *args)
 {
     auto self = as_ObjList(args[-1]);
-    return number_val(self->list->size());
+    return NanBox::fromNumber(self->list->size());
 }
 
 static Value builtin_empty(AriaEnv *env, int argCount, Value *args)
 {
     auto self = as_ObjList(args[-1]);
-    return bool_val(self->list->empty());
+    return NanBox::fromBool(self->list->empty());
 }
 
 static Value builtin_pop(AriaEnv *env, int argCount, Value *args)
@@ -42,7 +42,7 @@ static Value builtin_pop(AriaEnv *env, int argCount, Value *args)
         return env->newException(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "Pop from empty list");
     }
     self->list->pop();
-    return nil_val;
+    return NanBox::NilValue;
 }
 
 static Value builtin_insert(AriaEnv *env, int argCount, Value *args)
@@ -51,7 +51,7 @@ static Value builtin_insert(AriaEnv *env, int argCount, Value *args)
     CHECK_INTEGER(args[0], index, Argument);
     Value value = args[1];
     bool result = self->list->insert(index, value);
-    return bool_val(result);
+    return NanBox::fromBool(result);
 }
 
 static Value builtin_remove(AriaEnv *env, int argCount, Value *args)
@@ -60,7 +60,7 @@ static Value builtin_remove(AriaEnv *env, int argCount, Value *args)
     CHECK_INTEGER(args[0], index, Argument);
     CHECK_RANGE(index, 0, self->list->size(), Index);
     bool result = self->list->remove(index);
-    return bool_val(result);
+    return NanBox::fromBool(result);
 }
 
 static Value builtin_at(AriaEnv *env, int argCount, Value *args)
@@ -75,7 +75,7 @@ static Value builtin_clear(AriaEnv *env, int argCount, Value *args)
 {
     auto self = as_ObjList(args[-1]);
     self->list->clear();
-    return nil_val;
+    return NanBox::NilValue;
 }
 
 static Value builtin_slice(AriaEnv *env, int argCount, Value *args)
@@ -92,14 +92,14 @@ static Value builtin_slice(AriaEnv *env, int argCount, Value *args)
             ErrorCode::RUNTIME_OUT_OF_BOUNDS, "Start index should be smaller than end index");
     }
     ObjList *newList = NEW_OBJLIST(start, end, self);
-    return obj_val(newList);
+    return NanBox::fromObj(newList);
 }
 
 static Value builtin_reverse(AriaEnv *env, int argCount, Value *args)
 {
     auto self = as_ObjList(args[-1]);
     self->list->reverse();
-    return nil_val;
+    return NanBox::NilValue;
 }
 
 static Value builtin_equals(AriaEnv *env, int argCount, Value *args)
@@ -107,7 +107,7 @@ static Value builtin_equals(AriaEnv *env, int argCount, Value *args)
     auto self = as_ObjList(args[-1]);
     CHECK_OBJLIST(args[0], Argument);
     bool result = self->list->equals(as_ObjList(args[0])->list);
-    return bool_val(result);
+    return NanBox::fromBool(result);
 }
 
 void ObjList::init(GC *_gc, ValueHashTable *builtins)

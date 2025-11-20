@@ -38,14 +38,14 @@ String ObjMap::toString(ValueStack *printStack)
 {
     if (printStack == nullptr) {
         ValueStack stack;
-        stack.push(obj_val(this));
+        stack.push(NanBox::fromObj(this));
         return map->toString(&stack);
     }
 
-    if (printStack->Exist(obj_val(this))) {
+    if (printStack->Exist(NanBox::fromObj(this))) {
         return "{...}";
     }
-    printStack->push(obj_val(this));
+    printStack->push(NanBox::fromObj(this));
     String str = map->toString(printStack);
     printStack->pop();
     return str;
@@ -59,47 +59,47 @@ String ObjMap::representation(ValueStack *printStack)
 
 Value ObjMap::getByField(ObjString *name, Value &value)
 {
-    if (cachedMethods->get(obj_val(name), value)) {
-        return true_val;
+    if (cachedMethods->get(NanBox::fromObj(name), value)) {
+        return NanBox::TrueValue;
     }
-    if (gc->mapBuiltins->get(obj_val(name), value)) {
+    if (gc->mapBuiltins->get(NanBox::fromObj(name), value)) {
         assert(is_ObjNativeFn(value) && "map builtin method is nativeFn");
-        auto boundMethod = newObjBoundMethod(obj_val(this), as_ObjNativeFn(value), gc);
-        value = obj_val(boundMethod);
+        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjNativeFn(value), gc);
+        value = NanBox::fromObj(boundMethod);
         gc->cache(value);
-        cachedMethods->insert(obj_val(name), value);
+        cachedMethods->insert(NanBox::fromObj(name), value);
         gc->releaseCache(1);
-        return true_val;
+        return NanBox::TrueValue;
     }
-    return false_val;
+    return NanBox::FalseValue;
 }
 
 Value ObjMap::getByIndex(Value k, Value &v)
 {
     if (map->get(k, v)) {
-        return true_val;
+        return NanBox::TrueValue;
     }
-    return false_val;
+    return NanBox::FalseValue;
 }
 
 Value ObjMap::setByIndex(Value k, Value v)
 {
     map->insert(k, v);
-    return true_val;
+    return NanBox::TrueValue;
 }
 
 Value ObjMap::createIter(GC *gc)
 {
-    return obj_val(newObjIterator(this, gc));
+    return NanBox::fromObj(newObjIterator(this, gc));
 }
 
 Value ObjMap::copy(GC *gc)
 {
     ObjMap *newObj = newObjMap(gc);
-    gc->cache(obj_val(newObj));
+    gc->cache(NanBox::fromObj(newObj));
     newObj->map->copy(map);
     gc->releaseCache(1);
-    return obj_val(newObj);
+    return NanBox::fromObj(newObj);
 }
 
 void ObjMap::blacken()

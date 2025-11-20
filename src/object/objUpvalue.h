@@ -35,9 +35,9 @@ inline bool is_ObjUpvalue(Value value)
 inline ObjUpvalue *as_ObjUpvalue(Value value)
 {
 #ifdef DEBUG_MODE
-    return dynamic_cast<ObjUpvalue *>(as_obj(value));
+    return dynamic_cast<ObjUpvalue *>(NanBox::toObj(value));
 #else
-    return static_cast<ObjUpvalue *>(as_obj(value));
+    return static_cast<ObjUpvalue *>(NanBox::toObj(value));
 #endif
 }
 

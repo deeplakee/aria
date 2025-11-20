@@ -57,9 +57,9 @@ inline bool is_ObjList(Value value)
 inline ObjList *as_ObjList(Value value)
 {
 #ifdef DEBUG_MODE
-    return dynamic_cast<ObjList *>(as_obj(value));
+    return dynamic_cast<ObjList *>(NanBox::toObj(value));
 #else
-    return static_cast<ObjList *>(as_obj(value));
+    return static_cast<ObjList *>(NanBox::toObj(value));
 #endif
 }
 

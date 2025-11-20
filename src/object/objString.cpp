@@ -72,35 +72,35 @@ String ObjString::representation(ValueStack *printStack)
 
 Value ObjString::getByField(ObjString *name, Value &value)
 {
-    if (gc->stringBuiltins->get(obj_val(name), value)) {
+    if (gc->stringBuiltins->get(NanBox::fromObj(name), value)) {
         assert(is_ObjNativeFn(value) && "string builtin method is nativeFn");
-        auto boundMethod = newObjBoundMethod(obj_val(this), as_ObjNativeFn(value), gc);
-        value = obj_val(boundMethod);
-        return true_val;
+        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjNativeFn(value), gc);
+        value = NanBox::fromObj(boundMethod);
+        return NanBox::TrueValue;
     }
-    return false_val;
+    return NanBox::FalseValue;
 }
 
 Value ObjString::getByIndex(Value k, Value &v)
 {
-    if (!is_number(k)) {
+    if (!NanBox::isNumber(k)) {
         return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of string must be a integer");
     }
-    int index = static_cast<int>(as_number(k));
-    if (index != as_number(k)) {
+    int index = static_cast<int>(NanBox::toNumber(k));
+    if (index != NanBox::toNumber(k)) {
         return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of string must be a integer");
     }
     if (index < 0 || index >= length) {
         return genException(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "index out of range");
     }
     char a = C_str_ref()[index];
-    v = obj_val(newObjString(a, gc));
-    return true_val;
+    v = NanBox::fromObj(newObjString(a, gc));
+    return NanBox::TrueValue;
 }
 
 Value ObjString::createIter(GC *gc)
 {
-    return obj_val(newObjIterator(this, gc));
+    return NanBox::fromObj(newObjIterator(this, gc));
 }
 
 void ObjString::blacken() {}

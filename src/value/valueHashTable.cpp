@@ -103,8 +103,8 @@ bool ValueHashTable::remove(Value k)
     }
 
     ctrl[dest_index] = kDeleted;
-    entry[dest_index].key = nil_val;
-    entry[dest_index].value = nil_val;
+    entry[dest_index].key = NanBox::NilValue;
+    entry[dest_index].value = NanBox::NilValue;
     count--;
     return true;
 }
@@ -130,7 +130,7 @@ bool ValueHashTable::equals(const ValueHashTable *other) const
         if (ctrl_not_full(ctrl[i])) {
             continue;
         }
-        Value v = nil_val;
+        Value v = NanBox::NilValue;
         if (!other->get(entry[i].key, v)) {
             return false;
         }
@@ -307,16 +307,16 @@ int64_t ValueHashTable::getNextIndex(const int64_t pre) const
 Value ValueHashTable::getByIndex(const int64_t index) const
 {
     if (index < 0 || index >= capacity) {
-        return nil_val;
+        return NanBox::NilValue;
     }
     ObjList *obj = createPair(index);
-    return obj_val(obj);
+    return NanBox::fromObj(obj);
 }
 
 ObjList *ValueHashTable::createPair(const uint32_t index) const
 {
     ObjList *list = newObjList(gc);
-    gc->cache(obj_val(list));
+    gc->cache(NanBox::fromObj(list));
     list->list->push(entry[index].key);
     list->list->push(entry[index].value);
     gc->releaseCache(1);
@@ -326,13 +326,13 @@ ObjList *ValueHashTable::createPair(const uint32_t index) const
 ObjList *ValueHashTable::createPairList() const
 {
     ObjList *list = newObjList(gc);
-    gc->cache(obj_val(list));
+    gc->cache(NanBox::fromObj(list));
     list->list->reserve(next_power_of_2(count));
     for (uint32_t i = 0; i < capacity; i++) {
         if (ctrl_not_full(ctrl[i])) {
             continue;
         }
-        auto pair = obj_val(createPair(i));
+        auto pair = NanBox::fromObj(createPair(i));
         list->list->push(pair);
     }
     gc->releaseCache(1);
@@ -342,7 +342,7 @@ ObjList *ValueHashTable::createPairList() const
 ObjList *ValueHashTable::createKeyList() const
 {
     ObjList *list = newObjList(gc);
-    gc->cache(obj_val(list));
+    gc->cache(NanBox::fromObj(list));
     list->list->reserve(next_power_of_2(count));
     for (uint32_t i = 0; i < capacity; i++) {
         if (ctrl_not_full(ctrl[i])) {
@@ -357,7 +357,7 @@ ObjList *ValueHashTable::createKeyList() const
 ObjList *ValueHashTable::createValueList() const
 {
     ObjList *list = newObjList(gc);
-    gc->cache(obj_val(list));
+    gc->cache(NanBox::fromObj(list));
     list->list->reserve(next_power_of_2(count));
     for (uint32_t i = 0; i < capacity; i++) {
         if (ctrl_not_full(ctrl[i])) {

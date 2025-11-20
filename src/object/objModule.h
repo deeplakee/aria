@@ -38,9 +38,9 @@ inline bool is_ObjModule(Value value)
 inline ObjModule *as_ObjModule(Value value)
 {
 #ifdef DEBUG_MODE
-    return dynamic_cast<ObjModule *>(as_obj(value));
+    return dynamic_cast<ObjModule *>(NanBox::toObj(value));
 #else
-    return static_cast<ObjModule *>(as_obj(value));
+    return static_cast<ObjModule *>(NanBox::toObj(value));
 #endif
 }
 

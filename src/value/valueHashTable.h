@@ -21,8 +21,8 @@ inline void initKVPair(KVPair *pair, Value _key, Value _value)
 
 inline void initKVPair(KVPair *pair)
 {
-    pair->key = nil_val;
-    pair->value = nil_val;
+    pair->key = NanBox::NilValue;
+    pair->value = NanBox::NilValue;
 }
 
 class ValueHashTable

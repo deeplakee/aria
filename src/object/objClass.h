@@ -39,9 +39,9 @@ inline bool is_ObjClass(Value value)
 inline ObjClass *as_ObjClass(Value value)
 {
 #ifdef DEBUG_MODE
-    return dynamic_cast<ObjClass *>(as_obj(value));
+    return dynamic_cast<ObjClass *>(NanBox::toObj(value));
 #else
-    return static_cast<ObjClass *>(as_obj(value));
+    return static_cast<ObjClass *>(NanBox::toObj(value));
 #endif
 }
 

@@ -14,7 +14,7 @@ namespace aria {
 
 Value Native::_aria_clock_(AriaEnv *env, int argCount, Value *args)
 {
-    return number_val(static_cast<double>(::clock()) / CLOCKS_PER_SEC);
+    return NanBox::fromNumber(static_cast<double>(::clock()) / CLOCKS_PER_SEC);
 }
 
 Value Native::_aria_random_(AriaEnv *env, int argCount, Value *args)
@@ -24,7 +24,7 @@ Value Native::_aria_random_(AriaEnv *env, int argCount, Value *args)
     // so I use INT_MAX
     static std::uniform_int_distribution<> dis(std::mt19937::min(), INT_MAX);
 
-    return number_val(dis(gen));
+    return NanBox::fromNumber(dis(gen));
 }
 
 Value Native::_aria_println_(AriaEnv *env, int argCount, Value *args)
@@ -34,7 +34,7 @@ Value Native::_aria_println_(AriaEnv *env, int argCount, Value *args)
 
     if (argCount == 1) {
         std::cout << valueString((*list->list)[0]) << '\n';
-        return nil_val;
+        return NanBox::NilValue;
     }
 
     try {
@@ -67,25 +67,25 @@ Value Native::_aria_readline_(AriaEnv *env, int argCount, Value *args)
     String line;
     std::getline(std::cin, line);
     ObjString *objLineStr = newObjString(line, env->gc);
-    return obj_val(objLineStr);
+    return NanBox::fromObj(objLineStr);
 }
 
 Value Native::_aria_typeof_(AriaEnv *env, int argCount, Value *args)
 {
     ObjString *str = newObjString(valueTypeString(args[0]), env->gc);
-    return obj_val(str);
+    return NanBox::fromObj(str);
 }
 
 Value Native::_aria_str_(AriaEnv *env, int argCount, Value *args)
 {
     ObjString *str = newObjString(valueString(args[0]), env->gc);
-    return obj_val(str);
+    return NanBox::fromObj(str);
 }
 
 Value Native::_aria_repr_(AriaEnv *env, int argCount, Value *args)
 {
     ObjString *str = newObjString(valueRepresentation(args[0]), env->gc);
-    return obj_val(str);
+    return NanBox::fromObj(str);
 }
 
 Value Native::_aria_num_(AriaEnv *env, int argCount, Value *args)
@@ -94,7 +94,7 @@ Value Native::_aria_num_(AriaEnv *env, int argCount, Value *args)
         return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, "argument must be a string");
     }
     try {
-        return number_val(std::stod(as_ObjString(args[0])->C_str_ref()));
+        return NanBox::fromNumber(std::stod(as_ObjString(args[0])->C_str_ref()));
     } catch ([[maybe_unused]] const std::exception &e) {
         return env->newException(ErrorCode::RUNTIME_UNKNOWN, "Conversion failed");
     }
@@ -107,46 +107,46 @@ Value Native::_aria_bool_(AriaEnv *env, int argCount, Value *args)
     }
     ObjString *str = as_ObjString(args[0]);
     if (str->length == 4 && memcmp(str->C_str_ref(), "true", 4) == 0) {
-        return true_val;
+        return NanBox::TrueValue;
     }
     if (str->length == 5 && memcmp(str->C_str_ref(), "false", 5) == 0) {
-        return false_val;
+        return NanBox::FalseValue;
     }
     return env->newException(ErrorCode::RUNTIME_UNKNOWN, "Invalid boolean string");
 }
 
 Value Native::_aria_copy_(AriaEnv *env, int argCount, Value *args)
 {
-    if (is_obj(args[0])) {
-        return as_obj(args[0])->copy(env->gc);
+    if (NanBox::isObj(args[0])) {
+        return NanBox::toObj(args[0])->copy(env->gc);
     }
-    return nil_val;
+    return NanBox::NilValue;
 }
 
 Value Native::_aria_equals_(AriaEnv *env, int argCount, Value *args)
 {
-    return bool_val(valuesEqual(args[0], args[1]));
+    return NanBox::fromBool(valuesEqual(args[0], args[1]));
 }
 
 Value Native::_aria_iter_(AriaEnv *env, int argCount, Value *args)
 {
-    if (is_obj(args[0])) {
-        return as_obj(args[0])->createIter(env->gc);
+    if (NanBox::isObj(args[0])) {
+        return NanBox::toObj(args[0])->createIter(env->gc);
     }
-    return nil_val;
+    return NanBox::NilValue;
 }
 
 Value Native::_aria_exit_(AriaEnv *env, int argCount, Value *args)
 {
-    if (!is_number(args[0])) {
+    if (!NanBox::isNumber(args[0])) {
         exit(1);
     }
-    exit(static_cast<int>(as_number(args[0])));
+    exit(static_cast<int>(NanBox::toNumber(args[0])));
 }
 
 Value Native::_aria__foo__(AriaEnv *env, int argCount, Value *args)
 {
-    return nil_val;
+    return NanBox::NilValue;
 }
 
 List<NativeVarEntry> &Native::nativeVarTable()
@@ -156,7 +156,7 @@ List<NativeVarEntry> &Native::nativeVarTable()
         {"__version__", obj_wrap(newObjString(version, gc))},
         //{"pi", num_wrap(pi)},
         //{"e", num_wrap(e)},
-        {"_", val_wrap(nil_val)},
+        {"_", val_wrap(NanBox::NilValue)},
     };
     return table;
 }

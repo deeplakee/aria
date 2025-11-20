@@ -34,7 +34,7 @@ void Obj::mark()
 
 Value Obj::op_call(AriaEnv *env, int argCount)
 {
-    String msg = format("Cannot call object of {}", valueRepresentation(obj_val(this)));
+    String msg = format("Cannot call object of {}", valueRepresentation(NanBox::fromObj(this)));
     return env->newException(msg.c_str());
 }
 

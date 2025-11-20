@@ -6,7 +6,7 @@ namespace aria {
 static Value builtin_hasNext(AriaEnv *env, int argCount, Value *args)
 {
     auto self = as_ObjIterator(args[-1]);
-    return bool_val(self->iter->hasNext());
+    return NanBox::fromBool(self->iter->hasNext());
 }
 
 static Value builtin_next(AriaEnv *env, int argCount, Value *args)

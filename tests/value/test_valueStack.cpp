@@ -12,16 +12,16 @@
 TEST_F(ValueTestFixture, ValueStackOperation1)
 {
     aria::ValueStack stack;
-    auto val_1 = aria::nil_val;
-    auto val_2 = aria::true_val;
-    auto val_3 = aria::false_val;
-    auto val_4 = aria::obj_val(aria::newObjString("hello", gc));
-    auto val_5 = aria::false_val;
+    auto val_1 = aria::NanBox::NilValue;
+    auto val_2 = aria::NanBox::TrueValue;
+    auto val_3 = aria::NanBox::FalseValue;
+    auto val_4 = aria::NanBox::fromObj(aria::newObjString("hello", gc));
+    auto val_5 = aria::NanBox::FalseValue;
     stack.push(val_1);
     stack.push(val_2);
     stack.push(val_3);
     stack.push(val_4);
     stack.push(val_5);
     EXPECT_EQ(stack.size(), 5);
-    EXPECT_EQ(stack.pop(), aria::false_val);
+    EXPECT_EQ(stack.pop(), aria::NanBox::FalseValue);
 }

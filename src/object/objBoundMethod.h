@@ -42,9 +42,9 @@ inline bool is_ObjBoundMethod(Value value)
 inline ObjBoundMethod *as_ObjBoundMethod(Value value)
 {
 #ifdef DEBUG_MODE
-    return dynamic_cast<ObjBoundMethod *>(as_obj(value));
+    return dynamic_cast<ObjBoundMethod *>(NanBox::toObj(value));
 #else
-    return static_cast<ObjBoundMethod *>(as_obj(value));
+    return static_cast<ObjBoundMethod *>(NanBox::toObj(value));
 #endif
 }
 

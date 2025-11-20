@@ -54,9 +54,9 @@ inline bool is_ObjMap(Value value)
 inline ObjMap *as_ObjMap(Value value)
 {
 #ifdef DEBUG_MODE
-    return dynamic_cast<ObjMap *>(as_obj(value));
+    return dynamic_cast<ObjMap *>(NanBox::toObj(value));
 #else
-    return static_cast<ObjMap *>(as_obj(value));
+    return static_cast<ObjMap *>(NanBox::toObj(value));
 #endif
 }
 

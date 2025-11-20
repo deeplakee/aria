@@ -38,19 +38,19 @@ void ObjIterator::blacken()
 
 Value ObjIterator::getByField(ObjString *name, Value &value)
 {
-    if (cachedMethods->get(obj_val(name), value)) {
-        return true_val;
+    if (cachedMethods->get(NanBox::fromObj(name), value)) {
+        return NanBox::TrueValue;
     }
-    if (gc->iteratorBuiltins->get(obj_val(name), value)) {
+    if (gc->iteratorBuiltins->get(NanBox::fromObj(name), value)) {
         assert(is_ObjNativeFn(value) && "iterator builtin method is nativeFn");
-        auto boundMethod = newObjBoundMethod(obj_val(this), as_ObjNativeFn(value), gc);
-        value = obj_val(boundMethod);
+        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjNativeFn(value), gc);
+        value = NanBox::fromObj(boundMethod);
         gc->cache(value);
-        cachedMethods->insert(obj_val(name), value);
+        cachedMethods->insert(NanBox::fromObj(name), value);
         gc->releaseCache(1);
-        return true_val;
+        return NanBox::TrueValue;
     }
-    return false_val;
+    return NanBox::FalseValue;
 }
 
 ObjIterator *newObjIterator(Iterator *iter, GC *gc)

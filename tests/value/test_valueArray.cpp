@@ -1,3 +1,4 @@
+#include "compile/ast.h"
 #include <gtest/gtest.h>
 
 #include "tests/gc/gc_init.h"
@@ -15,24 +16,24 @@ TEST_F(ValueTestFixture, ValueArrayOperation1)
     const char *msg1 = "this is a spark test for ValueObj";
 
     auto str1 = aria::newObjString(msg1, gc);
-    aria::Value val_1 = aria::obj_val(str1);
+    aria::Value val_1 = aria::NanBox::fromObj(str1);
 
     auto e1 = aria::newObjException(msg1, gc);
-    aria::Value val_2 = aria::obj_val(e1);
+    aria::Value val_2 = aria::NanBox::fromObj(e1);
 
-    aria::Value val_3 = aria::nil_val;
+    aria::Value val_3 = aria::NanBox::NilValue;
 
-    aria::Value val_4 = aria::true_val;
+    aria::Value val_4 = aria::NanBox::TrueValue;
 
-    aria::Value val_5 = aria::false_val;
+    aria::Value val_5 = aria::NanBox::FalseValue;
 
-    aria::Value val_6 = aria::number_val(123.456);
+    aria::Value val_6 = aria::NanBox::fromNumber(123.456);
 
     auto str2 = aria::newObjString("oiyuweryuoiew\t\t\t", gc);
 
-    aria::Value val_7 = aria::obj_val(str2);
+    aria::Value val_7 = aria::NanBox::fromObj(str2);
 
-    aria::Value val_8 = aria::obj_val(aria::newObjException(str2, gc));
+    aria::Value val_8 = aria::NanBox::fromObj(aria::newObjException(str2, gc));
 
     arr.push(val_1);
     arr.push(val_2);
@@ -66,32 +67,32 @@ TEST_F(ValueTestFixture, ValueArrayOperation2)
     int begin = 10;
     int end = 1000;
     for (int i = begin; i < end; i++) {
-        arr.push(aria::number_val(static_cast<double>(i) / 10));
+        arr.push(aria::NanBox::fromNumber(static_cast<double>(i) / 10));
         EXPECT_EQ(arr.size(), i - begin + 1);
     }
     for (int i = begin; i < end; i++) {
         aria::Value val_i = arr[i - begin];
-        EXPECT_TRUE(aria::is_number(val_i));
-        EXPECT_EQ(aria::as_number(val_i), static_cast<double>(i) / 10);
+        EXPECT_TRUE(aria::NanBox::isNumber(val_i));
+        EXPECT_EQ(aria::NanBox::toNumber(val_i), static_cast<double>(i) / 10);
     }
 
     const int arr_size = arr.size();
     for (int i = 0; i < arr.size(); i++) {
         aria::Value val_i = arr.pop();
         EXPECT_EQ(arr.size(), arr_size - i - 1);
-        EXPECT_TRUE(aria::is_number(val_i));
-        EXPECT_EQ(aria::as_number(val_i), static_cast<double>(end - i - 1) / 10);
+        EXPECT_TRUE(aria::NanBox::isNumber(val_i));
+        EXPECT_EQ(aria::NanBox::toNumber(val_i), static_cast<double>(end - i - 1) / 10);
     }
 }
 
 TEST_F(ValueTestFixture, ValueArrayOperation3)
 {
     aria::ValueArray arr = aria::ValueArray(gc);
-    arr.push(aria::number_val(123.456));
-    arr.push(aria::number_val(-123.456));
-    arr.push(aria::true_val);
-    arr.push(aria::false_val);
-    arr.push(aria::nil_val);
+    arr.push(aria::NanBox::fromNumber(123.456));
+    arr.push(aria::NanBox::fromNumber(-123.456));
+    arr.push(aria::NanBox::TrueValue);
+    arr.push(aria::NanBox::FalseValue);
+    arr.push(aria::NanBox::NilValue);
     EXPECT_EQ(arr.size(), 5);
 
     std::ostringstream oss;

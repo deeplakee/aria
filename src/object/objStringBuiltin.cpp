@@ -12,7 +12,7 @@ namespace aria {
 static Value builtin_length(AriaEnv *env, int argCount, Value *args)
 {
     ObjString *self = as_ObjString(args[-1]);
-    return number_val(static_cast<double>(self->length));
+    return NanBox::fromNumber(static_cast<double>(self->length));
 }
 
 static Value builtin_at(AriaEnv *env, int argCount, Value *args)
@@ -21,7 +21,7 @@ static Value builtin_at(AriaEnv *env, int argCount, Value *args)
     CHECK_INTEGER(args[0], index, Argument);
     CHECK_RANGE(index, 0, self->length, Index);
     char a = self->C_str_ref()[index];
-    return obj_val(NEW_OBJSTRING(a));
+    return NanBox::fromObj(NEW_OBJSTRING(a));
 }
 
 static Value builtin_substr(AriaEnv *env, int argCount, Value *args)
@@ -39,7 +39,7 @@ static Value builtin_substr(AriaEnv *env, int argCount, Value *args)
     }
 
     ObjString *str = NEW_OBJSTRING(self->C_str(), end - start);
-    return obj_val(str);
+    return NanBox::fromObj(str);
 }
 
 static Value builtin_findstr(AriaEnv *env, int argCount, Value *args)
@@ -49,9 +49,9 @@ static Value builtin_findstr(AriaEnv *env, int argCount, Value *args)
     const ObjString *substr = as_ObjString(args[0]);
     const char *result = strstr(self->C_str_ref(), substr->C_str_ref());
     if (result == nullptr) {
-        return number_val(-1);
+        return NanBox::fromNumber(-1);
     }
-    return number_val(static_cast<double>(result - self->C_str_ref()));
+    return NanBox::fromNumber(static_cast<double>(result - self->C_str_ref()));
 }
 
 static Value builtin_concat(AriaEnv *env, int argCount, Value *args)
@@ -65,7 +65,7 @@ static Value builtin_concat(AriaEnv *env, int argCount, Value *args)
             ErrorCode::RESOURCE_STRING_OVERFLOW,
             "String concatenation result exceeds maximum length。");
     }
-    return obj_val(concatenatedStr);
+    return NanBox::fromObj(concatenatedStr);
 }
 
 static Value builtin_startWith(AriaEnv *env, int argCount, Value *args)
@@ -74,11 +74,11 @@ static Value builtin_startWith(AriaEnv *env, int argCount, Value *args)
     CHECK_OBJSTRING(args[0], Argument);
     const ObjString *substr = as_ObjString(args[0]);
     if (substr->length > self->length) {
-        return false_val;
+        return NanBox::FalseValue;
     }
 
     int result = memcmp(self->C_str_ref(), substr->C_str_ref(), substr->length) == 0;
-    return bool_val(result);
+    return NanBox::fromBool(result);
 }
 
 static Value builtin_endWith(AriaEnv *env, int argCount, Value *args)
@@ -87,7 +87,7 @@ static Value builtin_endWith(AriaEnv *env, int argCount, Value *args)
     CHECK_OBJSTRING(args[0], Argument);
     const ObjString *substr = as_ObjString(args[0]);
     if (substr->length > self->length) {
-        return false_val;
+        return NanBox::FalseValue;
     }
 
     auto result = memcmp(
@@ -95,7 +95,7 @@ static Value builtin_endWith(AriaEnv *env, int argCount, Value *args)
                       substr->C_str_ref(),
                       substr->length)
                   == 0;
-    return bool_val(result);
+    return NanBox::fromBool(result);
 }
 
 static Value builtin_reverse(AriaEnv *env, int argCount, Value *args)
@@ -109,7 +109,7 @@ static Value builtin_reverse(AriaEnv *env, int argCount, Value *args)
     }
     ObjString *newStrObj = NEW_OBJSTRING(dst, length);
     BUILTIN_DESTROY_BUFFER(dst, length);
-    return obj_val(newStrObj);
+    return NanBox::fromObj(newStrObj);
 }
 
 static Value builtin_upper(AriaEnv *env, int argCount, Value *args)
@@ -123,7 +123,7 @@ static Value builtin_upper(AriaEnv *env, int argCount, Value *args)
     }
     ObjString *newStrObj = NEW_OBJSTRING(dst, length);
     BUILTIN_DESTROY_BUFFER(dst, length);
-    return obj_val(newStrObj);
+    return NanBox::fromObj(newStrObj);
 }
 
 static Value builtin_lower(AriaEnv *env, int argCount, Value *args)
@@ -137,7 +137,7 @@ static Value builtin_lower(AriaEnv *env, int argCount, Value *args)
     }
     ObjString *newStrObj = NEW_OBJSTRING(dst, length);
     BUILTIN_DESTROY_BUFFER(dst, length);
-    return obj_val(newStrObj);
+    return NanBox::fromObj(newStrObj);
 }
 
 static Value builtin_trim(AriaEnv *env, int argCount, Value *args)
@@ -156,7 +156,7 @@ static Value builtin_trim(AriaEnv *env, int argCount, Value *args)
     memcpy(dst, start, length);
     ObjString *newStrObj = NEW_OBJSTRING(dst, length);
     BUILTIN_DESTROY_BUFFER(dst, length);
-    return obj_val(newStrObj);
+    return NanBox::fromObj(newStrObj);
 }
 
 static Value builtin_ltrim(AriaEnv *env, int argCount, Value *args)
@@ -172,7 +172,7 @@ static Value builtin_ltrim(AriaEnv *env, int argCount, Value *args)
     memcpy(dst, start, length);
     ObjString *newStrObj = NEW_OBJSTRING(dst, length);
     BUILTIN_DESTROY_BUFFER(dst, length);
-    return obj_val(newStrObj);
+    return NanBox::fromObj(newStrObj);
 }
 
 static Value builtin_rtrim(AriaEnv *env, int argCount, Value *args)
@@ -188,7 +188,7 @@ static Value builtin_rtrim(AriaEnv *env, int argCount, Value *args)
     memcpy(dst, start, length);
     ObjString *newStrObj = NEW_OBJSTRING(dst, length);
     BUILTIN_DESTROY_BUFFER(dst, length);
-    return obj_val(newStrObj);
+    return NanBox::fromObj(newStrObj);
 }
 
 static Value builtin_split(AriaEnv *env, int argCount, Value *args)
@@ -197,20 +197,20 @@ static Value builtin_split(AriaEnv *env, int argCount, Value *args)
     auto gc = env->gc;
     CHECK_OBJSTRING(args[0], Argument);
     if (self->length == 0) {
-        return obj_val(NEW_OBJLIST());
+        return NanBox::fromObj(NEW_OBJLIST());
     }
     const ObjString *delim = as_ObjString(args[0]);
     const char *srcStr = self->C_str_ref();
     const char *delimStr = delim->C_str_ref();
     ObjList *objlist = NEW_OBJLIST();
-    gc->cache(obj_val(objlist));
+    gc->cache(NanBox::fromObj(objlist));
 
     if (delim->length == 0) {
         for (int i = 0; srcStr[i] != '\0'; i++) {
             if (!isspace(srcStr[i])) {
                 ObjString *i_str = NEW_OBJSTRING(srcStr[i]);
-                gc->cache(obj_val(i_str));
-                objlist->list->push(obj_val(i_str));
+                gc->cache(NanBox::fromObj(i_str));
+                objlist->list->push(NanBox::fromObj(i_str));
                 gc->releaseCache(1);
             }
         }
@@ -223,8 +223,8 @@ static Value builtin_split(AriaEnv *env, int argCount, Value *args)
             size_t token_len = end - start;
             if (token_len > 0) {
                 ObjString *i_str = NEW_OBJSTRING(start, token_len);
-                gc->cache(obj_val(i_str));
-                objlist->list->push(obj_val(i_str));
+                gc->cache(NanBox::fromObj(i_str));
+                objlist->list->push(NanBox::fromObj(i_str));
                 gc->releaseCache(1);
             }
             start = end + delim_len;
@@ -233,14 +233,14 @@ static Value builtin_split(AriaEnv *env, int argCount, Value *args)
 
         if (strlen(start) > 0) {
             ObjString *i_str = NEW_OBJSTRING(start, strlen(start));
-            gc->cache(obj_val(i_str));
-            objlist->list->push(obj_val(i_str));
+            gc->cache(NanBox::fromObj(i_str));
+            objlist->list->push(NanBox::fromObj(i_str));
             gc->releaseCache(1);
         }
     }
 
     gc->releaseCache(1);
-    return obj_val(objlist);
+    return NanBox::fromObj(objlist);
 }
 
 static Value builtin___add__(AriaEnv *env, int argCount, Value *args)
@@ -253,7 +253,7 @@ static Value builtin___add__(AriaEnv *env, int argCount, Value *args)
             ErrorCode::RESOURCE_STRING_OVERFLOW,
             "String concatenation result exceeds maximum length。");
     }
-    return obj_val(concatenatedStr);
+    return NanBox::fromObj(concatenatedStr);
 }
 
 void ObjString::init(GC *_gc, ValueHashTable *builtins)

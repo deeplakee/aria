@@ -51,7 +51,10 @@ public:
 
     virtual ~Obj() = default;
 
-    virtual String toString(ValueStack *printStack) { return valueTypeString(obj_val(this)); }
+    virtual String toString(ValueStack *printStack)
+    {
+        return valueTypeString(NanBox::fromObj(this));
+    }
 
     String toString() { return toString(nullptr); }
 
@@ -67,27 +70,27 @@ public:
 
     virtual Value op_call(AriaEnv *env, int argCount);
 
-    virtual Value getByField(ObjString *name, Value &value) { return false_val; }
+    virtual Value getByField(ObjString *name, Value &value) { return NanBox::FalseValue; }
 
-    virtual Value setByField(ObjString *name, Value value) { return false_val; }
+    virtual Value setByField(ObjString *name, Value value) { return NanBox::FalseValue; }
 
-    virtual Value getByIndex(Value k, Value &v) { return false_val; };
+    virtual Value getByIndex(Value k, Value &v) { return NanBox::FalseValue; }
 
-    virtual Value setByIndex(Value k, Value v) { return false_val; }
+    virtual Value setByIndex(Value k, Value v) { return NanBox::FalseValue; }
 
-    virtual Value createIter(GC *gc) { return nil_val; }
+    virtual Value createIter(GC *gc) { return NanBox::NilValue; }
 
-    virtual Value copy(GC *gc) { return nil_val; }
+    virtual Value copy(GC *gc) { return NanBox::NilValue; }
 };
 
 inline ObjType obj_type(const Value value)
 {
-    return as_obj(value)->type;
+    return NanBox::toObj(value)->type;
 }
 
 inline bool isObjType(const Value value, const ObjType type)
 {
-    return is_obj(value) && obj_type(value) == type;
+    return NanBox::isObj(value) && obj_type(value) == type;
 }
 
 } // namespace aria

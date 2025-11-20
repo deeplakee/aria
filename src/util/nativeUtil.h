@@ -21,10 +21,10 @@ namespace aria {
 #define CHECK_INTEGER(val, int_result, what) \
     int int_result = -1; \
     do { \
-        if (!is_number(val)) { \
+        if (!NanBox::isNumber(val)) { \
             return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, #what " must be an integer"); \
         } \
-        auto _double_val_ = as_number(val); \
+        auto _double_val_ = NanBox::toNumber(val); \
         (int_result) = static_cast<int>(_double_val_); \
         if ((int_result) != _double_val_) { \
             return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, #what " must be an integer"); \
@@ -32,17 +32,17 @@ namespace aria {
     } while (0)
 
 #define CHECK_NUMBER(val, int_result, what) \
-    if (!is_number(val)) { \
+    if (!NanBox::isNumber(val)) { \
         return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, #what " must be a number"); \
     }
 
 #define CHECK_BOOL(val, int_result, what) \
-    if (!is_bool(val)) { \
+    if (!NanBox::isBool(val)) { \
         return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, #what " must be a boolean"); \
     }
 
 #define CHECK_NIL(val, int_result, what) \
-    if (!is_nil(val)) { \
+    if (!NanBox::isNil(val)) { \
         return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, #what " must be a nil"); \
     }
 
@@ -60,13 +60,13 @@ namespace aria {
 #define NEW_OBJSTRING_FROM_RAW(...) newObjStringFromRaw(__VA_ARGS__ __VA_OPT__(, ) env->gc)
 
 #define BUILTIN_INIT_BUFFER(bufferName, length) \
-    bool __useBuffer__ = length < GC::GC_BUFFER_SIZE; \
-    char *bufferName = __useBuffer__ ? env->gc->buffer \
+    bool __##bufferName##__useBuffer__ = length < GC::GC_BUFFER_SIZE; \
+    char *bufferName = __##bufferName##__useBuffer__ ? env->gc->buffer \
                                      : env->gc->allocate_array<char>(length + 1); \
     bufferName[length] = '\0';
 
 #define BUILTIN_DESTROY_BUFFER(bufferName, length) \
-    if (!__useBuffer__) { \
+    if (!__##bufferName##__useBuffer__) { \
         env->gc->free_array<char>(bufferName, length + 1); \
     }
 

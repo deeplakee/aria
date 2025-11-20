@@ -27,10 +27,10 @@ String ObjModule::toString(ValueStack *printStack)
 
 Value ObjModule::getByField(ObjString *name, Value &value)
 {
-    if (module->get(obj_val(name), value)) {
-        return true_val;
+    if (module->get(NanBox::fromObj(name), value)) {
+        return NanBox::TrueValue;
     }
-    return false_val;
+    return NanBox::FalseValue;
 }
 
 void ObjModule::blacken()

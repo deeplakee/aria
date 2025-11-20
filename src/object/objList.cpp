@@ -46,14 +46,14 @@ String ObjList::toString(ValueStack *printStack)
 {
     if (printStack == nullptr) {
         ValueStack stack;
-        stack.push(obj_val(this));
+        stack.push(NanBox::fromObj(this));
         return list->toString(&stack);
     }
 
-    if (printStack->Exist(obj_val(this))) {
+    if (printStack->Exist(NanBox::fromObj(this))) {
         return "[...]";
     }
-    printStack->push(obj_val(this));
+    printStack->push(NanBox::fromObj(this));
     String str = list->toString(printStack);
     printStack->pop();
     return str;
@@ -73,65 +73,65 @@ void ObjList::blacken()
 
 Value ObjList::getByField(ObjString *name, Value &value)
 {
-    if (cachedMethods->get(obj_val(name), value)) {
-        return true_val;
+    if (cachedMethods->get(NanBox::fromObj(name), value)) {
+        return NanBox::TrueValue;
     }
-    if (gc->listBuiltins->get(obj_val(name), value)) {
+    if (gc->listBuiltins->get(NanBox::fromObj(name), value)) {
         assert(is_ObjNativeFn(value) && "list builtin method is nativeFn");
-        auto boundMethod = newObjBoundMethod(obj_val(this), as_ObjNativeFn(value), gc);
-        value = obj_val(boundMethod);
+        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjNativeFn(value), gc);
+        value = NanBox::fromObj(boundMethod);
         gc->cache(value);
-        cachedMethods->insert(obj_val(name), value);
+        cachedMethods->insert(NanBox::fromObj(name), value);
         gc->releaseCache(1);
-        return true_val;
+        return NanBox::TrueValue;
     }
-    return false_val;
+    return NanBox::FalseValue;
 }
 
 Value ObjList::getByIndex(Value k, Value &v)
 {
-    if (!is_number(k)) {
+    if (!NanBox::isNumber(k)) {
         return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
     }
-    int index = static_cast<int>(as_number(k));
-    if (index != as_number(k)) {
+    int index = static_cast<int>(NanBox::toNumber(k));
+    if (index != NanBox::toNumber(k)) {
         return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
     }
     if (index < 0 || index >= list->size()) {
         return genException(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "index out of range");
     }
     v = (*list)[index];
-    return true_val;
+    return NanBox::TrueValue;
 }
 
 Value ObjList::setByIndex(Value k, Value v)
 {
-    if (!is_number(k)) {
+    if (!NanBox::isNumber(k)) {
         return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
     }
-    int index = static_cast<int>(as_number(k));
-    if (index != as_number(k)) {
+    int index = static_cast<int>(NanBox::toNumber(k));
+    if (index != NanBox::toNumber(k)) {
         return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
     }
     if (index < 0 || index >= list->size()) {
         return genException(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "index out of range");
     }
     (*list)[index] = v;
-    return true_val;
+    return NanBox::TrueValue;
 }
 
 Value ObjList::createIter(GC *gc)
 {
-    return obj_val(newObjIterator(this, gc));
+    return NanBox::fromObj(newObjIterator(this, gc));
 }
 
 Value ObjList::copy(GC *gc)
 {
     ObjList *newObj = newObjList(gc);
-    gc->cache(obj_val(newObj));
+    gc->cache(NanBox::fromObj(newObj));
     newObj->list->copy(list);
     gc->releaseCache(1);
-    return obj_val(newObj);
+    return NanBox::fromObj(newObj);
 }
 
 ObjList *newObjList(GC *gc)

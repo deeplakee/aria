@@ -44,9 +44,9 @@ inline bool is_ObjIterator(Value value)
 inline ObjIterator *as_ObjIterator(Value value)
 {
 #ifdef DEBUG_MODE
-    return dynamic_cast<ObjIterator *>(as_obj(value));
+    return dynamic_cast<ObjIterator *>(NanBox::toObj(value));
 #else
-    return static_cast<ObjIterator *>(as_obj(value));
+    return static_cast<ObjIterator *>(NanBox::toObj(value));
 #endif
 }
 

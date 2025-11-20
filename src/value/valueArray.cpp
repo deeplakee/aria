@@ -74,7 +74,7 @@ Value ValueArray::pop()
         count--;
         return values[count];
     }
-    return nil_val;
+    return NanBox::NilValue;
 }
 
 bool ValueArray::remove(uint32_t index)
