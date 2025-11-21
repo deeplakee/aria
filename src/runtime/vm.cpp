@@ -81,7 +81,7 @@ interpretResult AriaVM::interpret(String srcFilePath, String source)
     try {
         stack.push(NanBox::fromObj(script));
         callModule(script);
-        if (get_err_flag()) {
+        if (getErrFlag()) {
             return interpretResult::RUNTIME_ERROR;
         }
         run();
@@ -134,7 +134,7 @@ void AriaVM::setDebugger(AriaDebugger *_debugger)
 
 Value AriaVM::newException(const char *msg)
 {
-    set_err_flag();
+    setErrFlag();
     auto e = NanBox::fromObj(newObjException(msg, gc));
     E_REG = e;
     return e;
@@ -142,7 +142,7 @@ Value AriaVM::newException(const char *msg)
 
 Value AriaVM::newException(ErrorCode code, const char *msg)
 {
-    set_err_flag();
+    setErrFlag();
     auto e = NanBox::fromObj(newObjException(code, msg, gc));
     E_REG = e;
     return e;
@@ -590,7 +590,7 @@ Value AriaVM::run(int retFrame)
                 throwException(ErrorCode::RUNTIME_INVALID_INDEX_OP, msg);
                 break;
             }
-            if (get_err_flag()) {
+            if (getErrFlag()) {
                 if (!is_ObjException(result)) {
                     reportRuntimeFatalError(ErrorCode::RUNTIME_UNKNOWN, "Invalid return value");
                 }
@@ -622,7 +622,7 @@ Value AriaVM::run(int retFrame)
                 throwException(ErrorCode::RUNTIME_INVALID_INDEX_OP, msg);
                 break;
             }
-            if (get_err_flag()) {
+            if (getErrFlag()) {
                 if (!is_ObjException(result)) {
                     reportRuntimeFatalError(ErrorCode::RUNTIME_UNKNOWN, "Invalid return value");
                 }
@@ -816,7 +816,7 @@ Value AriaVM::run(int retFrame)
             int argCount = frame->readByte();
             auto callee = stack.peek(argCount);
             auto result = callValue(callee, argCount);
-            if (get_err_flag()) {
+            if (getErrFlag()) {
                 if (!is_ObjException(result)) {
                     reportRuntimeFatalError(ErrorCode::RUNTIME_UNKNOWN, "Invalid return value");
                 }
@@ -991,7 +991,7 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::THROW: {
-            set_err_flag();
+            setErrFlag();
             E_REG = stack.pop();
             if (EframeCount == 0) {
                 reportRuntimeFatalError(
@@ -1037,7 +1037,7 @@ void AriaVM::unwindToCatchPoint()
     stack.resize(ef->stackSize);
     stack.push(E_REG);
     E_REG = NanBox::NilValue;
-    unset_err_flag();
+    unsetErrFlag();
 }
 
 void AriaVM::throwException(ObjException *e)

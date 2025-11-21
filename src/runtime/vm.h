@@ -68,7 +68,7 @@ private:
 
     enum flagIndex {
         undefined0 = 0,
-        index_err,
+        index_Err,
         undefined2,
         undefined3,
         undefined4,
@@ -78,11 +78,11 @@ private:
     };
 
 #define defFlag(what) \
-    void set_##what##_flag() { flags = flags | (1 << index_##what); } \
-    void unset_##what##_flag() { flags = flags & ~(1 << index_##what); } \
-    [[nodiscard]] bool get_##what##_flag() const { return (flags & (1 << index_##what)); }
+    void set##what##Flag() { flags = flags | (1 << index_##what); } \
+    void unset##what##Flag() { flags = flags & ~(1 << index_##what); } \
+    [[nodiscard]] bool get##what##Flag() const { return (flags & (1 << index_##what)); }
 
-    defFlag(err);
+    defFlag(Err);
 
 #undef defFlag
 
