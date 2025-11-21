@@ -102,7 +102,7 @@ void Chunk::emitOpData(opCode op, Value value, uint32_t line)
 {
     gc->cache(value);
     consts.push(value);
-    gc->releaseCache();
+    gc->releaseCache(1);
     uint32_t index = consts.size() - 1;
     if (index > UINT16_MAX) {
         fatalError(ErrorCode::RESOURCE_CHUNK_OVERFLOW, "Too many constants in one chunk.");

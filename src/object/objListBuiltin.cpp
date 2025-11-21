@@ -19,7 +19,7 @@ static Value builtin_extend(AriaEnv *env, int argCount, Value *args)
     CHECK_OBJLIST(args[0], Argument);
     env->gc->cache(args[0]);
     self->list->extend(as_ObjList(args[0])->list);
-    env->gc->releaseCache();
+    env->gc->releaseCache(1);
     return NanBox::NilValue;
 }
 

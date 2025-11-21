@@ -194,7 +194,7 @@ bool GC::insertStr(ObjString *obj)
 {
     cache(NanBox::fromObj(obj));
     bool res = conStrPool->insert(obj);
-    releaseCache();
+    releaseCache(1);
     return res;
 }
 

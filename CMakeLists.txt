@@ -110,6 +110,7 @@ add_library(aria_core STATIC
         src/debugger/debugger.h
         src/debugger/breakpoint.cpp
         src/debugger/breakpoint.h
+        src/memory/allocator.h
 )
 
 # 设置头文件路径
