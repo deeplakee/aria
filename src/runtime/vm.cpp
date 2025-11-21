@@ -32,32 +32,6 @@
 
 namespace aria {
 
-uint8_t read_byte(CallFrame *frame)
-{
-    return *frame->ip++;
-}
-
-opCode read_opcode(CallFrame *frame)
-{
-    return static_cast<opCode>(read_byte(frame));
-}
-
-uint16_t read_word(CallFrame *frame)
-{
-    frame->ip += 2;
-    return static_cast<uint16_t>((frame->ip[-1] << 8) | frame->ip[-2]);
-}
-
-Value read_constant(CallFrame *frame)
-{
-    return frame->function->chunk->consts[read_word(frame)];
-}
-
-ObjString *read_ObjString(CallFrame *frame)
-{
-    return as_ObjString(read_constant(frame));
-}
-
 AriaVM::AriaVM()
     : gc{new GC{}}
     , Cframes{new CallFrame[FRAME_SIZE]}
@@ -487,9 +461,9 @@ Value AriaVM::run(int retFrame)
         Disassembler::disassembleInstruction(chunk, codeOffset, true);
 #endif
 
-        switch (read_opcode(frame)) {
+        switch (frame->readOpcode()) {
         case opCode::LOAD_CONST:
-            stack.push(read_constant(frame));
+            stack.push(frame->readConstant());
             break;
         case opCode::LOAD_NIL:
             stack.push(NanBox::NilValue);
@@ -501,23 +475,23 @@ Value AriaVM::run(int retFrame)
             stack.push(NanBox::FalseValue);
             break;
         case opCode::LOAD_LOCAL: {
-            uint16_t offset = read_word(frame);
+            uint16_t offset = frame->readWord();
             stack.push(frame->stakBase[offset]);
             break;
         }
         case opCode::STORE_LOCAL: {
-            uint16_t offset = read_word(frame);
+            uint16_t offset = frame->readWord();
             frame->stakBase[offset] = stack.peek();
             break;
         }
         case opCode::LOAD_UPVALUE: {
-            uint16_t slot = read_word(frame);
+            uint16_t slot = frame->readWord();
             Value val = *(frame->function->upvalues[slot]->location);
             stack.push(val);
             break;
         }
         case opCode::STORE_UPVALUE: {
-            uint16_t slot = read_word(frame);
+            uint16_t slot = frame->readWord();
             *frame->function->upvalues[slot]->location = stack.peek();
             break;
         }
@@ -527,7 +501,7 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::DEF_GLOBAL: {
-            ObjString *name = read_ObjString(frame);
+            ObjString *name = frame->readObjString();
             if (!chunk->globals->insert(NanBox::fromObj(name), stack.peek())) {
                 String msg = format("Existed variable '{}'.", name->C_str_ref());
                 throwException(ErrorCode::RUNTIME_EXISTED_VARIABLE, msg);
@@ -537,7 +511,7 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::LOAD_GLOBAL: {
-            ObjString *name = read_ObjString(frame);
+            ObjString *name = frame->readObjString();
             Value value = NanBox::NilValue;
             if (!chunk->globals->get(NanBox::fromObj(name), value)) {
                 if (!builtIn->get(NanBox::fromObj(name), value)) {
@@ -550,7 +524,7 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::STORE_GLOBAL: {
-            ObjString *name = read_ObjString(frame);
+            ObjString *name = frame->readObjString();
             if (chunk->globals->insert(NanBox::fromObj(name), stack.peek())) {
                 chunk->globals->remove(NanBox::fromObj(name));
                 String msg = format("Undefined variable '{}'.", name->C_str_ref());
@@ -565,7 +539,7 @@ Value AriaVM::run(int retFrame)
                 break;
             }
             Obj *obj = NanBox::toObj(stack.peek());
-            ObjString *name = read_ObjString(frame);
+            ObjString *name = frame->readObjString();
             Value value;
 
             if (auto result = obj->getByField(name, value); NanBox::isFalse(result)) {
@@ -585,7 +559,7 @@ Value AriaVM::run(int retFrame)
                 break;
             }
             Obj *obj = NanBox::toObj(stack.pop());
-            ObjString *propertyName = read_ObjString(frame);
+            ObjString *propertyName = frame->readObjString();
 
             if (auto result = obj->setByField(propertyName, stack.peek()); NanBox::isFalse(result)) {
                 String msg = format(
@@ -797,7 +771,7 @@ Value AriaVM::run(int retFrame)
             stack.pop();
             break;
         case opCode::POP_N:
-            stack.pop_n(read_byte(frame));
+            stack.pop_n(frame->readByte());
             break;
         case opCode::PRINT:
             std::cout << valueString(stack.pop()) << std::endl;
@@ -805,41 +779,41 @@ Value AriaVM::run(int retFrame)
         case opCode::NOP:
             break;
         case opCode::JUMP_FWD: {
-            const uint16_t offset = read_word(frame);
+            const uint16_t offset = frame->readWord();
             frame->ip -= offset;
             break;
         }
         case opCode::JUMP_BWD: {
-            const uint16_t offset = read_word(frame);
+            const uint16_t offset = frame->readWord();
             frame->ip += offset;
             break;
         }
         case opCode::JUMP_TRUE: {
-            const uint16_t offset = read_word(frame);
+            const uint16_t offset = frame->readWord();
             if (!isFalsey(stack.pop()))
                 frame->ip += offset;
             break;
         }
         case opCode::JUMP_TRUE_NOPOP: {
-            const uint16_t offset = read_word(frame);
+            const uint16_t offset = frame->readWord();
             if (!isFalsey(stack.peek(0)))
                 frame->ip += offset;
             break;
         }
         case opCode::JUMP_FALSE: {
-            const uint16_t offset = read_word(frame);
+            const uint16_t offset = frame->readWord();
             if (isFalsey(stack.pop()))
                 frame->ip += offset;
             break;
         }
         case opCode::JUMP_FALSE_NOPOP: {
-            const uint16_t offset = read_word(frame);
+            const uint16_t offset = frame->readWord();
             if (isFalsey(stack.peek(0)))
                 frame->ip += offset;
             break;
         }
         case opCode::CALL: {
-            int argCount = read_byte(frame);
+            int argCount = frame->readByte();
             auto callee = stack.peek(argCount);
             auto result = callValue(callee, argCount);
             if (get_err_flag()) {
@@ -851,10 +825,10 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::CLOSURE: {
-            ObjFunction *fun = as_ObjFunction(read_constant(frame));
+            ObjFunction *fun = as_ObjFunction(frame->readConstant());
             for (int i = 0; i < fun->upvalueCount; i++) {
-                uint8_t isLocal = read_byte(frame);
-                uint16_t index = read_word(frame);
+                uint8_t isLocal = frame->readByte();
+                uint16_t index = frame->readWord();
                 if (isLocal) {
                     fun->upvalues[i] = captureUpvalue(frame->stakBase + index);
                 } else {
@@ -864,7 +838,7 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::MAKE_CLASS: {
-            ObjClass *klass = newObjClass(read_ObjString(frame), gc);
+            ObjClass *klass = newObjClass(frame->readObjString(), gc);
             stack.push(NanBox::fromObj(klass));
             break;
         }
@@ -880,7 +854,7 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::MAKE_METHOD: {
-            Value methodName = NanBox::fromObj(read_ObjString(frame));
+            Value methodName = NanBox::fromObj(frame->readObjString());
             Value method = stack.peek(0);
             ObjClass *klass = as_ObjClass(stack.peek(1));
             klass->methods.insert(methodName, method);
@@ -898,7 +872,7 @@ Value AriaVM::run(int retFrame)
             exit(1);
         }
         case opCode::LOAD_SUPER_METHOD: {
-            ObjString *methodName = read_ObjString(frame);
+            ObjString *methodName = frame->readObjString();
             Value instance = stack.peek();
             ObjClass *superKlass = as_ObjInstance(instance)->klass->superKlass;
             Value superMethod = NanBox::NilValue;
@@ -923,21 +897,21 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::MAKE_LIST: {
-            int listSize = read_word(frame);
+            int listSize = frame->readWord();
             ObjList *list = newObjList(stack.getTopPtr() - listSize, listSize, gc);
             stack.pop_n(listSize);
             stack.push(NanBox::fromObj(list));
             break;
         }
         case opCode::MAKE_MAP: {
-            int mapSize = read_word(frame);
+            int mapSize = frame->readWord();
             ObjMap *map = newObjMap(stack.getTopPtr() - mapSize * 2, mapSize, gc);
             stack.pop_n(mapSize * 2);
             stack.push(NanBox::fromObj(map));
             break;
         }
         case opCode::IMPORT: {
-            ObjString *moduleName = read_ObjString(frame);
+            ObjString *moduleName = frame->readObjString();
             const char *currentModuleName = as_ObjString(*currentRmodule())->C_str_ref();
             String absoluteModulePath;
             absoluteModulePath = getAbsoluteModulePath(currentModuleName, moduleName->C_str_ref());
@@ -1003,7 +977,7 @@ Value AriaVM::run(int retFrame)
             break;
         }
         case opCode::SETUP_EXCEPT: {
-            uint16_t offset = read_word(frame);
+            uint16_t offset = frame->readWord();
             uint8_t *newIp = frame->ip + offset;
             if (EframeCount == FRAME_SIZE) {
                 reportRuntimeFatalError(

@@ -1,12 +1,14 @@
 #ifndef CALLFRAME_H
 #define CALLFRAME_H
 
+#include "chunk/chunk.h"
+#include "chunk/code.h"
 #include "common.h"
+#include "object/objFunction.h"
+#include "object/objString.h"
 #include "value/value.h"
 
 namespace aria {
-
-class ObjFunction;
 
 struct CallFrame
 {
@@ -35,6 +37,24 @@ struct CallFrame
         this->ip = other->ip;
         this->stakBase = other->stakBase;
     }
+
+    uint8_t readByte()
+    {
+        ip++;
+        return ip[-1];
+    }
+
+    uint16_t readWord()
+    {
+        ip += 2;
+        return static_cast<uint16_t>((ip[-1] << 8) | ip[-2]);
+    }
+
+    opCode readOpcode() { return static_cast<opCode>(readByte()); }
+
+    Value readConstant() { return function->chunk->consts[readWord()]; }
+
+    ObjString *readObjString() { return as_ObjString(readConstant()); }
 
     ObjFunction *function;
     uint8_t *ip;
