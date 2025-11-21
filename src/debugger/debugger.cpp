@@ -20,7 +20,7 @@ void AriaDebugger::runScript(const String &path)
     String ariaDir = getProgramDirectory();
     srcPath = getAbsolutePath(getWorkingDirectory(), path);
     println("debugging file:{}", srcPath);
-    println("Aria Debugger 0.1");
+    println("Aria Debugger {}", version);
     println("Type 'help' for commands.");
     repl();
 

@@ -15,8 +15,11 @@ class AriaDebugger
 {
 public:
     AriaDebugger();
+
     void attach(AriaVM *vm);
+
     void runScript(const String &path);
+
     void hookBeforeExec(CallFrame *frame, uint32_t offset);
 
 private:
@@ -38,6 +41,8 @@ private:
     uint32_t findNearestPendingBefore(const String &module, uint32_t line);
 
     void clearFlags();
+
+    static constexpr const char *version = "0.1";
 
     AriaVM *vm = nullptr;
     String srcPath;
