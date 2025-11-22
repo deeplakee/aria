@@ -83,14 +83,14 @@ public:
     virtual Value copy(GC *gc) { return NanBox::NilValue; }
 };
 
-inline ObjType obj_type(const Value value)
+inline ObjType getObjType(const Value value)
 {
     return NanBox::toObj(value)->type;
 }
 
 inline bool isObjType(const Value value, const ObjType type)
 {
-    return NanBox::isObj(value) && obj_type(value) == type;
+    return NanBox::isObj(value) && getObjType(value) == type;
 }
 
 } // namespace aria

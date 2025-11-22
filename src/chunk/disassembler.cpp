@@ -215,7 +215,7 @@ uint32_t Disassembler::closureInstruction(const Chunk *chunk, const uint32_t off
     uint32_t _offset = offset;
     uint16_t funIndex = getU16data(chunk->codes, _offset + 1);
     _offset += 3;
-    ObjFunction *function = as_ObjFunction(chunk->consts[funIndex]);
+    ObjFunction *function = asObjFunction(chunk->consts[funIndex]);
     print("{:<18} {}\n", "CLOSURE", function->toString());
     for (int j = 0; j < function->upvalueCount; j++) {
         auto isLocal = (*chunk)[_offset++];
@@ -317,7 +317,7 @@ uint32_t Disassembler::readInstruction(const Chunk *chunk, const uint32_t offset
         uint32_t _offset = offset;
         uint16_t funIndex = getU16data(chunk->codes, _offset + 1);
         _offset += 3;
-        ObjFunction *function = as_ObjFunction(chunk->consts[funIndex]);
+        ObjFunction *function = asObjFunction(chunk->consts[funIndex]);
         _offset += 2 * function->upvalueCount;
         return _offset;
     }

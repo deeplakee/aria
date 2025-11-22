@@ -52,12 +52,12 @@ public:
     static void init(GC *_gc, ValueHashTable *builtins);
 };
 
-inline bool is_ObjString(Value value)
+inline bool isObjString(Value value)
 {
     return isObjType(value, ObjType::STRING);
 }
 
-inline ObjString *as_ObjString(Value value)
+inline ObjString *asObjString(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjString *>(NanBox::toObj(value));
@@ -66,9 +66,9 @@ inline ObjString *as_ObjString(Value value)
 #endif
 }
 
-inline char *as_c_string(Value value)
+inline char *asCString(Value value)
 {
-    return as_ObjString(value)->C_str();
+    return asObjString(value)->C_str();
 }
 
 // construct from ref

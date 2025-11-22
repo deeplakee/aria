@@ -33,12 +33,12 @@ public:
     ErrorCode code;
 };
 
-inline bool is_ObjException(Value value)
+inline bool isObjException(Value value)
 {
     return isObjType(value, ObjType::EXCEPTION);
 }
 
-inline ObjException *as_ObjException(Value value)
+inline ObjException *asObjException(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjException *>(NanBox::toObj(value));

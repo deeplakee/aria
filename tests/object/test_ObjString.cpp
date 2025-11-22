@@ -9,17 +9,17 @@ TEST_F(ObjectTestFixture, ValidObjectString)
     const char *msg1 = "Hello World";
     auto str1 = aria::newObjString(msg1, gc);
     aria::Value str1_value = aria::NanBox::fromObj(str1);
-    EXPECT_TRUE(aria::is_ObjString(str1_value));
+    EXPECT_TRUE(aria::isObjString(str1_value));
 
     std::ostringstream oss;
-    aria::print(oss, aria::as_ObjString(str1_value)->toString());
+    aria::print(oss, aria::asObjString(str1_value)->toString());
     EXPECT_STREQ(oss.str().c_str(), msg1);
 }
 
 TEST(ObjectTest, InvalidObjectString)
 {
     aria::Value not_a_string = aria::NanBox::fromNumber(42);
-    EXPECT_FALSE(aria::is_ObjString(not_a_string));
+    EXPECT_FALSE(aria::isObjString(not_a_string));
 }
 
 TEST_F(ObjectTestFixture, ObjectStringCreation)

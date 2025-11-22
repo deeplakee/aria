@@ -27,12 +27,12 @@ public:
     ObjUpvalue *nextUpvalue;
 };
 
-inline bool is_ObjUpvalue(Value value)
+inline bool isObjUpvalue(Value value)
 {
     return isObjType(value, ObjType::UPVALUE);
 }
 
-inline ObjUpvalue *as_ObjUpvalue(Value value)
+inline ObjUpvalue *asObjUpvalue(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjUpvalue *>(NanBox::toObj(value));

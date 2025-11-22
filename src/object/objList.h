@@ -49,12 +49,12 @@ public:
     static void init(GC *_gc, ValueHashTable *builtins);
 };
 
-inline bool is_ObjList(Value value)
+inline bool isObjList(Value value)
 {
     return isObjType(value, ObjType::LIST);
 }
 
-inline ObjList *as_ObjList(Value value)
+inline ObjList *asObjList(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjList *>(NanBox::toObj(value));

@@ -8,14 +8,14 @@
 namespace aria {
 static Value builtin_insert(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjMap(args[-1]);
+    auto self = asObjMap(args[-1]);
     self->map->insert(args[0], args[1]);
     return NanBox::NilValue;
 }
 
 static Value builtin_get(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjMap(args[-1]);
+    auto self = asObjMap(args[-1]);
     Value value = NanBox::NilValue;
     self->map->get(args[0], value);
     return value;
@@ -23,63 +23,63 @@ static Value builtin_get(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_remove(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjMap(args[-1]);
+    auto self = asObjMap(args[-1]);
     self->map->remove(args[0]);
     return NanBox::NilValue;
 }
 
 static Value builtin_has(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjMap(args[-1]);
+    auto self = asObjMap(args[-1]);
     bool result = self->map->has(args[0]);
     return NanBox::fromBool(result);
 }
 
 static Value builtin_size(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjMap(args[-1]);
+    auto self = asObjMap(args[-1]);
     return NanBox::fromNumber(self->map->size());
 }
 
 static Value builtin_empty(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjMap(args[-1]);
+    auto self = asObjMap(args[-1]);
     return NanBox::fromBool(self->map->empty());
 }
 
 static Value builtin_clear(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjMap(args[-1]);
+    auto self = asObjMap(args[-1]);
     self->map->clear();
     return NanBox::NilValue;
 }
 
 static Value builtin_keys(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjMap(args[-1]);
+    auto self = asObjMap(args[-1]);
     ObjList *list = self->map->createKeyList();
     return NanBox::fromObj(list);
 }
 
 static Value builtin_values(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjMap(args[-1]);
+    auto self = asObjMap(args[-1]);
     ObjList *newList = self->map->createValueList();
     return NanBox::fromObj(newList);
 }
 
 Value builtin_pairs(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjMap(args[-1]);
+    auto self = asObjMap(args[-1]);
     ObjList *list = self->map->createPairList();
     return NanBox::fromObj(list);
 }
 
 static Value builtin_equals(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjMap(args[-1]);
+    auto self = asObjMap(args[-1]);
     CHECK_OBJMAP(args[0], Argument);
-    bool result = self->map->equals(as_ObjMap(args[0])->map);
+    bool result = self->map->equals(asObjMap(args[0])->map);
     return NanBox::fromBool(result);
 }
 

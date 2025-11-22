@@ -77,8 +77,8 @@ Value ObjList::getByField(ObjString *name, Value &value)
         return NanBox::TrueValue;
     }
     if (gc->listBuiltins->get(NanBox::fromObj(name), value)) {
-        assert(is_ObjNativeFn(value) && "list builtin method is nativeFn");
-        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjNativeFn(value), gc);
+        assert(isObjNativeFn(value) && "list builtin method is nativeFn");
+        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
         value = NanBox::fromObj(boundMethod);
         gc->cache(value);
         cachedMethods->insert(NanBox::fromObj(name), value);

@@ -54,7 +54,7 @@ struct CallFrame
 
     Value readConstant() { return function->chunk->consts[readWord()]; }
 
-    ObjString *readObjString() { return as_ObjString(readConstant()); }
+    ObjString *readObjString() { return asObjString(readConstant()); }
 
     ObjFunction *function;
     uint8_t *ip;

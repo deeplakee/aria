@@ -4,17 +4,17 @@
 namespace aria {
 
 #define CHECK_OBJLIST(val, what) \
-    if (!is_ObjList(val)) { \
+    if (!isObjList(val)) { \
         return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, #what " must be an list"); \
     }
 
 #define CHECK_OBJMAP(val, what) \
-    if (!is_ObjMap(val)) { \
+    if (!isObjMap(val)) { \
         return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, #what " must be a map"); \
     }
 
 #define CHECK_OBJSTRING(val, what) \
-    if (!is_ObjString(val)) { \
+    if (!isObjString(val)) { \
         return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, #what " must be a map"); \
     }
 

@@ -42,8 +42,8 @@ Value ObjIterator::getByField(ObjString *name, Value &value)
         return NanBox::TrueValue;
     }
     if (gc->iteratorBuiltins->get(NanBox::fromObj(name), value)) {
-        assert(is_ObjNativeFn(value) && "iterator builtin method is nativeFn");
-        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjNativeFn(value), gc);
+        assert(isObjNativeFn(value) && "iterator builtin method is nativeFn");
+        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
         value = NanBox::fromObj(boundMethod);
         gc->cache(value);
         cachedMethods->insert(NanBox::fromObj(name), value);

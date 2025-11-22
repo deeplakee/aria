@@ -58,7 +58,7 @@ void bindBuiltinMethod(
     const Value name_val = NanBox::fromObj(newObjString(name, gc));
     gc->cache(name_val);
     const Value method_val = NanBox::fromObj(
-        newObjNativeFn(FunctionType::METHOD, fn, as_ObjString(name_val), arity, acceptsVarargs, gc));
+        newObjNativeFn(FunctionType::METHOD, fn, asObjString(name_val), arity, acceptsVarargs, gc));
     gc->cache(method_val);
     methodTab->insert(name_val, method_val);
     gc->releaseCache(2);

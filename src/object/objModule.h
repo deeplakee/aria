@@ -30,12 +30,12 @@ public:
     ValueHashTable *module;
 };
 
-inline bool is_ObjModule(Value value)
+inline bool isObjModule(Value value)
 {
     return isObjType(value, ObjType::MODULE);
 }
 
-inline ObjModule *as_ObjModule(Value value)
+inline ObjModule *asObjModule(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjModule *>(NanBox::toObj(value));

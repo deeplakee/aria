@@ -55,12 +55,12 @@ public:
     bool acceptsVarargs;
 };
 
-inline bool is_ObjFunction(Value value)
+inline bool isObjFunction(Value value)
 {
     return isObjType(value, ObjType::FUNCTION);
 }
 
-inline ObjFunction *as_ObjFunction(Value value)
+inline ObjFunction *asObjFunction(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjFunction *>(NanBox::toObj(value));

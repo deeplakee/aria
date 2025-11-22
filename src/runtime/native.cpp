@@ -6,9 +6,9 @@
 #include "runtime/vm.h"
 #include "value/valueArray.h"
 
+#include <cstring>
 #include <ctime>
 #include <random>
-#include <cstring>
 
 namespace aria {
 
@@ -29,7 +29,7 @@ Value Native::_aria_random_(AriaEnv *env, int argCount, Value *args)
 
 Value Native::_aria_println_(AriaEnv *env, int argCount, Value *args)
 {
-    ObjList *list = as_ObjList(args[0]);
+    ObjList *list = asObjList(args[0]);
     String formatStr = valueString((*list->list)[0]);
 
     if (argCount == 1) {
@@ -90,11 +90,11 @@ Value Native::_aria_repr_(AriaEnv *env, int argCount, Value *args)
 
 Value Native::_aria_num_(AriaEnv *env, int argCount, Value *args)
 {
-    if (!is_ObjString(args[0])) {
+    if (!isObjString(args[0])) {
         return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, "argument must be a string");
     }
     try {
-        return NanBox::fromNumber(std::stod(as_ObjString(args[0])->C_str_ref()));
+        return NanBox::fromNumber(std::stod(asObjString(args[0])->C_str_ref()));
     } catch ([[maybe_unused]] const std::exception &e) {
         return env->newException(ErrorCode::RUNTIME_UNKNOWN, "Conversion failed");
     }
@@ -102,10 +102,10 @@ Value Native::_aria_num_(AriaEnv *env, int argCount, Value *args)
 
 Value Native::_aria_bool_(AriaEnv *env, int argCount, Value *args)
 {
-    if (!is_ObjString(args[0])) {
+    if (!isObjString(args[0])) {
         return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, "argument must be a string");
     }
-    ObjString *str = as_ObjString(args[0]);
+    ObjString *str = asObjString(args[0]);
     if (str->length == 4 && memcmp(str->C_str_ref(), "true", 4) == 0) {
         return NanBox::TrueValue;
     }

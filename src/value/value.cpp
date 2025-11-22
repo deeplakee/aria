@@ -97,15 +97,15 @@ bool valuesEqual(Value a, Value b)
     if (NanBox::isNumber(a) && NanBox::isNumber(b)) {
         return NanBox::toNumber(a) == NanBox::toNumber(b);
     }
-    if (is_ObjList(a) && is_ObjList(b)) {
-        return as_ObjList(a)->list->equals(as_ObjList(b)->list);
+    if (isObjList(a) && isObjList(b)) {
+        return asObjList(a)->list->equals(asObjList(b)->list);
     }
-    if (is_ObjMap(a) && is_ObjMap(b)) {
-        return as_ObjMap(a)->map->equals(as_ObjMap(b)->map);
+    if (isObjMap(a) && isObjMap(b)) {
+        return asObjMap(a)->map->equals(asObjMap(b)->map);
     }
-    if (is_ObjInstance(a) && is_ObjInstance(b)) {
-        ObjInstance *aInstance = as_ObjInstance(a);
-        ObjInstance *bInstance = as_ObjInstance(b);
+    if (isObjInstance(a) && isObjInstance(b)) {
+        ObjInstance *aInstance = asObjInstance(a);
+        ObjInstance *bInstance = asObjInstance(b);
         if (aInstance->klass != bInstance->klass) {
             return false;
         }

@@ -73,8 +73,8 @@ String ObjString::representation(ValueStack *printStack)
 Value ObjString::getByField(ObjString *name, Value &value)
 {
     if (gc->stringBuiltins->get(NanBox::fromObj(name), value)) {
-        assert(is_ObjNativeFn(value) && "string builtin method is nativeFn");
-        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjNativeFn(value), gc);
+        assert(isObjNativeFn(value) && "string builtin method is nativeFn");
+        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
         value = NanBox::fromObj(boundMethod);
         return NanBox::TrueValue;
     }

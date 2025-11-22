@@ -63,8 +63,8 @@ Value ObjMap::getByField(ObjString *name, Value &value)
         return NanBox::TrueValue;
     }
     if (gc->mapBuiltins->get(NanBox::fromObj(name), value)) {
-        assert(is_ObjNativeFn(value) && "map builtin method is nativeFn");
-        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjNativeFn(value), gc);
+        assert(isObjNativeFn(value) && "map builtin method is nativeFn");
+        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
         value = NanBox::fromObj(boundMethod);
         gc->cache(value);
         cachedMethods->insert(NanBox::fromObj(name), value);

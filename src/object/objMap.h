@@ -46,12 +46,12 @@ public:
     static void init(GC *_gc,ValueHashTable *builtins);
 };
 
-inline bool is_ObjMap(Value value)
+inline bool isObjMap(Value value)
 {
     return isObjType(value, ObjType::MAP);
 }
 
-inline ObjMap *as_ObjMap(Value value)
+inline ObjMap *asObjMap(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjMap *>(NanBox::toObj(value));

@@ -36,12 +36,12 @@ public:
     ValueHashTable *cachedMethods;
 };
 
-inline bool is_ObjInstance(Value value)
+inline bool isObjInstance(Value value)
 {
     return isObjType(value, ObjType::INSTANCE);
 }
 
-inline ObjInstance *as_ObjInstance(Value value)
+inline ObjInstance *asObjInstance(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjInstance *>(NanBox::toObj(value));

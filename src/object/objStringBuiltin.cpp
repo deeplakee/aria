@@ -11,13 +11,13 @@ namespace aria {
 
 static Value builtin_length(AriaEnv *env, int argCount, Value *args)
 {
-    ObjString *self = as_ObjString(args[-1]);
+    ObjString *self = asObjString(args[-1]);
     return NanBox::fromNumber(static_cast<double>(self->length));
 }
 
 static Value builtin_at(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     CHECK_INTEGER(args[0], index, Argument);
     CHECK_RANGE(index, 0, self->length, Index);
     char a = self->C_str_ref()[index];
@@ -26,7 +26,7 @@ static Value builtin_at(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_substr(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     CHECK_INTEGER(args[0], start, Start index);
     CHECK_INTEGER(args[1], end, End index);
     auto size = self->length;
@@ -44,9 +44,9 @@ static Value builtin_substr(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_findstr(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     CHECK_OBJSTRING(args[0], Argument);
-    const ObjString *substr = as_ObjString(args[0]);
+    const ObjString *substr = asObjString(args[0]);
     const char *result = strstr(self->C_str_ref(), substr->C_str_ref());
     if (result == nullptr) {
         return NanBox::fromNumber(-1);
@@ -56,9 +56,9 @@ static Value builtin_findstr(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_concat(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     CHECK_OBJSTRING(args[0], Argument);
-    const ObjString *b = as_ObjString(args[0]);
+    const ObjString *b = asObjString(args[0]);
     ObjString *concatenatedStr = concatenateString(self, b, env->gc);
     if (concatenatedStr == nullptr) {
         fatalError(
@@ -70,9 +70,9 @@ static Value builtin_concat(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_startWith(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     CHECK_OBJSTRING(args[0], Argument);
-    const ObjString *substr = as_ObjString(args[0]);
+    const ObjString *substr = asObjString(args[0]);
     if (substr->length > self->length) {
         return NanBox::FalseValue;
     }
@@ -83,9 +83,9 @@ static Value builtin_startWith(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_endWith(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     CHECK_OBJSTRING(args[0], Argument);
-    const ObjString *substr = as_ObjString(args[0]);
+    const ObjString *substr = asObjString(args[0]);
     if (substr->length > self->length) {
         return NanBox::FalseValue;
     }
@@ -100,7 +100,7 @@ static Value builtin_endWith(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_reverse(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     auto length = self->length;
     const char *src = self->C_str_ref();
     BUILTIN_INIT_BUFFER(dst, length);
@@ -114,7 +114,7 @@ static Value builtin_reverse(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_upper(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     auto length = self->length;
     const char *src = self->C_str_ref();
     BUILTIN_INIT_BUFFER(dst, length);
@@ -128,7 +128,7 @@ static Value builtin_upper(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_lower(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     auto length = self->length;
     const char *src = self->C_str_ref();
     BUILTIN_INIT_BUFFER(dst, length);
@@ -142,7 +142,7 @@ static Value builtin_lower(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_trim(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     const char *start = self->C_str_ref();
     while (*start && isspace(*start)) {
         start++;
@@ -161,7 +161,7 @@ static Value builtin_trim(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_ltrim(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     const char *start = self->C_str_ref();
     while (*start && isspace(*start)) {
         start++;
@@ -177,7 +177,7 @@ static Value builtin_ltrim(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_rtrim(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     const char *start = self->C_str_ref();
     const char *end = self->C_str_ref() + self->length - 1;
     while (end > start && isspace(*end)) {
@@ -193,13 +193,13 @@ static Value builtin_rtrim(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_split(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjString(args[-1]);
+    auto self = asObjString(args[-1]);
     auto gc = env->gc;
     CHECK_OBJSTRING(args[0], Argument);
     if (self->length == 0) {
         return NanBox::fromObj(NEW_OBJLIST());
     }
-    const ObjString *delim = as_ObjString(args[0]);
+    const ObjString *delim = asObjString(args[0]);
     const char *srcStr = self->C_str_ref();
     const char *delimStr = delim->C_str_ref();
     ObjList *objlist = NEW_OBJLIST();
@@ -245,8 +245,8 @@ static Value builtin_split(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin___add__(AriaEnv *env, int argCount, Value *args)
 {
-    const ObjString *left = as_ObjString(args[-1]);
-    const ObjString *right = as_ObjString(args[0]);
+    const ObjString *left = asObjString(args[-1]);
+    const ObjString *right = asObjString(args[0]);
     auto concatenatedStr = concatenateString(left, right, env->gc);
     if (concatenatedStr == nullptr) {
         fatalError(

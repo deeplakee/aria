@@ -50,10 +50,10 @@ Value ObjInstance::getByField(ObjString *name, Value &value)
     }
     if (klass->methods.get(NanBox::fromObj(name), value)) {
         ObjBoundMethod *boundMethod = nullptr;
-        if (is_ObjNativeFn(value)) {
-            boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjNativeFn(value), gc);
+        if (isObjNativeFn(value)) {
+            boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
         } else {
-            boundMethod = newObjBoundMethod(NanBox::fromObj(this), as_ObjFunction(value), gc);
+            boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjFunction(value), gc);
         }
         value = NanBox::fromObj(boundMethod);
         gc->cache(value);

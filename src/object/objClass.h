@@ -31,12 +31,12 @@ public:
     ObjFunction *initMethod;
 };
 
-inline bool is_ObjClass(Value value)
+inline bool isObjClass(Value value)
 {
     return isObjType(value, ObjType::CLASS);
 }
 
-inline ObjClass *as_ObjClass(Value value)
+inline ObjClass *asObjClass(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjClass *>(NanBox::toObj(value));

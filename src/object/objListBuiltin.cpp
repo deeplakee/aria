@@ -8,36 +8,36 @@ namespace aria {
 
 static Value builtin_append(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     self->list->push(args[0]);
     return NanBox::NilValue;
 }
 
 static Value builtin_extend(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     CHECK_OBJLIST(args[0], Argument);
     env->gc->cache(args[0]);
-    self->list->extend(as_ObjList(args[0])->list);
+    self->list->extend(asObjList(args[0])->list);
     env->gc->releaseCache(1);
     return NanBox::NilValue;
 }
 
 static Value builtin_size(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     return NanBox::fromNumber(self->list->size());
 }
 
 static Value builtin_empty(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     return NanBox::fromBool(self->list->empty());
 }
 
 static Value builtin_pop(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     if (self->list->empty()) {
         return env->newException(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "Pop from empty list");
     }
@@ -47,7 +47,7 @@ static Value builtin_pop(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_insert(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     CHECK_INTEGER(args[0], index, Argument);
     Value value = args[1];
     bool result = self->list->insert(index, value);
@@ -56,7 +56,7 @@ static Value builtin_insert(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_remove(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     CHECK_INTEGER(args[0], index, Argument);
     CHECK_RANGE(index, 0, self->list->size(), Index);
     bool result = self->list->remove(index);
@@ -65,7 +65,7 @@ static Value builtin_remove(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_at(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     CHECK_INTEGER(args[0], index, Argument);
     CHECK_RANGE(index, 0, self->list->size(), Index);
     return (*self->list)[index];
@@ -73,14 +73,14 @@ static Value builtin_at(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_clear(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     self->list->clear();
     return NanBox::NilValue;
 }
 
 static Value builtin_slice(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     CHECK_INTEGER(args[0], start, Start index);
     CHECK_INTEGER(args[1], end, End index);
 
@@ -97,16 +97,16 @@ static Value builtin_slice(AriaEnv *env, int argCount, Value *args)
 
 static Value builtin_reverse(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     self->list->reverse();
     return NanBox::NilValue;
 }
 
 static Value builtin_equals(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = as_ObjList(args[-1]);
+    auto self = asObjList(args[-1]);
     CHECK_OBJLIST(args[0], Argument);
-    bool result = self->list->equals(as_ObjList(args[0])->list);
+    bool result = self->list->equals(asObjList(args[0])->list);
     return NanBox::fromBool(result);
 }
 

@@ -40,12 +40,12 @@ public:
     bool acceptsVarargs;
 };
 
-inline bool is_ObjNativeFn(Value value)
+inline bool isObjNativeFn(Value value)
 {
     return isObjType(value, ObjType::NATIVE_FN);
 }
 
-inline ObjNativeFn *as_ObjNativeFn(Value value)
+inline ObjNativeFn *asObjNativeFn(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjNativeFn *>(NanBox::toObj(value));
@@ -54,9 +54,9 @@ inline ObjNativeFn *as_ObjNativeFn(Value value)
 #endif
 }
 
-inline NativeFn_t as_NativeFn(Value value)
+inline NativeFn_t asNativeFn(Value value)
 {
-    return as_ObjNativeFn(value)->function;
+    return asObjNativeFn(value)->function;
 }
 
 ObjNativeFn *newObjNativeFn(

@@ -34,12 +34,12 @@ public:
     ObjNativeFn *native_method;
 };
 
-inline bool is_ObjBoundMethod(Value value)
+inline bool isObjBoundMethod(Value value)
 {
     return isObjType(value, ObjType::BOUND_METHOD);
 }
 
-inline ObjBoundMethod *as_ObjBoundMethod(Value value)
+inline ObjBoundMethod *asObjBoundMethod(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjBoundMethod *>(NanBox::toObj(value));

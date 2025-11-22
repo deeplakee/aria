@@ -36,12 +36,12 @@ public:
     static void init(GC *_gc, ValueHashTable *builtins);
 };
 
-inline bool is_ObjIterator(Value value)
+inline bool isObjIterator(Value value)
 {
     return isObjType(value, ObjType::ITERATOR);
 }
 
-inline ObjIterator *as_ObjIterator(Value value)
+inline ObjIterator *asObjIterator(Value value)
 {
 #ifdef DEBUG_MODE
     return dynamic_cast<ObjIterator *>(NanBox::toObj(value));
