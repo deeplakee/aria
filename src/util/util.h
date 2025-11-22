@@ -45,16 +45,6 @@ void *toVoidPtr(T ptr)
     return static_cast<void *>(ptr);
 }
 
-#define var_to_str(var) #var
-
-#if defined(__GNUC__) || defined(__clang__)
-#define likely(x) __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
-#else
-#define likely(x) (x)
-#define unlikely(x) (x)
-#endif
-
 inline bool isDigit(char ch)
 {
     return isdigit(ch);

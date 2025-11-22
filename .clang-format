@@ -3,6 +3,7 @@ BasedOnStyle: LLVM
 
 AccessModifierOffset: -4
 AlignAfterOpenBracket: AlwaysBreak
+AlignConsecutiveMacros: true
 AlignConsecutiveAssignments: None
 AlignConsecutiveDeclarations: None
 AlignEscapedNewlines: DontAlign
@@ -66,6 +67,7 @@ IndentCaseLabels: false
 IndentWidth: 4
 IndentWrappedFunctionNames: false
 InsertBraces: false
+IndentPPDirectives: BeforeHash
 JavaScriptQuotes: Leave
 JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: false

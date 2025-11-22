@@ -111,6 +111,7 @@ add_library(aria_core STATIC
         src/debugger/breakpoint.cpp
         src/debugger/breakpoint.h
         src/memory/allocator.h
+        src/sys.h
 )
 
 # 设置头文件路径
@@ -133,20 +134,20 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_definitions(aria_core PRIVATE DISABLE_DEBUG_STRESS_GC)
     target_compile_definitions(aria_core PRIVATE DISABLE_DEBUG_LOG_GC)
     target_compile_definitions(aria_core PRIVATE DISABLE_DEBUG_PRINT_IMPORT_MODULE_PATH)
-     set(RELEASE_CXX_FLAGS
-             -O3
-             -DNDEBUG
-             -march=native
-             -mtune=native
-             -flto
-             -fno-stack-protector
-             -fomit-frame-pointer
-     )
-     set(RELEASE_LINK_FLAGS
-             -flto
-             -s
-             -Wl,--gc-sections
-     )
+    set(RELEASE_CXX_FLAGS
+            -O3
+            -DNDEBUG
+            -march=native
+            -mtune=native
+            -flto
+            -fno-stack-protector
+            -fomit-frame-pointer
+    )
+    set(RELEASE_LINK_FLAGS
+            -flto
+            -s
+            -Wl,--gc-sections
+    )
 endif ()
 
 # 链接库

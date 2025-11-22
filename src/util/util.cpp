@@ -1,18 +1,21 @@
 #include "util/util.h"
 
 #include "aria.h"
+#include "sys.h"
+
 #include <filesystem>
 #include <fstream>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
-#ifdef _WIN32
-#include <windows.h>
-#elif defined(__APPLE__)
-#include <mach-o/dyld.h> // macOS 专用 API
-#else
-#include <limits.h> // PATH_MAX
-#include <unistd.h> // Linux/Unix readlink
+
+#if defined(SYS_WINDOWS)
+    #include <windows.h>
+#elif defined(SYS_MACOS) || defined(SYS_IOS)
+    #include <mach-o/dyld.h>
+#elif defined(SYS_LINUX) || defined(SYS_ANDROID) || defined(SYS_FREEBSD)
+    #include <limits.h> // PATH_MAX
+    #include <unistd.h> // Linux/Unix readlink
 #endif
 
 namespace aria {
@@ -71,19 +74,19 @@ String getProgramDirectory()
     }
 
     String path;
-#ifdef _WIN32
+#if defined(SYS_WINDOWS)
     char buffer[MAX_PATH];
     DWORD length = GetModuleFileNameA(nullptr, buffer, MAX_PATH);
     if (length == 0 || length >= MAX_PATH) {
         return path;
     }
-#elif defined(__APPLE__)
+#elif defined(SYS_MACOS) || defined(SYS_IOS)
     char buffer[PATH_MAX];
     uint32_t length = PATH_MAX;
     if (_NSGetExecutablePath(buffer, &length) != 0) {
         return path;
     }
-#else
+#elif defined(SYS_LINUX) || defined(SYS_ANDROID) || defined(SYS_FREEBSD)
     char buffer[PATH_MAX];
     ssize_t length = readlink("/proc/self/exe", buffer, PATH_MAX);
     if (length <= 0 || length >= PATH_MAX) {

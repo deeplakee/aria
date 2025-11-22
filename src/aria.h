@@ -1,6 +1,8 @@
 #ifndef ARIA_ARIA_H
 #define ARIA_ARIA_H
 
+#include "sys.h"
+
 namespace aria {
 
 class AriaVM;
@@ -8,28 +10,18 @@ class AriaVM;
 using AriaEnv = AriaVM;
 
 inline constexpr const char *platform =
-#ifdef _WIN32
-#ifdef _WIN64
-    "windows64"
-#else
-    "windows32"
-#endif
-#elif defined(__APPLE__) && defined(__MACH__)
-#include "TargetConditionals.h"
-
-#if TARGET_OS_IPHONE
-    "ios"
-#elif TARGET_OS_MAC
-    "macos"
-#else
-    "apple_unknown"
-#endif
-#elif __ANDROID__
-    "android"
-#elif __linux__
+#if defined(SYS_WINDOWS)
+    "windows"
+#elif defined(SYS_LINUX)
     "linux"
-#elif __unix__
-    "unix"
+#elif defined(SYS_MACOS)
+    "macos"
+#elif defined(SYS_FREEBSD)
+    "freebsd"
+#elif defined(SYS_ANDROID)
+    "android"
+#elif defined(SYS_IOS)
+    "ios"
 #else
     "unknown_platform"
 #endif

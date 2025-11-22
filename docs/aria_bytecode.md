@@ -1,5 +1,3 @@
-
-
 ------
 
 # 🧩 aria bytecode
@@ -169,7 +167,8 @@ No Effect.
 
 #### Work
 
-Close all open upvalues referencing local variables at or above the current stack top (This is usually emitted before `RETURN` to ensure closures capture correct values).
+Close all open upvalues referencing local variables at or above the current stack top (This is usually emitted before
+`RETURN` to ensure closures capture correct values).
 
 #### Stack Effect
 
@@ -187,7 +186,7 @@ No Effect.
 #### Work
 
 Define a new global variable in the VM’s global table.
- The variable name is fetched from the constant pool, and the top of stack is used as the value.
+The variable name is fetched from the constant pool, and the top of stack is used as the value.
 
 #### Stack Effect
 
@@ -243,7 +242,7 @@ No Effect.
 #### Work
 
 Pop an object from the stack, retrieve the field value using the field name (from constant pool),
- push the retrieved value back into stack.
+push the retrieved value back into stack.
 
 #### Stack Effect
 
@@ -263,8 +262,8 @@ pop(obj) + push(field_value)
 #### Work
 
 Read `value` from the third-from-top slot, `object` from the second-from-top, and the field name (from constant pool),
- sssign `object.field = value`,
- pop only the `object`.
+sssign `object.field = value`,
+pop only the `object`.
 
 #### Stack Effect
 
@@ -284,8 +283,8 @@ pop(obj)
 #### Work
 
 Read `index` from the top of the stack and `container` from the second-from-top slot.
- Retrieve the element value by evaluating `container[index]`,
- then pop both `index` and `container`, and push the retrieved value onto the stack.
+Retrieve the element value by evaluating `container[index]`,
+then pop both `index` and `container`, and push the retrieved value onto the stack.
 
 #### Stack Effect
 
@@ -304,15 +303,14 @@ pop(2) + push(value)
 
 #### Work
 
-Read `value` from the third-from-top stack slot, `container` from the second-from-top, and `index` from the top; perform the assignment `container[index] = value`, then pop the `container` and `index`, leaving `value` on the stack.
+Read `value` from the third-from-top stack slot, `container` from the second-from-top, and `index` from the top; perform
+the assignment `container[index] = value`, then pop the `container` and `index`, leaving `value` on the stack.
 
 #### Stack Effect
 
 ```
 pop(2)
 ```
-
-
 
 ------
 
@@ -332,7 +330,7 @@ pop(2)
 #### Work
 
 Pop two operands `b` and `a` from the stack,
- compare them for equality (`a == b`), and push the result (boolean).
+compare them for equality (`a == b`), and push the result (boolean).
 
 #### Stack Effect
 
@@ -352,8 +350,8 @@ pop(2) + push(result)
 #### Work
 
 Pop two operands `b` and `a`,
- compare them for inequality (`a != b`),
- and push the boolean result.
+compare them for inequality (`a != b`),
+and push the boolean result.
 
 #### Stack Effect
 
@@ -373,8 +371,8 @@ pop(2) + push(result)
 #### Work
 
 Pop two operands `b` and `a`,
- compare whether `a > b`,
- and push the boolean result.
+compare whether `a > b`,
+and push the boolean result.
 
 #### Stack Effect
 
@@ -394,8 +392,8 @@ pop(2) + push(result)
 #### Work
 
 Pop two operands `b` and `a`,
- compare whether `a >= b`,
- and push the boolean result.
+compare whether `a >= b`,
+and push the boolean result.
 
 #### Stack Effect
 
@@ -415,8 +413,8 @@ pop(2) + push(result)
 #### Work
 
 Pop two operands `b` and `a`,
- compare whether `a < b`,
- and push the boolean result.
+compare whether `a < b`,
+and push the boolean result.
 
 #### Stack Effect
 
@@ -436,8 +434,8 @@ pop(2) + push(result)
 #### Work
 
 Pop two operands `b` and `a`,
- compare whether `a <= b`,
- and push the boolean result.
+compare whether `a <= b`,
+and push the boolean result.
 
 #### Stack Effect
 
@@ -457,8 +455,8 @@ pop(2) + push(result)
 #### Work
 
 Pop two operands `b` and `a` from the stack,
- perform addition (`a + b`) if both are numeric;
- if either is a string, perform concatenation.
+perform addition (`a + b`) if both are numeric;
+if either is a string, perform concatenation.
 
 #### Stack Effect
 
@@ -478,8 +476,8 @@ pop(2) + push(sum or concatenation)
 #### Work
 
 Pop two operands `b` and `a`,
- compute numeric subtraction (`a - b`),
- and push the result.
+compute numeric subtraction (`a - b`),
+and push the result.
 
 #### Stack Effect
 
@@ -499,8 +497,8 @@ pop(2) + push(result)
 #### Work
 
 Pop two operands `b` and `a`,
- compute multiplication (`a * b`),
- and push the result.
+compute multiplication (`a * b`),
+and push the result.
 
 #### Stack Effect
 
@@ -520,8 +518,8 @@ pop(2) + push(result)
 #### Work
 
 Pop two operands `b` and `a`,
- check for division by zero,
- then compute division (`a / b`).
+check for division by zero,
+then compute division (`a / b`).
 
 #### Stack Effect
 
@@ -541,8 +539,8 @@ pop(2) + push(result)
 #### Work
 
 Pop two operands `b` and `a`,
- compute remainder (`a % b`),
- and push the result.
+compute remainder (`a % b`),
+and push the result.
 
 #### Stack Effect
 
@@ -562,8 +560,8 @@ pop(2) + push(result)
 #### Work
 
 Pop one operand `a`,
- perform boolean negation (`!a`),
- and push the result.
+perform boolean negation (`!a`),
+and push the result.
 
 #### Stack Effect
 
@@ -583,16 +581,14 @@ pop() + push(result)
 #### Work
 
 Pop one operand `a`,
- perform numeric negation (`-a`),
- and push the result.
+perform numeric negation (`-a`),
+and push the result.
 
 #### Stack Effect
 
 ```
 pop() + push(result)
 ```
-
-
 
 ------
 
@@ -650,7 +646,7 @@ pop(N)
 #### Work
 
 Pop the top value from the stack, convert it to a string,
- and print it to standard output.
+and print it to standard output.
 
 #### Stack Effect
 
@@ -733,7 +729,7 @@ none
 #### Work
 
 Pop the top value `cond`.
- If `isTruthy(cond)` is true, jump **backward** by `offset`.
+If `isTruthy(cond)` is true, jump **backward** by `offset`.
 
 #### Stack Effect
 
@@ -753,7 +749,7 @@ pop(1)
 #### Work
 
 Check top value `cond` (without popping).
- If `isTruthy(cond)` is true, jump **backward** by `offset`.
+If `isTruthy(cond)` is true, jump **backward** by `offset`.
 
 #### Stack Effect
 
@@ -771,7 +767,7 @@ No Effect.
 #### Work
 
 Pop the top value `cond`.
- If `isFalsy(cond)` is true, jump **backward** by `offset`.
+If `isFalsy(cond)` is true, jump **backward** by `offset`.
 
 #### Stack Effect
 
@@ -791,7 +787,7 @@ pop(1)
 #### Work
 
 Check top value `cond` (without popping).
- If `isFalsy(cond)` is true, jump **backward** by `offset`.
+If `isFalsy(cond)` is true, jump **backward** by `offset`.
 
 #### Stack Effect
 
@@ -804,7 +800,7 @@ No Effect.
 ## 📞 Group 5 — Function Call & Closure Creation (40–41)
 
 这组指令是虚拟机的核心之一，控制函数调用栈帧、闭包捕获等运行时机制。
- 它们直接对应编译器生成的函数调用和 lambda（闭包）表达式。
+它们直接对应编译器生成的函数调用和 lambda（闭包）表达式。
 
 ------
 
@@ -818,14 +814,16 @@ No Effect.
 #### Work
 
 Initiate a function or callable invocation.
- The callee is located below the top `argCount` arguments on the stack.
- If the callee is a user-defined function, a new call frame is created and execution continues within that function’s bytecode.
- If the callee is a native function or callable object, it executes directly and may later adjust the stack and push a return value.
+The callee is located below the top `argCount` arguments on the stack.
+If the callee is a user-defined function, a new call frame is created and execution continues within that function’s
+bytecode.
+If the callee is a native function or callable object, it executes directly and may later adjust the stack and push a
+return value.
 
 #### Stack Effect
 
 Temporarily extends the active frame for the call.
- Actual stack cleanup (removing the callee and arguments, and pushing the return value) occurs after the call completes.
+Actual stack cleanup (removing the callee and arguments, and pushing the return value) occurs after the call completes.
 
 ------
 
@@ -839,12 +837,13 @@ Temporarily extends the active frame for the call.
 #### Work
 
 Read a function object from the constant pool.
- For each upvalue entry emitted by the compiler, read `isLocal` and `index` and resolve the upvalue as follows:
+For each upvalue entry emitted by the compiler, read `isLocal` and `index` and resolve the upvalue as follows:
 
 - If `isLocal` is true, capture the local variable at `frame->stakBase + index` by calling `captureUpvalue(...)`.
 - Otherwise, reference the parent function’s upvalue at `frame->function->upvalues[index]`.
 
-Wire the resolved upvalues into the function/closure upvalue slots so the function can access captured variables, then push the resulting closure/function value onto the stack.
+Wire the resolved upvalues into the function/closure upvalue slots so the function can access captured variables, then
+push the resulting closure/function value onto the stack.
 
 #### Stack Effect
 
@@ -852,14 +851,12 @@ No Effect.
 
 #### Notes
 
-
-
 ------
 
 ## 🏗️ Group 6 — Class & Method Definition (42–47)
 
 这些指令控制 **类对象**、**继承关系** 与 **方法绑定** 的创建过程，
- 是 Aria VM 实现面向对象特性的核心。
+是 Aria VM 实现面向对象特性的核心。
 
 ------
 
@@ -873,7 +870,7 @@ No Effect.
 #### Work
 
 Create a new **class object** with the given name.
- The class initially has no superclass or methods.
+The class initially has no superclass or methods.
 
 #### Stack Effect
 
@@ -893,7 +890,8 @@ push(classObj)
 #### Work
 
 Pop the superclass object from the stack.
- Copy methods and metadata from the popped `superclass` into the class object immediately below it on the stack (`class`).
+Copy methods and metadata from the popped `superclass` into the class object immediately below it on the stack (
+`class`).
 
 #### Stack Effect
 
@@ -913,7 +911,7 @@ pop(superclass)
 #### Work
 
 Pop the method object from the top of the stack.
- Bind this method to the class object immediately below it on the stack (`class`).
+Bind this method to the class object immediately below it on the stack (`class`).
 
 #### Stack Effect
 
@@ -933,7 +931,7 @@ pop(method)
 #### Work
 
 Pop the initializer method (constructor) from the stack.
- Bind it as the `init` method of the class object immediately below it on the stack (`class`).
+Bind it as the `init` method of the class object immediately below it on the stack (`class`).
 
 #### Stack Effect
 
@@ -948,11 +946,9 @@ pop(initmethod)
 #### Instruction
 
 - **Opcode (8-bit):** `0x2E`
-- **Operands:** 
+- **Operands:**
 
 #### Work
-
-
 
 #### Stack Effect
 
@@ -980,7 +976,7 @@ object.method(args...)
 #### Work
 
 Load a method with the given name from the superclass of the current class.
- Pop the instance object, then push the resolved method.
+Pop the instance object, then push the resolved method.
 
 #### Stack Effect
 
@@ -988,14 +984,12 @@ Load a method with the given name from the superclass of the current class.
 pop(instance) + push(method)
 ```
 
-
-
 ------
 
 ## 🏗️ Group 7 — Collection Construction (48–49)
 
 这些指令用于创建 **列表（list）** 和 **字典（map）**，
- 是 Aria VM 支持集合类型的核心操作。
+是 Aria VM 支持集合类型的核心操作。
 
 ------
 
@@ -1009,8 +1003,8 @@ pop(instance) + push(method)
 #### Work
 
 Pop `n` values from the stack (in order),
- create a **list object** containing these elements,
- then push the list back onto the stack.
+create a **list object** containing these elements,
+then push the list back onto the stack.
 
 #### Stack Effect
 
@@ -1030,7 +1024,7 @@ pop(n) → push(list)
 #### Work
 
 Pop `2*n` values from the stack, treating them as consecutive key-value pairs.
- The order on the stack is:
+The order on the stack is:
 
 ```
 ..., key1, value1, key2, value2, ..., keyn, valuen
@@ -1043,8 +1037,6 @@ Construct a **dictionary (map) object** using these pairs, then push the resulti
 ```
 pop(2*n) → push(map)
 ```
-
-
 
 ------
 
@@ -1064,8 +1056,8 @@ pop(2*n) → push(map)
 #### Work
 
 Load a module by its name string from the constant pool.
- If the module is not yet loaded, the VM compiles and executes it,
- then pushes the module object onto the stack.
+If the module is not yet loaded, the VM compiles and executes it,
+then pushes the module object onto the stack.
 
 #### Stack Effect
 
@@ -1085,7 +1077,7 @@ push(module)
 #### Work
 
 Pop a value from the stack, and attempt to get its **iterator object**.
- Push the resulting iterator back onto the stack.
+Push the resulting iterator back onto the stack.
 
 #### Stack Effect
 
@@ -1105,8 +1097,8 @@ pop(1) → push(iter)
 #### Work
 
 Pop the iterator object,
- check whether there is a next element available.
- Push a boolean (`true` / `false`) indicating the result.
+check whether there is a next element available.
+Push a boolean (`true` / `false`) indicating the result.
 
 #### Stack Effect
 
@@ -1126,8 +1118,8 @@ pop(1) → push(bool)
 #### Work
 
 Pop the iterator object,
- retrieve the **next value** from it,
- and push both the iterator (for reuse) and the value.
+retrieve the **next value** from it,
+and push both the iterator (for reuse) and the value.
 
 #### Stack Effect
 
@@ -1135,14 +1127,12 @@ Pop the iterator object,
 pop(1) → push(iter, next_val)
 ```
 
-
-
 ------
 
 ## ⚙️ Group 9 — Exception Handling & Control Flow Termination (54–57)
 
 这些指令负责 **异常框架（Eframe）** 管理、**异常传播** 以及 **函数返回**。
- 它们是虚拟机实现 `try / catch / throw` 的核心部分。
+它们是虚拟机实现 `try / catch / throw` 的核心部分。
 
 ------
 
@@ -1179,7 +1169,7 @@ No Effect.
 #### Work
 
 Exit the current exception frame.
- Pop the topmost `Eframe` from the exception stack.
+Pop the topmost `Eframe` from the exception stack.
 
 #### Stack Effect
 
@@ -1197,9 +1187,9 @@ No Effect.
 #### Work
 
 Pop the top value (the exception object or message) from the stack,
- mark the VM as in `THROWING` state,
- and unwind stack frames until a matching exception frame is found.
- Then jump to the exception handler recorded in that frame.
+mark the VM as in `THROWING` state,
+and unwind stack frames until a matching exception frame is found.
+Then jump to the exception handler recorded in that frame.
 
 #### Stack Effect
 
@@ -1219,18 +1209,16 @@ pop(1)
 #### Work
 
 Pop the top value as the **return result**.
- Close any active upvalues in the current frame.
- Pop the current **CallFrame**.
- Push the return result onto the caller’s stack.
- If this is the top-level frame (script or function object), terminate execution and return the result.
+Close any active upvalues in the current frame.
+Pop the current **CallFrame**.
+Push the return result onto the caller’s stack.
+If this is the top-level frame (script or function object), terminate execution and return the result.
 
 #### Stack Effect
 
 ```
 pop(1) → (restore caller frame) → push(result)/return result
 ```
-
-
 
 ------
 

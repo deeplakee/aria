@@ -1,8 +1,9 @@
 # 🧭 Aria Debugger
 
 **Aria Debugger** is an interactive debugger (`ariadb`) for the Aria Virtual Machine.
- It allows you to set breakpoints, step through code, and inspect execution state during script execution.
- The debugger checks for breakpoints before every VM instruction (via the `hookBeforeExec` hook), enabling fine-grained debugging control.
+It allows you to set breakpoints, step through code, and inspect execution state during script execution.
+The debugger checks for breakpoints before every VM instruction (via the `hookBeforeExec` hook), enabling fine-grained
+debugging control.
 
 ------
 
@@ -33,7 +34,8 @@
 ```
 
 - **AriaDebugger** is attached to an **AriaVM** instance.
-- Before each bytecode instruction executes, the VM calls `maybeDebugStep` to determine whether to enter `hookBeforeExec`.
+- Before each bytecode instruction executes, the VM calls `maybeDebugStep` to determine whether to enter
+  `hookBeforeExec`.
 - If a breakpoint is hit or single-step mode is active, the debugger enters **REPL mode**.
 - Users can interact via command-line commands such as `break`, `step`, or `continue`.
 
@@ -44,7 +46,7 @@
 At the `(ariadb)` prompt, you can enter the following commands:
 
 | Command                 | Description                                  |
-| ----------------------- | -------------------------------------------- |
+|-------------------------|----------------------------------------------|
 | `help`                  | Show available commands                      |
 | `break <line>`          | Set a breakpoint in the current file         |
 | `break <module>:<line>` | Set a breakpoint in the specified module     |

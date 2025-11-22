@@ -9,9 +9,9 @@ static_assert(sizeof(void *) == 8, "This program requires a 64-bit system.");
 #include <memory>
 #include <stack>
 #include <string>
-#include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace aria {
 
@@ -44,57 +44,57 @@ template<typename... Args>
 using Tuple = std::tuple<Args...>;
 
 #ifdef DEBUG_MODE
-#define DEBUG_TRACE_EXECUTION
-#define DEBUG_PRINT_COMPILED_CODE
-#define DEBUG_PRINT_CODE_AST
-#define DEBUG_PRINT_SRC_CODE
-#define DEBUG_TRACE_STRING_OBJECT_CREATE
-#define DEBUG_STRESS_GC
-#define DEBUG_PRINT_IMPORT_MODULE_PATH
-#define DEBUG_LOG_GC
-#include <cassert>
+    #define DEBUG_TRACE_EXECUTION
+    #define DEBUG_PRINT_COMPILED_CODE
+    #define DEBUG_PRINT_CODE_AST
+    #define DEBUG_PRINT_SRC_CODE
+    #define DEBUG_TRACE_STRING_OBJECT_CREATE
+    #define DEBUG_STRESS_GC
+    #define DEBUG_PRINT_IMPORT_MODULE_PATH
+    #define DEBUG_LOG_GC
+    #include <cassert>
 #endif
 
 #ifdef DISABLE_DEBUG_TRACE_EXECUTION
-#ifdef DEBUG_TRACE_EXECUTION
-#undef DEBUG_TRACE_EXECUTION
-#endif
+    #ifdef DEBUG_TRACE_EXECUTION
+        #undef DEBUG_TRACE_EXECUTION
+    #endif
 #endif
 
 #ifdef DISABLE_DEBUG_PRINT_COMPILED_CODE
-#ifdef DEBUG_PRINT_COMPILED_CODE
-#undef DEBUG_PRINT_COMPILED_CODE
-#endif
+    #ifdef DEBUG_PRINT_COMPILED_CODE
+        #undef DEBUG_PRINT_COMPILED_CODE
+    #endif
 #endif
 
 #ifdef DISABLE_DEBUG_PRINT_CODE_AST
-#ifdef DEBUG_PRINT_CODE_AST
-#undef DEBUG_PRINT_CODE_AST
-#endif
+    #ifdef DEBUG_PRINT_CODE_AST
+        #undef DEBUG_PRINT_CODE_AST
+    #endif
 #endif
 
 #ifdef DISABLE_DEBUG_PRINT_SRC_CODE
-#ifdef DEBUG_PRINT_SRC_CODE
-#undef DEBUG_PRINT_SRC_CODE
-#endif
+    #ifdef DEBUG_PRINT_SRC_CODE
+        #undef DEBUG_PRINT_SRC_CODE
+    #endif
 #endif
 
 #ifdef DISABLE_DEBUG_TRACE_STRING_OBJECT_CREATE
-#ifdef DEBUG_TRACE_STRING_OBJECT_CREATE
-#undef DEBUG_TRACE_STRING_OBJECT_CREATE
-#endif
+    #ifdef DEBUG_TRACE_STRING_OBJECT_CREATE
+        #undef DEBUG_TRACE_STRING_OBJECT_CREATE
+    #endif
 #endif
 
 #ifdef DISABLE_DEBUG_STRESS_GC
-#ifdef DEBUG_STRESS_GC
-#undef DEBUG_STRESS_GC
-#endif
+    #ifdef DEBUG_STRESS_GC
+        #undef DEBUG_STRESS_GC
+    #endif
 #endif
 
 #ifdef DISABLE_DEBUG_PRINT_IMPORT_MODULE_PATH
-#ifdef DEBUG_PRINT_IMPORT_MODULE_PATH
-#undef DEBUG_PRINT_IMPORT_MODULE_PATH
-#endif
+    #ifdef DEBUG_PRINT_IMPORT_MODULE_PATH
+        #undef DEBUG_PRINT_IMPORT_MODULE_PATH
+    #endif
 #endif
 
 ///////////////////////
@@ -103,9 +103,9 @@ using Tuple = std::tuple<Args...>;
 #endif
 
 #ifdef DISABLE_DEBUG_LOG_GC
-#ifdef DEBUG_LOG_GC
-#undef DEBUG_LOG_GC
-#endif
+    #ifdef DEBUG_LOG_GC
+        #undef DEBUG_LOG_GC
+    #endif
 #endif
 
 } // namespace aria

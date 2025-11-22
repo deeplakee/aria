@@ -1,7 +1,8 @@
 # Aria Language Interpreter
 
 **Aria** is a lightweight programming language interpreter written in **C++20**.
-It consists of an independent **core runtime library (`aria_core`)**, a **command-line interpreter (`aria`)**, and a comprehensive test suite based on **GoogleTest**.
+It consists of an independent **core runtime library (`aria_core`)**, a **command-line interpreter (`aria`)**, and a
+comprehensive test suite based on **GoogleTest**.
 
 ------
 
@@ -10,7 +11,7 @@ It consists of an independent **core runtime library (`aria_core`)**, a **comman
 ### ✅ Requirements
 
 | Dependency       | Minimum Version        | Description                                                 |
-| ---------------- | ---------------------- | ----------------------------------------------------------- |
+|------------------|------------------------|-------------------------------------------------------------|
 | **CMake**        | 3.27                   | Build system                                                |
 | **C++ Compiler** | C++20 support required | Tested with g++, clang++, and MSVC                          |
 | **GoogleTest**   | v1.14.0                | Automatically downloaded (no manual installation needed)    |
@@ -27,7 +28,7 @@ git clone https://github.com/deeplakee/Aria.git
 cd Aria
 ```
 
-### 2️⃣  Generate the Build System
+### 2️⃣ Generate the Build System
 
 #### 🔹 Release Mode (default)
 
@@ -36,7 +37,8 @@ cmake -B ./build/release -S . -DCMAKE_BUILD_TYPE=Release
 cd ./build/release
 ```
 
-> Tests (`BUILD_TESTS=OFF`) are disabled by default in Release mode, and several optimization macros are defined automatically.
+> Tests (`BUILD_TESTS=OFF`) are disabled by default in Release mode, and several optimization macros are defined
+> automatically.
 
 #### 🔹 Debug Mode (with tests enabled)
 
@@ -69,7 +71,7 @@ Generated files:
 ## 🧰 Optional Build Options
 
 | Option             | Default   | Description                                                 |
-| ------------------ | --------- | ----------------------------------------------------------- |
+|--------------------|-----------|-------------------------------------------------------------|
 | `BUILD_TESTS`      | `OFF`     | Enable building unit tests (automatically ON in Debug mode) |
 | `USE_READLINE`     | `ON`      | Enable interactive command-line input                       |
 | `CMAKE_BUILD_TYPE` | `Release` | Choose between `Debug` and `Release` modes                  |

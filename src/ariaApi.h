@@ -1,6 +1,7 @@
 #ifndef ARIA_ARIAAPI_H
 #define ARIA_ARIAAPI_H
 
+#include "aria.h"
 #include "common.h"
 #include "memory/gc.h"
 #include "object/funDef.h"
@@ -18,6 +19,7 @@
 #include "object/object.h"
 #include "runtime/native.h"
 #include "runtime/vm.h"
+#include "sys.h"
 #include "util/nativeUtil.h"
 #include "value/value.h"
 #include "value/valueArray.h"
