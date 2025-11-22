@@ -1,5 +1,5 @@
-#ifndef BYTECODEGENERATOR_H
-#define BYTECODEGENERATOR_H
+#ifndef ARIA_BYTECODEGENERATOR_H
+#define ARIA_BYTECODEGENERATOR_H
 
 #include "chunk/chunk.h"
 #include "common.h"
@@ -133,4 +133,4 @@ private:
 
 } // namespace aria
 
-#endif //BYTECODEGENERATOR_H
+#endif //ARIA_BYTECODEGENERATOR_H

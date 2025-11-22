@@ -1,5 +1,5 @@
-#ifndef OBJMODULE_H
-#define OBJMODULE_H
+#ifndef ARIA_OBJMODULE_H
+#define ARIA_OBJMODULE_H
 
 #include "object/object.h"
 
@@ -48,4 +48,4 @@ ObjModule *newObjModule(ObjFunction *module, GC *gc);
 
 } // namespace aria
 
-#endif //OBJMODULE_H
+#endif //ARIA_OBJMODULE_H

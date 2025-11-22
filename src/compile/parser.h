@@ -1,5 +1,5 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef ARIA_PARSER_H
+#define ARIA_PARSER_H
 
 #include "compile/ast.h"
 #include "compile/token.h"
@@ -137,4 +137,4 @@ private:
 
 } // namespace aria
 
-#endif //PARSER_H
+#endif //ARIA_PARSER_H

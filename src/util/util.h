@@ -1,5 +1,5 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef ARIA_UTIL_H
+#define ARIA_UTIL_H
 
 #include "common.h"
 
@@ -121,4 +121,4 @@ String getAbsoluteModulePath(const String &currentFilePath, const String &module
 
 } // namespace aria
 
-#endif // UTIL_H
+#endif //ARIA_UTIL_H

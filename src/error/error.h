@@ -1,5 +1,5 @@
-#ifndef ERROR_H
-#define ERROR_H
+#ifndef ARIA_ERROR_H
+#define ARIA_ERROR_H
 
 #include "common.h"
 #include "error/ErrorCode.h"
@@ -43,4 +43,4 @@ String runtimeError(const String &fmt, Args &&...args)
 
 } // namespace aria
 
-#endif //ERROR_H
+#endif //ARIA_ERROR_H

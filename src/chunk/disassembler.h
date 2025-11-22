@@ -1,5 +1,5 @@
-#ifndef DISASSEMBLER_H
-#define DISASSEMBLER_H
+#ifndef ARIA_DISASSEMBLER_H
+#define ARIA_DISASSEMBLER_H
 
 #include "chunk/code.h"
 
@@ -32,4 +32,4 @@ public:
 
 } // namespace aria
 
-#endif //DISASSEMBLER_H
+#endif //ARIA_DISASSEMBLER_H

@@ -1,5 +1,5 @@
-#ifndef OBJMAP_H
-#define OBJMAP_H
+#ifndef ARIA_OBJMAP_H
+#define ARIA_OBJMAP_H
 
 #include "object/object.h"
 
@@ -66,4 +66,4 @@ ObjMap *newObjMap(Value *values, uint32_t count, GC *gc);
 
 } // namespace aria
 
-#endif //OBJMAP_H
+#endif //ARIA_OBJMAP_H

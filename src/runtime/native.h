@@ -1,5 +1,5 @@
-#ifndef NATIVE_H
-#define NATIVE_H
+#ifndef ARIA_NATIVE_H
+#define ARIA_NATIVE_H
 
 #include "object/funDef.h"
 #include "value/value.h"
@@ -68,4 +68,4 @@ public:
 
 } // namespace aria
 
-#endif //NATIVE_H
+#endif //ARIA_NATIVE_H

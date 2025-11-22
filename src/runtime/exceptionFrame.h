@@ -1,5 +1,5 @@
-#ifndef EXCEPTIONFRAME_H
-#define EXCEPTIONFRAME_H
+#ifndef ARIA_EXCEPTIONFRAME_H
+#define ARIA_EXCEPTIONFRAME_H
 
 #include "common.h"
 
@@ -34,4 +34,4 @@ struct ExceptionFrame
 
 } // namespace aria
 
-#endif //EXCEPTIONFRAME_H
+#endif //ARIA_EXCEPTIONFRAME_H

@@ -1,5 +1,5 @@
-#ifndef OBJINSTANCE_H
-#define OBJINSTANCE_H
+#ifndef ARIA_OBJINSTANCE_H
+#define ARIA_OBJINSTANCE_H
 
 #include "object/object.h"
 #include "value/valueHashTable.h"
@@ -54,4 +54,4 @@ ObjInstance *newObjInstance(ObjClass *klass, GC *gc);
 
 } // namespace aria
 
-#endif //OBJINSTANCE_H
+#endif //ARIA_OBJINSTANCE_H

@@ -1,5 +1,5 @@
-#ifndef ERRORCODE_H
-#define ERRORCODE_H
+#ifndef ARIA_ERRORCODE_H
+#define ARIA_ERRORCODE_H
 
 #include "common.h"
 
@@ -80,4 +80,4 @@ enum class ErrorCode : uint8_t {
 
 }
 
-#endif //ERRORCODE_H
+#endif //ARIA_ERRORCODE_H

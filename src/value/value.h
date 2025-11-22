@@ -1,5 +1,5 @@
-#ifndef VALUE_H
-#define VALUE_H
+#ifndef ARIA_VALUE_H
+#define ARIA_VALUE_H
 
 #include "common.h"
 #include "value/nanBoxing.h"
@@ -37,4 +37,4 @@ inline bool isFalsey(Value value)
 
 } // namespace aria
 
-#endif // VALUE_H
+#endif //ARIA_VALUE_H

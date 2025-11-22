@@ -1,5 +1,5 @@
-#ifndef FUNDEF_H
-#define FUNDEF_H
+#ifndef ARIA_FUNDEF_H
+#define ARIA_FUNDEF_H
 
 #include "aria.h"
 #include "value/value.h"
@@ -14,4 +14,4 @@ using NativeFn_t = Value (*)(AriaEnv *env, int argCount, Value *args);
 
 } // namespace aria
 
-#endif //FUNDEF_H
+#endif //ARIA_FUNDEF_H

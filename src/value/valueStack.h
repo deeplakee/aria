@@ -1,5 +1,5 @@
-#ifndef VALUESTACK_H
-#define VALUESTACK_H
+#ifndef ARIA_VALUESTACK_H
+#define ARIA_VALUESTACK_H
 
 #include "util/util.h"
 #include "value/value.h"
@@ -84,4 +84,4 @@ private:
 };
 } // namespace aria
 
-#endif // VALUESTACK_H
+#endif //ARIA_VALUESTACK_H

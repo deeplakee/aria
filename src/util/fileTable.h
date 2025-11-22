@@ -1,5 +1,5 @@
-#ifndef FILETABLE_H
-#define FILETABLE_H
+#ifndef ARIA_FILETABLE_H
+#define ARIA_FILETABLE_H
 
 #include "common.h"
 #include <fstream>
@@ -55,4 +55,4 @@ private:
 };
 } // namespace aria
 
-#endif //FILETABLE_H
+#endif //ARIA_FILETABLE_H

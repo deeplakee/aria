@@ -1,5 +1,5 @@
-#ifndef ARIAEXCEPTION_H
-#define ARIAEXCEPTION_H
+#ifndef ARIA_ARIAEXCEPTION_H
+#define ARIA_ARIAEXCEPTION_H
 
 #include "common.h"
 #include "error/ErrorCode.h"
@@ -47,4 +47,4 @@ public:
 
 } // namespace aria
 
-#endif //ARIAEXCEPTION_H
+#endif //ARIA_ARIAEXCEPTION_H

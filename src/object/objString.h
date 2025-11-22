@@ -1,5 +1,5 @@
-#ifndef OBJSTRING_H
-#define OBJSTRING_H
+#ifndef ARIA_OBJSTRING_H
+#define ARIA_OBJSTRING_H
 
 #include "object/object.h"
 
@@ -87,4 +87,4 @@ ObjString *concatenateString(const ObjString *a, const ObjString *b, GC *gc);
 
 } // namespace aria
 
-#endif //OBJSTRING_H
+#endif //ARIA_OBJSTRING_H

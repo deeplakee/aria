@@ -1,5 +1,5 @@
-#ifndef TOKEN_H
-#define TOKEN_H
+#ifndef ARIA_TOKEN_H
+#define ARIA_TOKEN_H
 
 #include "common.h"
 #include "util/util.h"
@@ -128,4 +128,4 @@ void printTokenList(const List<Token> &tokens);
 
 } // namespace aria
 
-#endif //TOKEN_H
+#endif //ARIA_TOKEN_H

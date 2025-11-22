@@ -1,5 +1,5 @@
-#ifndef COMPILER_H
-#define COMPILER_H
+#ifndef ARIA_COMPILER_H
+#define ARIA_COMPILER_H
 
 #include "common.h"
 
@@ -27,4 +27,4 @@ public:
 
 } // namespace aria
 
-#endif //COMPILER_H
+#endif //ARIA_COMPILER_H

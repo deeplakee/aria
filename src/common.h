@@ -1,5 +1,5 @@
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef ARIA_COMMON_H
+#define ARIA_COMMON_H
 
 static_assert(sizeof(void *) == 8, "This program requires a 64-bit system.");
 
@@ -110,4 +110,4 @@ using Tuple = std::tuple<Args...>;
 
 } // namespace aria
 
-#endif //COMMON_H
+#endif //ARIA_COMMON_H

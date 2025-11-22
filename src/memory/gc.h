@@ -1,5 +1,5 @@
-#ifndef GC_H
-#define GC_H
+#ifndef ARIA_GC_H
+#define ARIA_GC_H
 
 #include "aria.h"
 #include "error/error.h"
@@ -160,4 +160,4 @@ public:
 
 } // namespace aria
 
-#endif // GC_H
+#endif //ARIA_GC_H

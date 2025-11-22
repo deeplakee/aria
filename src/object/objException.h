@@ -1,5 +1,5 @@
-#ifndef OBJEXCEPTION_H
-#define OBJEXCEPTION_H
+#ifndef ARIA_OBJEXCEPTION_H
+#define ARIA_OBJEXCEPTION_H
 
 #include "error/ErrorCode.h"
 #include "object/object.h"
@@ -55,4 +55,4 @@ ObjException *newObjException(ObjString *msg, GC *gc);
 
 } // namespace aria
 
-#endif //OBJEXCEPTION_H
+#endif //ARIA_OBJEXCEPTION_H

@@ -1,5 +1,5 @@
-#ifndef OBJBOUNDMETHOD_H
-#define OBJBOUNDMETHOD_H
+#ifndef ARIA_OBJBOUNDMETHOD_H
+#define ARIA_OBJBOUNDMETHOD_H
 
 #include "funDef.h"
 #include "object/object.h"
@@ -54,4 +54,4 @@ ObjBoundMethod *newObjBoundMethod(Value receiver, ObjNativeFn *method, GC *gc);
 
 } // namespace aria
 
-#endif //OBJBOUNDMETHOD_H
+#endif //ARIA_OBJBOUNDMETHOD_H

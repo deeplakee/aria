@@ -1,5 +1,5 @@
-#ifndef OBJFUNCTION_H
-#define OBJFUNCTION_H
+#ifndef ARIA_OBJFUNCTION_H
+#define ARIA_OBJFUNCTION_H
 
 #include "funDef.h"
 #include "object/object.h"
@@ -88,4 +88,4 @@ ObjFunction *newObjFunction(
 
 } // namespace aria
 
-#endif //OBJFUNCTION_H
+#endif //ARIA_OBJFUNCTION_H

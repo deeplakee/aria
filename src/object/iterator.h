@@ -1,5 +1,5 @@
-#ifndef ITERATOR_H
-#define ITERATOR_H
+#ifndef ARIA_ITERATOR_H
+#define ARIA_ITERATOR_H
 
 #include "common.h"
 #include "value/value.h"
@@ -78,4 +78,4 @@ public:
 
 } // namespace aria
 
-#endif //ITERATOR_H
+#endif //ARIA_ITERATOR_H

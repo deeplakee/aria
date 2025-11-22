@@ -1,5 +1,5 @@
-#ifndef CODEVISITOR_H
-#define CODEVISITOR_H
+#ifndef ARIA_ASTVISITOR_H
+#define ARIA_ASTVISITOR_H
 
 namespace aria {
 
@@ -115,4 +115,4 @@ public:
 
 } // namespace aria
 
-#endif //CODEVISITOR_H
+#endif //ARIA_ASTVISITOR_H

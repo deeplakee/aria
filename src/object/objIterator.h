@@ -1,5 +1,5 @@
-#ifndef OBJITERATOR_H
-#define OBJITERATOR_H
+#ifndef ARIA_OBJITERATOR_H
+#define ARIA_OBJITERATOR_H
 
 #include "object/iterator.h"
 #include "object/object.h"
@@ -60,4 +60,4 @@ ObjIterator *newObjIterator(ObjString *str, GC *gc);
 
 } // namespace aria
 
-#endif //OBJITERATOR_H
+#endif //ARIA_OBJITERATOR_H

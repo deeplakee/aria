@@ -1,5 +1,5 @@
-#ifndef CALLFRAME_H
-#define CALLFRAME_H
+#ifndef ARIA_CALLFRAME_H
+#define ARIA_CALLFRAME_H
 
 #include "chunk/chunk.h"
 #include "chunk/code.h"
@@ -63,4 +63,4 @@ struct CallFrame
 
 } // namespace aria
 
-#endif //CALLFRAME_H
+#endif //ARIA_CALLFRAME_H

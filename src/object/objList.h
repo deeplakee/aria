@@ -1,5 +1,5 @@
-#ifndef OBJLIST_H
-#define OBJLIST_H
+#ifndef ARIA_OBJLIST_H
+#define ARIA_OBJLIST_H
 
 #include "object/object.h"
 
@@ -71,4 +71,4 @@ ObjList *newObjList(uint32_t begin, uint32_t end, ObjList *other, GC *gc);
 
 } // namespace aria
 
-#endif //OBJLIST_H
+#endif //ARIA_OBJLIST_H

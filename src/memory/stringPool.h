@@ -1,5 +1,5 @@
-#ifndef STRINGPOOL_H
-#define STRINGPOOL_H
+#ifndef ARIA_STRINGPOOL_H
+#define ARIA_STRINGPOOL_H
 
 #include "common.h"
 
@@ -43,4 +43,4 @@ private:
 
 } // namespace aria
 
-#endif //STRINGPOOL_H
+#endif //ARIA_STRINGPOOL_H

@@ -1,5 +1,5 @@
-#ifndef FUNCTIONCONTEXT_H
-#define FUNCTIONCONTEXT_H
+#ifndef ARIA_FUNCTIONCONTEXT_H
+#define ARIA_FUNCTIONCONTEXT_H
 
 #include "chunk/chunk.h"
 #include "object/funDef.h"
@@ -137,4 +137,4 @@ public:
 
 } // namespace aria
 
-#endif //FUNCTIONCONTEXT_H
+#endif //ARIA_FUNCTIONCONTEXT_H

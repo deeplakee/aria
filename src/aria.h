@@ -1,5 +1,5 @@
-#ifndef ARIA_H
-#define ARIA_H
+#ifndef ARIA_ARIA_H
+#define ARIA_ARIA_H
 
 namespace aria {
 
@@ -49,4 +49,4 @@ inline constexpr const char *overloadingMod_FunName = "__mod__";
 inline constexpr const char *overloadingEqual_FunName = "__equal__";
 } // namespace aria
 
-#endif //ARIA_H
+#endif //ARIA_ARIA_H

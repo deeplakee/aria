@@ -1,5 +1,5 @@
-#ifndef OBJECT_H
-#define OBJECT_H
+#ifndef ARIA_OBJECT_H
+#define ARIA_OBJECT_H
 
 #include "aria.h"
 #include "common.h"
@@ -95,4 +95,4 @@ inline bool isObjType(const Value value, const ObjType type)
 
 } // namespace aria
 
-#endif //OBJECT_H
+#endif //ARIA_OBJECT_H

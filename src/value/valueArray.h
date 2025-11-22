@@ -1,5 +1,5 @@
-#ifndef VALUEARRAY_H
-#define VALUEARRAY_H
+#ifndef ARIA_VALUEARRAY_H
+#define ARIA_VALUEARRAY_H
 
 #include "value/value.h"
 
@@ -75,4 +75,4 @@ private:
 };
 } // namespace aria
 
-#endif // VALUEARRAY_H
+#endif //ARIA_VALUEARRAY_H

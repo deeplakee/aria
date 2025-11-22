@@ -1,5 +1,5 @@
-#ifndef OBJUPVALUE_H
-#define OBJUPVALUE_H
+#ifndef ARIA_OBJUPVALUE_H
+#define ARIA_OBJUPVALUE_H
 
 #include "object/object.h"
 
@@ -45,4 +45,4 @@ ObjUpvalue *newObjUpvalue(Value *location, GC *gc);
 
 } // namespace aria
 
-#endif //OBJUPVALUE_H
+#endif //ARIA_OBJUPVALUE_H

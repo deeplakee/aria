@@ -1,5 +1,5 @@
-#ifndef OBJNATIVEFN_H
-#define OBJNATIVEFN_H
+#ifndef ARIA_OBJNATIVEFN_H
+#define ARIA_OBJNATIVEFN_H
 
 #include "object/funDef.h"
 #include "object/object.h"
@@ -72,4 +72,4 @@ void bindBuiltinMethod(
 
 } // namespace aria
 
-#endif //OBJNATIVEFN_H
+#endif //ARIA_OBJNATIVEFN_H

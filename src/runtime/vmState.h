@@ -1,5 +1,5 @@
-#ifndef VMSTATE_H
-#define VMSTATE_H
+#ifndef ARIA_VMSTATE_H
+#define ARIA_VMSTATE_H
 
 #include "runtime/callFrame.h"
 #include "runtime/exceptionFrame.h"
@@ -39,4 +39,4 @@ public:
 
 } // namespace aria
 
-#endif //VMSTATE_H
+#endif //ARIA_VMSTATE_H

@@ -1,5 +1,5 @@
-#ifndef LEXER_H
-#define LEXER_H
+#ifndef ARIA_LEXER_H
+#define ARIA_LEXER_H
 
 #include "compile/token.h"
 #include "error/error.h"
@@ -108,4 +108,4 @@ private:
 
 } // namespace aria
 
-#endif //LEXER_H
+#endif //ARIA_LEXER_H

@@ -1,5 +1,5 @@
-#ifndef DEBUGGER_H
-#define DEBUGGER_H
+#ifndef ARIA_DEBUGGER_H
+#define ARIA_DEBUGGER_H
 
 #include "common.h"
 #include "debugger/breakpoint.h"
@@ -54,4 +54,4 @@ private:
 
 } // namespace aria
 
-#endif //DEBUGGER_H
+#endif //ARIA_DEBUGGER_H

@@ -1,5 +1,5 @@
-#ifndef NATIVEUTIL_H
-#define NATIVEUTIL_H
+#ifndef ARIA_NATIVEUTIL_H
+#define ARIA_NATIVEUTIL_H
 
 namespace aria {
 
@@ -72,4 +72,4 @@ namespace aria {
 
 } // namespace aria
 
-#endif //NATIVEUTIL_H
+#endif //ARIA_NATIVEUTIL_H

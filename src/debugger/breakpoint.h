@@ -1,5 +1,5 @@
-#ifndef BREAKPOINT_H
-#define BREAKPOINT_H
+#ifndef ARIA_BREAKPOINT_H
+#define ARIA_BREAKPOINT_H
 
 #include "common.h"
 #include <utility>
@@ -26,4 +26,4 @@ struct Breakpoint
 
 } // namespace aria
 
-#endif //BREAKPOINT_H
+#endif //ARIA_BREAKPOINT_H

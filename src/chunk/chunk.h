@@ -1,5 +1,5 @@
-#ifndef CHUNK_H
-#define CHUNK_H
+#ifndef ARIA_CHUNK_H
+#define ARIA_CHUNK_H
 
 #include "chunk/code.h"
 #include "memory/gc.h"
@@ -77,4 +77,4 @@ private:
 
 } // namespace aria
 
-#endif //CHUNK_H
+#endif //ARIA_CHUNK_H

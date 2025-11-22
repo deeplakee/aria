@@ -1,5 +1,5 @@
-#ifndef VALUEHASHTABLE_H
-#define VALUEHASHTABLE_H
+#ifndef ARIA_VALUEHASHTABLE_H
+#define ARIA_VALUEHASHTABLE_H
 
 #include "object/objList.h"
 #include "value/value.h"
@@ -102,4 +102,4 @@ private:
 
 } // namespace aria
 
-#endif // VALUEHASHTABLE_H
+#endif //ARIA_VALUEHASHTABLE_H

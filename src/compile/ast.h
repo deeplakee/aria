@@ -1,5 +1,5 @@
-#ifndef AST_H
-#define AST_H
+#ifndef ARIA_AST_H
+#define ARIA_AST_H
 
 #include "compile/astVisitor.h"
 #include "compile/token.h"
@@ -557,4 +557,4 @@ struct ErrorNode : ASTNode
 
 } // namespace aria
 
-#endif //AST_H
+#endif //ARIA_AST_H

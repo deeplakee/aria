@@ -1,5 +1,5 @@
-#ifndef OBJCLASS_H
-#define OBJCLASS_H
+#ifndef ARIA_OBJCLASS_H
+#define ARIA_OBJCLASS_H
 
 #include "object/object.h"
 #include "value/valueHashTable.h"
@@ -49,4 +49,4 @@ ObjClass *newObjClass(ObjString *name, GC *gc);
 
 } // namespace aria
 
-#endif //OBJCLASS_H
+#endif //ARIA_OBJCLASS_H

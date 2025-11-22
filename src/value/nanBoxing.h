@@ -1,5 +1,5 @@
-#ifndef NANBOXING_H
-#define NANBOXING_H
+#ifndef ARIA_NANBOXING_H
+#define ARIA_NANBOXING_H
 
 #include <bit>
 #include <cstdint>
@@ -68,4 +68,4 @@ public:
 
 } // namespace aria
 
-#endif // NANBOXING_H
+#endif //ARIA_NANBOXING_H

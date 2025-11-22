@@ -1,5 +1,5 @@
-#ifndef LOCK_H
-#define LOCK_H
+#ifndef ARIA_LOCK_H
+#define ARIA_LOCK_H
 
 #include <atomic>
 #include <iostream>
@@ -39,4 +39,4 @@ private:
 };
 } // namespace aria
 
-#endif // LOCK_H
+#endif //ARIA_LOCK_H

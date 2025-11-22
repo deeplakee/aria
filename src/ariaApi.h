@@ -1,5 +1,5 @@
-#ifndef ARIAAPI_H
-#define ARIAAPI_H
+#ifndef ARIA_ARIAAPI_H
+#define ARIA_ARIAAPI_H
 
 #include "common.h"
 #include "memory/gc.h"
@@ -24,4 +24,4 @@
 #include "value/valueHashTable.h"
 #include "value/valueStack.h"
 
-#endif //ARIAAPI_H
+#endif //ARIA_ARIAAPI_H

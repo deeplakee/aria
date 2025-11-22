@@ -1,5 +1,5 @@
-#ifndef CODE_H
-#define CODE_H
+#ifndef ARIA_CODE_H
+#define ARIA_CODE_H
 
 #include "common.h"
 
@@ -96,4 +96,4 @@ enum class opCode : uint8_t {
 
 }
 
-#endif //CODE_H
+#endif //ARIA_CODE_H

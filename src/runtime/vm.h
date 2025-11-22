@@ -1,5 +1,5 @@
-#ifndef VM_H
-#define VM_H
+#ifndef ARIA_VM_H
+#define ARIA_VM_H
 
 #include "aria.h"
 #include "common.h"
@@ -171,4 +171,4 @@ private:
 
 } // namespace aria
 
-#endif //VM_H
+#endif //ARIA_VM_H
