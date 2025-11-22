@@ -421,7 +421,7 @@ void AriaVM::defineNativeVar(const char *name, Value value) const
 bool AriaVM::isModuleRunning(const String &path) const
 {
     for (int i = 0; i < RmoduleCount; i++) {
-        if (path == asObjString(Rmodules[i])->C_str_ref()) {
+        if (path == asCString(Rmodules[i])) {
             return true;
         }
     }
@@ -912,7 +912,7 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::IMPORT: {
             ObjString *moduleName = frame->readObjString();
-            const char *currentModuleName = asObjString(*currentRmodule())->C_str_ref();
+            const char *currentModuleName = asCString(*currentRmodule());
             String absoluteModulePath;
             absoluteModulePath = getAbsoluteModulePath(currentModuleName, moduleName->C_str_ref());
             if (absoluteModulePath.empty()) {

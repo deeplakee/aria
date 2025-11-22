@@ -94,7 +94,7 @@ Value Native::_aria_num_(AriaEnv *env, int argCount, Value *args)
         return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, "argument must be a string");
     }
     try {
-        return NanBox::fromNumber(std::stod(asObjString(args[0])->C_str_ref()));
+        return NanBox::fromNumber(std::stod(asCString(args[0])));
     } catch ([[maybe_unused]] const std::exception &e) {
         return env->newException(ErrorCode::RUNTIME_UNKNOWN, "Conversion failed");
     }
