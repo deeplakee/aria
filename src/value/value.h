@@ -8,7 +8,7 @@ namespace aria {
 
 class ValueStack;
 
-using Value = NanBox_t;
+using Value = NanBox::NanBox_t;
 
 String valueTypeString(Value value);
 

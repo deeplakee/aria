@@ -5,66 +5,99 @@
 #include <cstdint>
 
 namespace aria {
-// Forward declaration of class 'Obj'
-// 'Obj' is the base class of all objects like string,function...
-// To use 'nan_t', you need to define class 'Obj'
+
 class Obj;
+
+namespace NanBox {
 
 using NanBox_t = uint64_t;
 
-class NanBox
+//==============================
+//  NaN Boxing 基本常量
+//==============================
+
+inline constexpr NanBox_t SignBit = 0x8000000000000000;
+inline constexpr NanBox_t QNaN = 0x7ffc000000000000;
+inline constexpr NanBox_t TagNil = 0x0000000000000001;
+inline constexpr NanBox_t TagFalse = 0x0000000000000002;
+inline constexpr uint64_t TagTrue = 0x0000000000000003;
+inline constexpr NanBox_t TrueValue = QNaN | TagTrue;
+inline constexpr NanBox_t FalseValue = QNaN | TagFalse;
+inline constexpr NanBox_t NilValue = QNaN | TagNil;
+
+//==============================
+//  基本构造函数
+//==============================
+
+inline NanBox_t fromBool(bool b)
 {
-    //==============================
-    //  NaN Boxing 基本常量
-    //==============================
-private:
-    static constexpr NanBox_t SignBit = 0x8000000000000000;
-    static constexpr NanBox_t QNaN = 0x7ffc000000000000;
-    static constexpr NanBox_t TagNil = 0x0000000000000001;
-    static constexpr NanBox_t TagFalse = 0x0000000000000002;
-    static constexpr uint64_t TagTrue = 0x0000000000000003;
+    return b ? TrueValue : FalseValue;
+}
 
-public:
-    static constexpr NanBox_t TrueValue = QNaN | TagTrue;
-    static constexpr NanBox_t FalseValue = QNaN | TagFalse;
-    static constexpr NanBox_t NilValue = QNaN | TagNil;
+inline NanBox_t fromNumber(double num)
+{
+    return std::bit_cast<NanBox_t>(num);
+}
 
-    //==============================
-    //  基本构造函数
-    //==============================
+inline NanBox_t fromObj(Obj *obj)
+{
+    return SignBit | QNaN | reinterpret_cast<uint64_t>(obj);
+}
 
-    static NanBox_t fromBool(bool b) { return b ? TrueValue : FalseValue; }
+//==============================
+//  取值函数
+//==============================
 
-    static NanBox_t fromNumber(double num) { return std::bit_cast<NanBox_t>(num); }
+inline bool toBool(NanBox_t v)
+{
+    return v == TrueValue;
+}
 
-    static NanBox_t fromObj(Obj *obj) { return SignBit | QNaN | reinterpret_cast<uint64_t>(obj); }
+inline double toNumber(NanBox_t v)
+{
+    return std::bit_cast<double>(v);
+}
 
-    //==============================
-    //  取值函数
-    //==============================
+inline Obj *toObj(NanBox_t v)
+{
+    return reinterpret_cast<Obj *>(v & ~(SignBit | QNaN));
+}
 
-    static bool toBool(NanBox_t v) { return v == TrueValue; }
+//==============================
+//  类型检测
+//==============================
 
-    static double toNumber(NanBox_t v) { return std::bit_cast<double>(v); }
+inline bool isBool(NanBox_t v)
+{
+    return (v | 1) == TrueValue;
+}
 
-    static Obj *toObj(NanBox_t v) { return reinterpret_cast<Obj *>(v & ~(SignBit | QNaN)); }
+inline bool isTrue(NanBox_t v)
+{
+    return v == TrueValue;
+}
 
-    //==============================
-    //  类型检测
-    //==============================
+inline bool isFalse(NanBox_t v)
+{
+    return v == FalseValue;
+}
 
-    static bool isBool(NanBox_t v) { return (v | 1) == TrueValue; }
+inline bool isNil(NanBox_t v)
+{
+    return v == NilValue;
+}
 
-    static bool isTrue(NanBox_t v) { return v == TrueValue; }
+inline bool isNumber(NanBox_t v)
+{
+    return (v & QNaN) != QNaN;
+}
 
-    static bool isFalse(NanBox_t v) { return v == FalseValue; }
+inline bool isObj(NanBox_t v)
+{
+    return (v & (QNaN | SignBit)) == (QNaN | SignBit);
+}
 
-    static bool isNil(NanBox_t v) { return v == NilValue; }
-
-    static bool isNumber(NanBox_t v) { return (v & QNaN) != QNaN; }
-
-    static bool isObj(NanBox_t v) { return (v & (QNaN | SignBit)) == (QNaN | SignBit); }
-};
+} // namespace NanBox
 
 } // namespace aria
 
