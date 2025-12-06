@@ -62,13 +62,13 @@ Value ObjMap::getByField(ObjString *name, Value &value)
     if (cachedMethods->get(NanBox::fromObj(name), value)) {
         return NanBox::TrueValue;
     }
-    if (gc->mapBuiltins->get(NanBox::fromObj(name), value)) {
+    if (gc->mapMethods->get(NanBox::fromObj(name), value)) {
         assert(isObjNativeFn(value) && "map builtin method is nativeFn");
         auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
         value = NanBox::fromObj(boundMethod);
-        gc->cache(value);
+        gc->pushTempRoot(value);
         cachedMethods->insert(NanBox::fromObj(name), value);
-        gc->releaseCache(1);
+        gc->popTempRoot(1);
         return NanBox::TrueValue;
     }
     return NanBox::FalseValue;
@@ -96,9 +96,9 @@ Value ObjMap::createIter(GC *gc)
 Value ObjMap::copy(GC *gc)
 {
     ObjMap *newObj = newObjMap(gc);
-    gc->cache(NanBox::fromObj(newObj));
+    gc->pushTempRoot(NanBox::fromObj(newObj));
     newObj->map->copy(map);
-    gc->releaseCache(1);
+    gc->popTempRoot(1);
     return NanBox::fromObj(newObj);
 }
 
@@ -110,7 +110,7 @@ void ObjMap::blacken()
 
 ObjMap *newObjMap(GC *gc)
 {
-    auto obj = gc->allocate_object<ObjMap>(gc);
+    auto obj = gc->allocateObject<ObjMap>(gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object MAP)", toVoidPtr(obj), sizeof(ObjMap));
 #endif
@@ -119,7 +119,7 @@ ObjMap *newObjMap(GC *gc)
 
 ObjMap *newObjMap(Value *values, uint32_t count, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjMap>(values, count, gc);
+    auto obj = gc->allocateObject<ObjMap>(values, count, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object MAP)", toVoidPtr(obj), sizeof(ObjMap));
 #endif

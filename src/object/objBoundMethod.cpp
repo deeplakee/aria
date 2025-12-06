@@ -52,7 +52,7 @@ void ObjBoundMethod::blacken()
 
 ObjBoundMethod *newObjBoundMethod(Value receiver, ObjFunction *method, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjBoundMethod>(receiver, method, gc);
+    auto obj = gc->allocateObject<ObjBoundMethod>(receiver, method, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object BOUND_METHOD)", toVoidPtr(obj), sizeof(ObjBoundMethod));
 #endif
@@ -61,7 +61,7 @@ ObjBoundMethod *newObjBoundMethod(Value receiver, ObjFunction *method, GC *gc)
 
 ObjBoundMethod *newObjBoundMethod(Value receiver, ObjNativeFn *method, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjBoundMethod>(receiver, method, gc);
+    auto obj = gc->allocateObject<ObjBoundMethod>(receiver, method, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object BOUND_METHOD)", toVoidPtr(obj), sizeof(ObjBoundMethod));
 #endif

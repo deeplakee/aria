@@ -61,13 +61,13 @@ namespace aria {
 
 #define BUILTIN_INIT_BUFFER(bufferName, length) \
     bool __##bufferName##__useBuffer__ = length < GC::GC_BUFFER_SIZE; \
-    char *bufferName = __##bufferName##__useBuffer__ ? env->gc->buffer \
-                                     : env->gc->allocate_array<char>(length + 1); \
+    char *bufferName = __##bufferName##__useBuffer__ ? env->gc->stringOpBuffer \
+                                     : env->gc->allocateArray<char>(length + 1); \
     bufferName[length] = '\0';
 
 #define BUILTIN_DESTROY_BUFFER(bufferName, length) \
     if (!__##bufferName##__useBuffer__) { \
-        env->gc->free_array<char>(bufferName, length + 1); \
+        env->gc->freeArray<char>(bufferName, length + 1); \
     }
 
 } // namespace aria

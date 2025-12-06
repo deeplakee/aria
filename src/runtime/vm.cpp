@@ -50,7 +50,7 @@ AriaVM::AriaVM()
     , globals{new ValueHashTable{gc}}
     , debugger{nullptr}
 {
-    gc->bindVM(this);
+    gc->attachVM(this);
     registerNative();
 }
 
@@ -226,11 +226,11 @@ void AriaVM::packVarargs(int argCount, int arity)
 
 ObjModule *AriaVM::cacheModule(ObjFunction *moduleFn)
 {
-    gc->cache(NanBox::fromObj(moduleFn));
+    gc->pushTempRoot(NanBox::fromObj(moduleFn));
     auto module = NanBox::fromObj(newObjModule(moduleFn, gc));
-    gc->cache(module);
+    gc->pushTempRoot(module);
     cachedModules->insert(NanBox::fromObj(moduleFn->location), module);
-    gc->releaseCache(2);
+    gc->popTempRoot(2);
     return asObjModule(module);
 }
 
@@ -401,21 +401,21 @@ void AriaVM::defineNativeFn(
     const char *name, int arity, NativeFn_t function, bool acceptsVarargs) const
 {
     Value key = NanBox::fromObj(newObjString(name, gc));
-    gc->cache(key);
+    gc->pushTempRoot(key);
     Value value = NanBox::fromObj(
         newObjNativeFn(FunctionType::FUNCTION, function, asObjString(key), arity, acceptsVarargs, gc));
-    gc->cache(value);
+    gc->pushTempRoot(value);
     builtIn->insert(key, value);
-    gc->releaseCache(2);
+    gc->popTempRoot(2);
 }
 
 void AriaVM::defineNativeVar(const char *name, Value value) const
 {
     Value key = NanBox::fromObj(newObjString(name, gc));
-    gc->cache(key);
-    gc->cache(value);
+    gc->pushTempRoot(key);
+    gc->pushTempRoot(value);
     builtIn->insert(key, value);
-    gc->releaseCache(2);
+    gc->popTempRoot(2);
 }
 
 bool AriaVM::isModuleRunning(const String &path) const

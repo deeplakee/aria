@@ -29,7 +29,7 @@ void Obj::mark()
     print("{:p} mark {}\n", toVoidPtr(this), this->toString());
 #endif
     isMarked = true;
-    gc->addToGrey(this);
+    gc->pushGrey(this);
 }
 
 Value Obj::op_call(AriaEnv *env, int argCount)

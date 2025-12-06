@@ -56,9 +56,9 @@ Value ObjInstance::getByField(ObjString *name, Value &value)
             boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjFunction(value), gc);
         }
         value = NanBox::fromObj(boundMethod);
-        gc->cache(value);
+        gc->pushTempRoot(value);
         cachedMethods->insert(NanBox::fromObj(name), value);
-        gc->releaseCache(1);
+        gc->popTempRoot(1);
         return NanBox::TrueValue;
     }
     return NanBox::FalseValue;
@@ -73,15 +73,15 @@ Value ObjInstance::setByField(ObjString *name, Value value)
 Value ObjInstance::copy(GC *gc)
 {
     ObjInstance *newObj = newObjInstance(klass, gc);
-    gc->cache(NanBox::fromObj(newObj));
+    gc->pushTempRoot(NanBox::fromObj(newObj));
     newObj->fields.copy(&fields);
-    gc->releaseCache(1);
+    gc->popTempRoot(1);
     return NanBox::fromObj(newObj);
 }
 
 ObjInstance *newObjInstance(ObjClass *klass, GC *gc)
 {
-    auto *obj = gc->allocate_object<ObjInstance>(klass, gc);
+    auto *obj = gc->allocateObject<ObjInstance>(klass, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object INSTANCE)", toVoidPtr(obj), sizeof(ObjInstance));
 #endif

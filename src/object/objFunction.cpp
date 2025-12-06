@@ -61,7 +61,7 @@ ObjFunction::~ObjFunction()
 {
     delete chunk;
     if (upvalues != nullptr) {
-        gc->free_array<ObjUpvalue *>(upvalues, upvalueCount);
+        gc->freeArray<ObjUpvalue *>(upvalues, upvalueCount);
     }
 }
 
@@ -108,7 +108,7 @@ void ObjFunction::initUpvalues(GC *gc)
     if (upvalueCount == 0) {
         return;
     }
-    upvalues = gc->allocate_array<ObjUpvalue *>(upvalueCount);
+    upvalues = gc->allocateArray<ObjUpvalue *>(upvalueCount);
     for (int i = 0; i < upvalueCount; i++) {
         upvalues[i] = nullptr;
     }
@@ -116,7 +116,7 @@ void ObjFunction::initUpvalues(GC *gc)
 
 ObjFunction *newObjFunction(FunctionType type, ObjString *location, ObjString *name, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjFunction>(type, location, name, gc);
+    auto obj = gc->allocateObject<ObjFunction>(type, location, name, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object FUNCTION)", toVoidPtr(obj), sizeof(ObjFunction));
 #endif
@@ -126,7 +126,7 @@ ObjFunction *newObjFunction(FunctionType type, ObjString *location, ObjString *n
 ObjFunction *newObjFunction(
     FunctionType type, ObjString *location, ObjString *name, ValueHashTable *globals, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjFunction>(type, location, name, globals, gc);
+    auto obj = gc->allocateObject<ObjFunction>(type, location, name, globals, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object FUNCTION)", toVoidPtr(obj), sizeof(ObjFunction));
 #endif
@@ -143,7 +143,7 @@ ObjFunction *newObjFunction(
     GC *gc)
 {
     auto obj
-        = gc->allocate_object<ObjFunction>(type, location, name, arity, globals, acceptsVarargs, gc);
+        = gc->allocateObject<ObjFunction>(type, location, name, arity, globals, acceptsVarargs, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object FUNCTION)", toVoidPtr(obj), sizeof(ObjFunction));
 #endif

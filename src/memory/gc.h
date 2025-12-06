@@ -8,6 +8,7 @@
 #include "util/lock.h"
 #include "util/util.h"
 #include "value/valueStack.h"
+
 #include <type_traits>
 
 namespace aria {
@@ -32,7 +33,7 @@ public:
 
     ~GC();
 
-    static uint64_t grow_capacity(uint32_t capacity) { return capacity < 8 ? 8 : capacity * 2; }
+    static uint64_t growCapacity(uint32_t capacity) { return capacity < 8 ? 8 : capacity * 2; }
 
     void markRoots();
 
@@ -69,25 +70,25 @@ public:
     }
 
     template<Trivial T>
-    T *allocate_array(size_t count)
+    T *allocateArray(size_t count)
     {
         return reallocate<T>(nullptr, 0, count);
     }
 
     template<Trivial T>
-    T *grow_array(T *pointer, size_t oldCount, size_t newCount)
+    T *resizeArray(T *pointer, size_t oldCount, size_t newCount)
     {
         return reallocate<T>(pointer, oldCount, newCount);
     }
 
     template<Trivial T>
-    void free_array(T *pointer, size_t oldCount)
+    void freeArray(T *pointer, size_t oldCount)
     {
         reallocate<T>(pointer, oldCount, 0);
     }
 
     template<DerivedFromObj T, typename... Args>
-    T *allocate_object(Args &&...args)
+    T *allocateObject(Args &&...args)
     {
         bytesAllocated += sizeof(T);
 #ifdef DEBUG_STRESS_GC
@@ -103,32 +104,32 @@ public:
             fatalError(ErrorCode::RESOURCE_MEMORY_EXHAUSTED, "Memory allocation failed");
         }
         if constexpr (std::is_same_v<T, ObjString>) {
-            obj->next = strList;
-            strList = obj;
+            obj->next = internedStringList;
+            internedStringList = obj;
         } else {
-            obj->next = objList;
-            objList = obj;
+            obj->next = objectList;
+            objectList = obj;
         }
         return obj;
     }
 
-    void free_object(Obj *obj);
+    void freeObject(Obj *obj);
 
-    void free_objects();
+    void freeAllObjects();
 
-    bool insertStr(ObjString *obj);
+    bool internString(ObjString *obj);
 
-    ObjString *getStr(const char *chars, size_t length, uint32_t hash);
+    ObjString *findInternedString(const char *chars, size_t length, uint32_t hash);
 
-    void cache(Value v) const { tempVars->push(v); }
+    void pushTempRoot(Value v) const { tempRootStack->push(v); }
 
-    void releaseCache(int n = 1) const { tempVars->pop_n(n); }
+    void popTempRoot(int n = 1) const { tempRootStack->pop_n(n); }
 
-    void bindVM(AriaVM *vm) { runningVM = vm; }
+    void attachVM(AriaVM *vm) { runningVM = vm; }
 
-    void bindCompilingCtx(FunctionContext *ctx) { compilingContext = ctx; }
+    void attachCompiler(FunctionContext *ctx) { compilingContext = ctx; }
 
-    void addToGrey(Obj *obj) { greyStack.push(obj); }
+    void pushGrey(Obj *obj) { greyStack.push(obj); }
 
     static constexpr int GC_INITIAL_SIZE = 1024 * 1024;
     static constexpr int GC_HEAP_GROW_FACTOR = 2;
@@ -137,18 +138,17 @@ public:
     size_t bytesAllocated;
     size_t nextGC;
 
-    Obj *objList;
-    Obj *strList;
+    Obj *objectList;
+    Obj *internedStringList;
 
-    ValueStack *tempVars;
-    StringPool *conStrPool;
-    ValueArray *builtinStrs;
-    ValueHashTable *listBuiltins;
-    ValueHashTable *mapBuiltins;
-    ValueHashTable *stringBuiltins;
-    ValueHashTable *iteratorBuiltins;
+    ValueStack *tempRootStack;
+    StringPool *internPool;
+    ValueHashTable *listMethods;
+    ValueHashTable *mapMethods;
+    ValueHashTable *stringMethods;
+    ValueHashTable *iteratorMethods;
 
-    char *buffer;
+    char *stringOpBuffer;
 
     Lock gcLock;
     bool inGC;

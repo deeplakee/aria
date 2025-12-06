@@ -40,7 +40,7 @@ void ObjNativeFn::blacken()
 ObjNativeFn *newObjNativeFn(
     FunctionType type, NativeFn_t function, ObjString *name, int arity, bool acceptsVarargs, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjNativeFn>(type, function, name, arity, acceptsVarargs, gc);
+    auto obj = gc->allocateObject<ObjNativeFn>(type, function, name, arity, acceptsVarargs, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object NATIVE_FN)", toVoidPtr(obj), sizeof(ObjNativeFn));
 #endif
@@ -56,12 +56,12 @@ void bindBuiltinMethod(
     bool acceptsVarargs)
 {
     const Value name_val = NanBox::fromObj(newObjString(name, gc));
-    gc->cache(name_val);
+    gc->pushTempRoot(name_val);
     const Value method_val = NanBox::fromObj(
         newObjNativeFn(FunctionType::METHOD, fn, asObjString(name_val), arity, acceptsVarargs, gc));
-    gc->cache(method_val);
+    gc->pushTempRoot(method_val);
     methodTab->insert(name_val, method_val);
-    gc->releaseCache(2);
+    gc->popTempRoot(2);
 }
 
 } // namespace aria

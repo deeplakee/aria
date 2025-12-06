@@ -41,13 +41,13 @@ Value ObjIterator::getByField(ObjString *name, Value &value)
     if (cachedMethods->get(NanBox::fromObj(name), value)) {
         return NanBox::TrueValue;
     }
-    if (gc->iteratorBuiltins->get(NanBox::fromObj(name), value)) {
+    if (gc->iteratorMethods->get(NanBox::fromObj(name), value)) {
         assert(isObjNativeFn(value) && "iterator builtin method is nativeFn");
         auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
         value = NanBox::fromObj(boundMethod);
-        gc->cache(value);
+        gc->pushTempRoot(value);
         cachedMethods->insert(NanBox::fromObj(name), value);
-        gc->releaseCache(1);
+        gc->popTempRoot(1);
         return NanBox::TrueValue;
     }
     return NanBox::FalseValue;
@@ -55,7 +55,7 @@ Value ObjIterator::getByField(ObjString *name, Value &value)
 
 ObjIterator *newObjIterator(Iterator *iter, GC *gc)
 {
-    auto *obj = gc->allocate_object<ObjIterator>(iter, gc);
+    auto *obj = gc->allocateObject<ObjIterator>(iter, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
 #endif
@@ -65,7 +65,7 @@ ObjIterator *newObjIterator(Iterator *iter, GC *gc)
 ObjIterator *newObjIterator(ObjList *list, GC *gc)
 {
     auto iter = new ListIterator{list};
-    auto obj = gc->allocate_object<ObjIterator>(iter, gc);
+    auto obj = gc->allocateObject<ObjIterator>(iter, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
 #endif
@@ -75,7 +75,7 @@ ObjIterator *newObjIterator(ObjList *list, GC *gc)
 ObjIterator *newObjIterator(ObjMap *map, GC *gc)
 {
     auto iter = new MapIterator{map};
-    auto obj = gc->allocate_object<ObjIterator>(iter, gc);
+    auto obj = gc->allocateObject<ObjIterator>(iter, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
 #endif
@@ -85,7 +85,7 @@ ObjIterator *newObjIterator(ObjMap *map, GC *gc)
 ObjIterator *newObjIterator(ObjString *str, GC *gc)
 {
     auto iter = new StringIterator{str};
-    auto obj = gc->allocate_object<ObjIterator>(iter, gc);
+    auto obj = gc->allocateObject<ObjIterator>(iter, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
 #endif

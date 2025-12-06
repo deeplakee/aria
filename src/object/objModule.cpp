@@ -41,7 +41,7 @@ void ObjModule::blacken()
 
 ObjModule *newObjModule(ObjFunction *module, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjModule>(module, gc);
+    auto obj = gc->allocateObject<ObjModule>(module, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object MODULE)", toVoidPtr(obj), sizeof(ObjModule));
 #endif

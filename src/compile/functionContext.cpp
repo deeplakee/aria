@@ -13,17 +13,17 @@ FunctionContext::FunctionContext(
     , scopeDepth{0}
 {
     auto fnNameObj = newObjString(_fnName, gc);
-    gc->cache(NanBox::fromObj(fnNameObj));
+    gc->pushTempRoot(NanBox::fromObj(fnNameObj));
     auto fnLocationObj = newObjString(_fnLocation, gc);
-    gc->cache(NanBox::fromObj(fnLocationObj));
+    gc->pushTempRoot(NanBox::fromObj(fnLocationObj));
     if (_globals == nullptr) {
         fun = newObjFunction(FunctionType::SCRIPT, fnLocationObj, fnNameObj, _gc);
     } else {
         fun = newObjFunction(FunctionType::SCRIPT, fnLocationObj, fnNameObj, _globals, _gc);
     }
-    gc->releaseCache(2);
+    gc->popTempRoot(2);
     chunk = fun->chunk;
-    gc->bindCompilingCtx(this);
+    gc->attachCompiler(this);
     locals.emplace_back();
 }
 
@@ -41,13 +41,13 @@ FunctionContext::FunctionContext(
 {
     auto globals = enclosing->fun->chunk->globals;
     auto fnNameObj = newObjString(_fnName, gc);
-    gc->cache(NanBox::fromObj(fnNameObj));
+    gc->pushTempRoot(NanBox::fromObj(fnNameObj));
     _arity = _acceptsVarargs ? _arity - 1 : _arity;
     fun = newObjFunction(
         _type, enclosing->fun->location, fnNameObj, _arity, globals, _acceptsVarargs, gc);
-    gc->releaseCache(1);
+    gc->popTempRoot(1);
     chunk = fun->chunk;
-    gc->bindCompilingCtx(this);
+    gc->attachCompiler(this);
     locals.emplace_back();
     if (_type == FunctionType::METHOD || _type == FunctionType::INIT_METHOD) {
         locals[0].name = "this";
@@ -56,7 +56,7 @@ FunctionContext::FunctionContext(
 
 FunctionContext::~FunctionContext()
 {
-    gc->bindCompilingCtx(this->enclosing);
+    gc->attachCompiler(this->enclosing);
 }
 
 ObjFunction *FunctionContext::currentFunction()

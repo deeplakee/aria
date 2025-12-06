@@ -23,14 +23,14 @@ ObjString::ObjString(char *_chars, size_t _length, uint32_t _hash, bool _ownChar
         memcpy(shortChars, _chars, length);
         shortChars[length] = '\0';
         if (_ownChars) {
-            gc->free_array<char>(_chars, length + 1);
+            gc->freeArray<char>(_chars, length + 1);
         }
     } else {
         isLong = true;
         if (_ownChars) {
             longChars = _chars;
         } else {
-            longChars = gc->allocate_array<char>(length + 1);
+            longChars = gc->allocateArray<char>(length + 1);
             memcpy(longChars, _chars, length);
             longChars[length] = '\0';
         }
@@ -47,7 +47,7 @@ ObjString::ObjString(const char *_chars, size_t _length, uint32_t _hash, GC *_gc
         shortChars[length] = '\0';
     } else {
         isLong = true;
-        longChars = gc->allocate_array<char>(length + 1);
+        longChars = gc->allocateArray<char>(length + 1);
         memcpy(longChars, _chars, length);
         longChars[length] = '\0';
     }
@@ -56,7 +56,7 @@ ObjString::ObjString(const char *_chars, size_t _length, uint32_t _hash, GC *_gc
 ObjString::~ObjString()
 {
     if (isLong && longChars != nullptr) {
-        gc->free_array<char>(longChars, length + 1);
+        gc->freeArray<char>(longChars, length + 1);
     }
 }
 
@@ -72,7 +72,7 @@ String ObjString::representation(ValueStack *printStack)
 
 Value ObjString::getByField(ObjString *name, Value &value)
 {
-    if (gc->stringBuiltins->get(NanBox::fromObj(name), value)) {
+    if (gc->stringMethods->get(NanBox::fromObj(name), value)) {
         assert(isObjNativeFn(value) && "string builtin method is nativeFn");
         auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
         value = NanBox::fromObj(boundMethod);
@@ -109,11 +109,11 @@ ObjString *newObjString(const String &str, GC *gc)
 {
     const size_t length = str.length();
     uint32_t hash = hashString(str.c_str(), length);
-    if (auto interned = gc->getStr(str.c_str(), length, hash); interned != nullptr) {
+    if (auto interned = gc->findInternedString(str.c_str(), length, hash); interned != nullptr) {
         return interned;
     }
-    auto obj = gc->allocate_object<ObjString>(str.c_str(), length, hash, gc);
-    gc->insertStr(obj);
+    auto obj = gc->allocateObject<ObjString>(str.c_str(), length, hash, gc);
+    gc->internString(obj);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object STRING)", toVoidPtr(obj), sizeof(ObjString));
 #endif
@@ -124,11 +124,11 @@ ObjString *newObjString(const char *str, GC *gc)
 {
     const size_t length = strlen(str);
     uint32_t hash = hashString(str, length);
-    if (auto interned = gc->getStr(str, length, hash); interned != nullptr) {
+    if (auto interned = gc->findInternedString(str, length, hash); interned != nullptr) {
         return interned;
     }
-    auto obj = gc->allocate_object<ObjString>(str, length, hash, gc);
-    gc->insertStr(obj);
+    auto obj = gc->allocateObject<ObjString>(str, length, hash, gc);
+    gc->internString(obj);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object STRING)", toVoidPtr(obj), sizeof(ObjString));
 #endif
@@ -138,11 +138,11 @@ ObjString *newObjString(const char *str, GC *gc)
 ObjString *newObjString(char *str, size_t length, GC *gc)
 {
     uint32_t hash = hashString(str, length);
-    if (auto interned = gc->getStr(str, length, hash); interned != nullptr) {
+    if (auto interned = gc->findInternedString(str, length, hash); interned != nullptr) {
         return interned;
     }
-    auto obj = gc->allocate_object<ObjString>(str, length, hash, gc);
-    gc->insertStr(obj);
+    auto obj = gc->allocateObject<ObjString>(str, length, hash, gc);
+    gc->internString(obj);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object STRING)", toVoidPtr(obj), sizeof(ObjString));
 #endif
@@ -153,14 +153,14 @@ ObjString *newObjString(char ch, GC *gc)
 {
     constexpr size_t length = 1;
     uint32_t hash = hashString(&ch, length);
-    if (auto interned = gc->getStr(&ch, length, hash); interned != nullptr) {
+    if (auto interned = gc->findInternedString(&ch, length, hash); interned != nullptr) {
         return interned;
     }
-    char *newStr = gc->allocate_array<char>(length + 1);
+    char *newStr = gc->allocateArray<char>(length + 1);
     newStr[0] = ch;
     newStr[length] = '\0';
-    auto obj = gc->allocate_object<ObjString>(newStr, length, hash, true, gc);
-    gc->insertStr(obj);
+    auto obj = gc->allocateObject<ObjString>(newStr, length, hash, true, gc);
+    gc->internString(obj);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object STRING)", toVoidPtr(obj), sizeof(ObjString));
 #endif
@@ -175,17 +175,17 @@ ObjString *concatenateString(const ObjString *a, const ObjString *b, GC *gc)
     }
     uint32_t hash = hashString(b->C_str_ref(), b->length, a->hash);
     bool useGCBuffer = length < GC::GC_BUFFER_SIZE;
-    char *dest = useGCBuffer ? gc->buffer : gc->allocate_array<char>(length + 1);
+    char *dest = useGCBuffer ? gc->stringOpBuffer : gc->allocateArray<char>(length + 1);
     memcpy(dest, a->C_str_ref(), a->length);
     memcpy(dest + a->length, b->C_str_ref(), b->length + 1); // copy '\0' from b
-    if (auto interned = gc->getStr(dest, length, hash); interned != nullptr) {
+    if (auto interned = gc->findInternedString(dest, length, hash); interned != nullptr) {
         if (!useGCBuffer) {
-            gc->free_array<char>(dest, length + 1);
+            gc->freeArray<char>(dest, length + 1);
         }
         return interned;
     }
-    auto obj = gc->allocate_object<ObjString>(dest, length, hash, !useGCBuffer, gc);
-    gc->insertStr(obj);
+    auto obj = gc->allocateObject<ObjString>(dest, length, hash, !useGCBuffer, gc);
+    gc->internString(obj);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object STRING)", toVoidPtr(obj), sizeof(ObjString));
 #endif

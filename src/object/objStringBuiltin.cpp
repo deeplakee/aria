@@ -203,15 +203,15 @@ static Value builtin_split(AriaEnv *env, int argCount, Value *args)
     const char *srcStr = self->C_str_ref();
     const char *delimStr = delim->C_str_ref();
     ObjList *objlist = NEW_OBJLIST();
-    gc->cache(NanBox::fromObj(objlist));
+    gc->pushTempRoot(NanBox::fromObj(objlist));
 
     if (delim->length == 0) {
         for (int i = 0; srcStr[i] != '\0'; i++) {
             if (!isspace(srcStr[i])) {
                 ObjString *i_str = NEW_OBJSTRING(srcStr[i]);
-                gc->cache(NanBox::fromObj(i_str));
+                gc->pushTempRoot(NanBox::fromObj(i_str));
                 objlist->list->push(NanBox::fromObj(i_str));
-                gc->releaseCache(1);
+                gc->popTempRoot(1);
             }
         }
     } else {
@@ -223,9 +223,9 @@ static Value builtin_split(AriaEnv *env, int argCount, Value *args)
             size_t token_len = end - start;
             if (token_len > 0) {
                 ObjString *i_str = NEW_OBJSTRING(start, token_len);
-                gc->cache(NanBox::fromObj(i_str));
+                gc->pushTempRoot(NanBox::fromObj(i_str));
                 objlist->list->push(NanBox::fromObj(i_str));
-                gc->releaseCache(1);
+                gc->popTempRoot(1);
             }
             start = end + delim_len;
             end = strstr(start, delimStr);
@@ -233,13 +233,13 @@ static Value builtin_split(AriaEnv *env, int argCount, Value *args)
 
         if (strlen(start) > 0) {
             ObjString *i_str = NEW_OBJSTRING(start, strlen(start));
-            gc->cache(NanBox::fromObj(i_str));
+            gc->pushTempRoot(NanBox::fromObj(i_str));
             objlist->list->push(NanBox::fromObj(i_str));
-            gc->releaseCache(1);
+            gc->popTempRoot(1);
         }
     }
 
-    gc->releaseCache(1);
+    gc->popTempRoot(1);
     return NanBox::fromObj(objlist);
 }
 

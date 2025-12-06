@@ -52,13 +52,13 @@ ValueArray::ValueArray(Value *_values, uint32_t _count, GC *_gc)
 
 ValueArray::~ValueArray()
 {
-    gc->free_array<Value>(values, capacity);
+    gc->freeArray<Value>(values, capacity);
 }
 
 void ValueArray::push(Value value)
 {
     if (capacity < count + 1) {
-        uint64_t newCapacity = GC::grow_capacity(capacity);
+        uint64_t newCapacity = GC::growCapacity(capacity);
         if (newCapacity > UINT32_MAX) {
             fatalError(ErrorCode::RESOURCE_LIST_OVERFLOW, "Too many values in a list");
         }
@@ -95,7 +95,7 @@ bool ValueArray::insert(uint32_t index, Value v)
         return false;
     }
     if (capacity < count + 1) {
-        reserve(GC::grow_capacity(capacity));
+        reserve(GC::growCapacity(capacity));
     }
     for (uint32_t i = count; i > index; i--) {
         values[i] = values[i - 1];
@@ -141,7 +141,7 @@ uint32_t ValueArray::size() const
 
 void ValueArray::reserve(const uint32_t newCapacity)
 {
-    values = gc->grow_array<Value>(values, capacity, newCapacity);
+    values = gc->resizeArray<Value>(values, capacity, newCapacity);
     capacity = newCapacity;
 }
 

@@ -36,7 +36,7 @@ public:
 
     void emitOpArg16(opCode op, uint16_t arg, uint32_t line);
 
-    void emitOpData(opCode op, Value value, uint32_t line);
+    void emitOpValue(opCode op, Value value, uint32_t line);
 
     // Write a jump instruction with a placeholder (2 bytes)
     // return the offset position (for subsequent backfilling)
@@ -56,7 +56,7 @@ public:
 
     void disassemble(StringView name) const;
 
-    [[nodiscard]] uint32_t lastOpLine() const;
+    [[nodiscard]] uint32_t lineOfLastCode() const;
 
     GC *gc;
     uint32_t count;

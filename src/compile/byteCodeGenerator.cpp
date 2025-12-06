@@ -87,7 +87,7 @@ void ByteCodeGenerator::visitProgramNode(ProgramNode *node)
         decl->accept(*this);
     }
     Chunk *chunk = context->chunk;
-    chunk->emitFunEndRet(chunk->lastOpLine());
+    chunk->emitFunEndRet(chunk->lineOfLastCode());
 }
 
 FunctionContext *ByteCodeGenerator::createLocalFunctionContext(
@@ -107,13 +107,13 @@ void ByteCodeGenerator::defineFunction(FunDeclNode *node, FunctionContext *inner
     auto endLine = node->endLine;
     ObjFunction *fun = innerCtx->fun;
 
-    chunk->emitOpData(opCode::LOAD_CONST, NanBox::fromObj(fun), endLine);
+    chunk->emitOpValue(opCode::LOAD_CONST, NanBox::fromObj(fun), endLine);
     if (context->scopeDepth > 0) {
         checkDefine(context, node->token_name);
         declareLocalVariable(context, node->token_name);
         context->finalizeLocal();
     } else {
-        chunk->emitOpData(opCode::DEF_GLOBAL, NanBox::fromObj(fun->name), endLine);
+        chunk->emitOpValue(opCode::DEF_GLOBAL, NanBox::fromObj(fun->name), endLine);
     }
 }
 
@@ -131,7 +131,7 @@ void ByteCodeGenerator::emitClosure(Chunk *chunk, ObjFunction *fun, uint32_t lin
 {
     fun->initUpvalues(context->gc);
     if (fun->upvalueCount != 0) {
-        chunk->emitOpData(opCode::CLOSURE, NanBox::fromObj(fun), line);
+        chunk->emitOpValue(opCode::CLOSURE, NanBox::fromObj(fun), line);
         for (int i = 0; i < fun->upvalueCount; i++) {
             chunk->emitByte(context->upvalues[i].isLocal ? 1 : 0, line);
             chunk->emitWord(context->upvalues[i].index, line);
@@ -156,7 +156,7 @@ void ByteCodeGenerator::visitFunDeclNode(FunDeclNode *node)
     }
 
     node->body->accept(*this);
-    context->chunk->emitFunEndRet(context->chunk->lastOpLine());
+    context->chunk->emitFunEndRet(context->chunk->lineOfLastCode());
     emitClosure(chunk, fun, endLine);
 
 #ifdef DEBUG_PRINT_COMPILED_CODE
@@ -188,7 +188,7 @@ ObjString *ByteCodeGenerator::genMethodCode(ASTNode *node)
     FunctionContext *innerCtx = createLocalFunctionContext(method, methodType);
     context = innerCtx;
     ObjFunction *function = context->fun;
-    chunk->emitOpData(opCode::LOAD_CONST, NanBox::fromObj(function), chunk->lastOpLine());
+    chunk->emitOpValue(opCode::LOAD_CONST, NanBox::fromObj(function), chunk->lineOfLastCode());
 
     context->beginScope();
 
@@ -220,10 +220,10 @@ void ByteCodeGenerator::defineAndLoadClass(const Token &className)
         declareLocalVariable(context, className);
         context->finalizeLocal();
         int localSlot = context->findLocalVariable(className.text);
-        chunk->emitOpArg16(opCode::LOAD_LOCAL, static_cast<uint16_t>(localSlot), chunk->lastOpLine());
+        chunk->emitOpArg16(opCode::LOAD_LOCAL, static_cast<uint16_t>(localSlot), chunk->lineOfLastCode());
     } else {
-        chunk->emitOpData(opCode::DEF_GLOBAL, NanBox::fromObj(classNameObj), chunk->lastOpLine());
-        chunk->emitOpData(opCode::LOAD_GLOBAL, NanBox::fromObj(classNameObj), chunk->lastOpLine());
+        chunk->emitOpValue(opCode::DEF_GLOBAL, NanBox::fromObj(classNameObj), chunk->lineOfLastCode());
+        chunk->emitOpValue(opCode::LOAD_GLOBAL, NanBox::fromObj(classNameObj), chunk->lineOfLastCode());
     }
 }
 
@@ -233,7 +233,7 @@ void ByteCodeGenerator::visitClassDeclNode(ClassDeclNode *node)
     auto token_name = node->token_name;
     auto token_super_name = node->token_super_name;
     ObjString *className = newObjString(token_name.text, context->gc);
-    chunk->emitOpData(opCode::MAKE_CLASS, NanBox::fromObj(className), token_name.line);
+    chunk->emitOpValue(opCode::MAKE_CLASS, NanBox::fromObj(className), token_name.line);
 
     auto thisClass = new ClassContext{context->currentClass, false};
     context->currentClass = thisClass;
@@ -250,7 +250,7 @@ void ByteCodeGenerator::visitClassDeclNode(ClassDeclNode *node)
         if (methodName->length == 4 && memcmp(methodName->C_str_ref(), "init", 4) == 0) {
             chunk->emitOp(opCode::MAKE_INIT_METHOD);
         } else {
-            chunk->emitOpData(opCode::MAKE_METHOD, NanBox::fromObj(methodName), chunk->lastOpLine());
+            chunk->emitOpValue(opCode::MAKE_METHOD, NanBox::fromObj(methodName), chunk->lineOfLastCode());
         }
     }
 
@@ -280,7 +280,7 @@ void ByteCodeGenerator::defineGlobalVar(const VarDeclNode *node, int index)
     node->exprs[index]->accept(*this);
 
     const Value name_obj = NanBox::fromObj(newObjString(varName, context->gc));
-    context->chunk->emitOpData(opCode::DEF_GLOBAL, name_obj, varLine);
+    context->chunk->emitOpValue(opCode::DEF_GLOBAL, name_obj, varLine);
 }
 
 void ByteCodeGenerator::visitVarDeclNode(VarDeclNode *node)
@@ -312,10 +312,10 @@ void ByteCodeGenerator::visitIfStmtNode(IfStmtNode *node)
 {
     Chunk *chunk = context->chunk;
     node->condition->accept(*this);
-    auto falseJump = chunk->emitJump(opCode::JUMP_FALSE, chunk->lastOpLine());
+    auto falseJump = chunk->emitJump(opCode::JUMP_FALSE, chunk->lineOfLastCode());
     node->body->accept(*this);
     if (node->elseBody != nullptr) {
-        auto endJump = chunk->emitJump(opCode::JUMP_BWD, chunk->lastOpLine());
+        auto endJump = chunk->emitJump(opCode::JUMP_BWD, chunk->lineOfLastCode());
         chunk->patchJump(falseJump);
         node->elseBody->accept(*this);
         chunk->patchJump(endJump);
@@ -357,9 +357,9 @@ void ByteCodeGenerator::visitWhileStmtNode(WhileStmtNode *node)
 
     auto loopStart = chunk->count;
     node->condition->accept(*this);
-    auto exitJump = chunk->emitJump(opCode::JUMP_FALSE, chunk->lastOpLine());
+    auto exitJump = chunk->emitJump(opCode::JUMP_FALSE, chunk->lineOfLastCode());
     node->body->accept(*this);
-    auto loopEnd = chunk->emitJump(opCode::JUMP_FWD, chunk->lastOpLine());
+    auto loopEnd = chunk->emitJump(opCode::JUMP_FWD, chunk->lineOfLastCode());
     chunk->patchJump(loopEnd, loopStart);
     chunk->patchJump(exitJump);
 
@@ -384,7 +384,7 @@ void ByteCodeGenerator::visitForStmtNode(ForStmtNode *node)
     int64_t exitJump = -1;
     if (node->condition != nullptr) {
         node->condition->accept(*this);
-        exitJump = chunk->emitJump(opCode::JUMP_FALSE, chunk->lastOpLine());
+        exitJump = chunk->emitJump(opCode::JUMP_FALSE, chunk->lineOfLastCode());
     }
 
     node->body->accept(*this);
@@ -395,7 +395,7 @@ void ByteCodeGenerator::visitForStmtNode(ForStmtNode *node)
         chunk->emitOp(opCode::POP);
     }
 
-    uint32_t loopEnd = chunk->emitJump(opCode::JUMP_FWD, chunk->lastOpLine());
+    uint32_t loopEnd = chunk->emitJump(opCode::JUMP_FWD, chunk->lineOfLastCode());
     chunk->patchJump(loopEnd, loopStart);
     if (exitJump != -1) {
         chunk->patchJump(exitJump);
@@ -406,7 +406,7 @@ void ByteCodeGenerator::visitForStmtNode(ForStmtNode *node)
     teardownLoopContext();
 
     auto ops = context->endScope();
-    context->chunk->emitScopeCleanup(ops, chunk->lastOpLine());
+    context->chunk->emitScopeCleanup(ops, chunk->lineOfLastCode());
 }
 
 void ByteCodeGenerator::visitForInStmtNode(ForInStmtNode *node)
@@ -433,22 +433,22 @@ void ByteCodeGenerator::visitForInStmtNode(ForInStmtNode *node)
 
     // get iterator.hasNext
     int iterSlot = context->findLocalVariable(tk_iter_name.text);
-    chunk->emitOpArg16(opCode::LOAD_LOCAL, static_cast<uint16_t>(iterSlot), chunk->lastOpLine());
+    chunk->emitOpArg16(opCode::LOAD_LOCAL, static_cast<uint16_t>(iterSlot), chunk->lineOfLastCode());
     chunk->emitOp(opCode::ITER_HAS_NEXT);
-    uint32_t exitJump = chunk->emitJump(opCode::JUMP_FALSE, chunk->lastOpLine());
+    uint32_t exitJump = chunk->emitJump(opCode::JUMP_FALSE, chunk->lineOfLastCode());
 
     // store loopVar
     int loopVarSlot = context->findLocalVariable(tk_loop_var_name.text);
-    chunk->emitOpArg16(opCode::LOAD_LOCAL, static_cast<uint16_t>(iterSlot), chunk->lastOpLine());
+    chunk->emitOpArg16(opCode::LOAD_LOCAL, static_cast<uint16_t>(iterSlot), chunk->lineOfLastCode());
     chunk->emitOp(opCode::ITER_GET_NEXT);
-    chunk->emitOpArg16(opCode::STORE_LOCAL, static_cast<uint16_t>(loopVarSlot), chunk->lastOpLine());
+    chunk->emitOpArg16(opCode::STORE_LOCAL, static_cast<uint16_t>(loopVarSlot), chunk->lineOfLastCode());
     chunk->emitOp(opCode::POP);
 
     node->body->accept(*this);
 
     uint32_t incrementStart = chunk->count;
 
-    uint32_t loopEnd = chunk->emitJump(opCode::JUMP_FWD, chunk->lastOpLine());
+    uint32_t loopEnd = chunk->emitJump(opCode::JUMP_FWD, chunk->lineOfLastCode());
     chunk->patchJump(loopEnd, loopStart);
 
     chunk->patchJump(exitJump);
@@ -458,7 +458,7 @@ void ByteCodeGenerator::visitForInStmtNode(ForInStmtNode *node)
     teardownLoopContext();
 
     auto ops = context->endScope();
-    context->chunk->emitScopeCleanup(ops, chunk->lastOpLine());
+    context->chunk->emitScopeCleanup(ops, chunk->lineOfLastCode());
 }
 
 void ByteCodeGenerator::visitBreakStmtNode(BreakStmtNode *node)
@@ -514,8 +514,8 @@ void ByteCodeGenerator::visitImportStmtNode(ImportStmtNode *node)
     Chunk *chunk = context->chunk;
     ObjString *module = newObjString(node->token_module.text, context->gc);
     Token tk_name = node->token_name;
-    uint32_t line = chunk->lastOpLine();
-    chunk->emitOpData(opCode::IMPORT, NanBox::fromObj(module), node->token_import.line);
+    uint32_t line = chunk->lineOfLastCode();
+    chunk->emitOpValue(opCode::IMPORT, NanBox::fromObj(module), node->token_import.line);
 
     if (context->scopeDepth > 0) {
         checkDefine(context, tk_name);
@@ -523,7 +523,7 @@ void ByteCodeGenerator::visitImportStmtNode(ImportStmtNode *node)
         context->finalizeLocal();
     } else {
         ObjString *name = newObjString(tk_name.text, context->gc);
-        chunk->emitOpData(opCode::DEF_GLOBAL, NanBox::fromObj(name), line);
+        chunk->emitOpValue(opCode::DEF_GLOBAL, NanBox::fromObj(name), line);
     }
 }
 
@@ -543,7 +543,7 @@ void ByteCodeGenerator::visitTryCatchStmtNode(TryCatchStmtNode *node)
     context->finalizeLocal();
     node->catchBody->accept(*this);
     auto ops = context->endScope();
-    context->chunk->emitScopeCleanup(ops, chunk->lastOpLine());
+    context->chunk->emitScopeCleanup(ops, chunk->lineOfLastCode());
     chunk->emitOp(opCode::END_EXCEPT);
     chunk->patchJump(exitJump);
 }
@@ -594,7 +594,7 @@ void ByteCodeGenerator::visitIncExprNode(IncExprNode *node)
     auto &expr = node->expr;
     Token op = node->op;
     expr->accept(*this);
-    chunk->emitOpData(opCode::LOAD_CONST, NanBox::fromNumber(1), op.line);
+    chunk->emitOpValue(opCode::LOAD_CONST, NanBox::fromNumber(1), op.line);
     chunk->emitOp(tokenToBinaryOpCode[op.type], op.line);
     try {
         expr->asLvalue = true;
@@ -665,11 +665,11 @@ void ByteCodeGenerator::genLoadFieldNodeCode(FieldExprNode *node)
     Value name = NanBox::fromObj(newObjString(tk_fieldName.text, context->gc));
 
     if (isSuperVarNode(node->receiver.get())) {
-        chunk->emitOpData(opCode::LOAD_SUPER_METHOD, name, tk_fieldName.line);
+        chunk->emitOpValue(opCode::LOAD_SUPER_METHOD, name, tk_fieldName.line);
         return;
     }
 
-    chunk->emitOpData(opCode::LOAD_FIELD, name, tk_fieldName.line);
+    chunk->emitOpValue(opCode::LOAD_FIELD, name, tk_fieldName.line);
 }
 
 void ByteCodeGenerator::genStoreFieldNodeCode(FieldExprNode *node)
@@ -685,7 +685,7 @@ void ByteCodeGenerator::genStoreFieldNodeCode(FieldExprNode *node)
     node->receiver->accept(*this);
 
     Value name = NanBox::fromObj(newObjString(tk_fieldName.text, context->gc));
-    chunk->emitOpData(opCode::STORE_FIELD, name, tk_fieldName.line);
+    chunk->emitOpValue(opCode::STORE_FIELD, name, tk_fieldName.line);
 }
 
 void ByteCodeGenerator::visitFieldExprNode(FieldExprNode *node)
@@ -782,7 +782,7 @@ void ByteCodeGenerator::genStoreVarNodeCode(const VarNode *node) const
         }
         if (upvalueSlot == -1) {
             Value name = NanBox::fromObj(newObjString(varName, chunk->gc));
-            chunk->emitOpData(opCode::STORE_GLOBAL, name, line);
+            chunk->emitOpValue(opCode::STORE_GLOBAL, name, line);
             return;
         }
         if (upvalueSlot == -2) {
@@ -838,7 +838,7 @@ void ByteCodeGenerator::genLoadVarNodeCode(const VarNode *node) const
         }
         if (upvalueSlot == -1) {
             Value name = NanBox::fromObj(newObjString(varName, context->gc));
-            chunk->emitOpData(opCode::LOAD_GLOBAL, name, line);
+            chunk->emitOpValue(opCode::LOAD_GLOBAL, name, line);
             return;
         }
         if (upvalueSlot == -2) {
@@ -874,7 +874,7 @@ void ByteCodeGenerator::visitNumberNode(NumberNode *node)
         String msg = semanticError("Number out of range.\n{}", num.info());
         throw ariaCompilingException(ErrorCode::SEMANTIC_LITERAL_OVERFLOW, msg);
     }
-    context->chunk->emitOpData(opCode::LOAD_CONST, NanBox::fromNumber(value), num.line);
+    context->chunk->emitOpValue(opCode::LOAD_CONST, NanBox::fromNumber(value), num.line);
 }
 
 void ByteCodeGenerator::visitStringNode(StringNode *node)
@@ -882,7 +882,7 @@ void ByteCodeGenerator::visitStringNode(StringNode *node)
     checkAssignFlag(node);
     auto &str = node->str;
     Value strObj = NanBox::fromObj(newObjString(str.text, context->gc));
-    context->chunk->emitOpData(opCode::LOAD_CONST, strObj, str.line);
+    context->chunk->emitOpValue(opCode::LOAD_CONST, strObj, str.line);
 }
 
 void ByteCodeGenerator::visitTrueNode(TrueNode *node)

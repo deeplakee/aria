@@ -21,24 +21,23 @@ namespace aria {
 GC::GC()
     : bytesAllocated{0}
     , nextGC{GC_INITIAL_SIZE}
-    , objList{nullptr}
-    , strList{nullptr}
-    , tempVars{new ValueStack{}}
-    , buffer{new char[GC_BUFFER_SIZE]}
+    , objectList{nullptr}
+    , internedStringList{nullptr}
+    , tempRootStack{new ValueStack{}}
+    , stringOpBuffer{new char[GC_BUFFER_SIZE]}
     , inGC{false}
     , runningVM{nullptr}
     , compilingContext{nullptr}
 {
-    conStrPool = new StringPool{this};
-    builtinStrs = new ValueArray{this};
-    listBuiltins = new ValueHashTable{this};
-    mapBuiltins = new ValueHashTable{this};
-    stringBuiltins = new ValueHashTable{this};
-    iteratorBuiltins = new ValueHashTable{this};
-    ObjList::init(this, listBuiltins);
-    ObjMap::init(this, mapBuiltins);
-    ObjString::init(this, stringBuiltins);
-    ObjIterator::init(this, iteratorBuiltins);
+    internPool = new StringPool{this};
+    listMethods = new ValueHashTable{this};
+    mapMethods = new ValueHashTable{this};
+    stringMethods = new ValueHashTable{this};
+    iteratorMethods = new ValueHashTable{this};
+    ObjList::init(this, listMethods);
+    ObjMap::init(this, mapMethods);
+    ObjString::init(this, stringMethods);
+    ObjIterator::init(this, iteratorMethods);
 #ifdef DEBUG_LOG_GC
     println("=== start up GC ===");
 #endif
@@ -46,15 +45,14 @@ GC::GC()
 
 GC::~GC()
 {
-    delete[] buffer;
-    delete tempVars;
-    delete listBuiltins;
-    delete mapBuiltins;
-    delete stringBuiltins;
-    delete iteratorBuiltins;
-    delete builtinStrs;
-    delete conStrPool;
-    free_objects();
+    delete[] stringOpBuffer;
+    delete tempRootStack;
+    delete listMethods;
+    delete mapMethods;
+    delete stringMethods;
+    delete iteratorMethods;
+    delete internPool;
+    freeAllObjects();
 #ifdef DEBUG_LOG_GC
     println("=== shut down GC ===");
 #endif
@@ -89,11 +87,11 @@ void GC::markRoots()
     if (compilingContext != nullptr) {
         compilingContext->mark();
     }
-    listBuiltins->mark();
-    mapBuiltins->mark();
-    stringBuiltins->mark();
-    iteratorBuiltins->mark();
-    tempVars->mark();
+    listMethods->mark();
+    mapMethods->mark();
+    stringMethods->mark();
+    iteratorMethods->mark();
+    tempRootStack->mark();
     //conStrPool->mark();
 }
 
@@ -112,7 +110,7 @@ void GC::traceReferences()
 void GC::sweep()
 {
     Obj *previous = nullptr;
-    Obj *object = objList;
+    Obj *object = objectList;
     while (object != nullptr) {
         if (object->isMarked) {
             object->isMarked = false;
@@ -124,10 +122,10 @@ void GC::sweep()
             if (previous != nullptr) {
                 previous->next = object;
             } else {
-                objList = object;
+                objectList = object;
             }
 
-            free_object(unreached);
+            freeObject(unreached);
         }
     }
 }
@@ -165,7 +163,7 @@ void GC::collectGarbage()
     inGC = false;
 }
 
-void GC::free_object(Obj *obj)
+void GC::freeObject(Obj *obj)
 {
     auto obj_size = obj->objSize();
 #ifdef DEBUG_LOG_GC
@@ -175,32 +173,32 @@ void GC::free_object(Obj *obj)
     delete obj;
 }
 
-void GC::free_objects()
+void GC::freeAllObjects()
 {
-    while (objList != nullptr) {
-        Obj *next = objList->next;
-        free_object(objList);
-        objList = next;
+    while (objectList != nullptr) {
+        Obj *next = objectList->next;
+        freeObject(objectList);
+        objectList = next;
     }
 
-    while (strList != nullptr) {
-        Obj *next = strList->next;
-        free_object(strList);
-        strList = next;
+    while (internedStringList != nullptr) {
+        Obj *next = internedStringList->next;
+        freeObject(internedStringList);
+        internedStringList = next;
     }
 }
 
-bool GC::insertStr(ObjString *obj)
+bool GC::internString(ObjString *obj)
 {
-    cache(NanBox::fromObj(obj));
-    bool res = conStrPool->insert(obj);
-    releaseCache(1);
+    pushTempRoot(NanBox::fromObj(obj));
+    bool res = internPool->insert(obj);
+    popTempRoot(1);
     return res;
 }
 
-ObjString *GC::getStr(const char *chars, size_t length, uint32_t hash)
+ObjString *GC::findInternedString(const char *chars, size_t length, uint32_t hash)
 {
-    return conStrPool->findExist(chars, length, hash);
+    return internPool->findExist(chars, length, hash);
 }
 
 } // namespace aria

@@ -16,13 +16,13 @@ StringPool::StringPool(GC *_gc)
 
 StringPool::~StringPool()
 {
-    gc->free_array<ObjStringPtr>(table, capacity);
+    gc->freeArray<ObjStringPtr>(table, capacity);
 }
 
 bool StringPool::insert(ObjString *obj)
 {
     if (count + 1 > capacity * TABLE_MAX_LOAD) {
-        uint64_t newCapacity = GC::grow_capacity(capacity);
+        uint64_t newCapacity = GC::growCapacity(capacity);
         if (newCapacity > UINT32_MAX) {
             fatalError(ErrorCode::RESOURCE_STRING_POOL_FULL, "Aria string pool is full");
         }
@@ -118,7 +118,7 @@ ObjStringPtr *StringPool::findPosition(ObjStringPtr *s_table, ObjString *s, uint
 
 void StringPool::adjustCapacity(uint32_t newCapacity)
 {
-    ObjStringPtr *newTable = gc->allocate_array<ObjStringPtr>(newCapacity);
+    ObjStringPtr *newTable = gc->allocateArray<ObjStringPtr>(newCapacity);
     for (uint32_t i = 0; i < newCapacity; i++) {
         newTable[i] = nullptr;
     }
@@ -134,7 +134,7 @@ void StringPool::adjustCapacity(uint32_t newCapacity)
         count++;
     }
 
-    gc->free_array<ObjStringPtr>(table, capacity);
+    gc->freeArray<ObjStringPtr>(table, capacity);
     table = newTable;
     capacity = newCapacity;
 }

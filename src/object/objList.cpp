@@ -76,13 +76,13 @@ Value ObjList::getByField(ObjString *name, Value &value)
     if (cachedMethods->get(NanBox::fromObj(name), value)) {
         return NanBox::TrueValue;
     }
-    if (gc->listBuiltins->get(NanBox::fromObj(name), value)) {
+    if (gc->listMethods->get(NanBox::fromObj(name), value)) {
         assert(isObjNativeFn(value) && "list builtin method is nativeFn");
         auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
         value = NanBox::fromObj(boundMethod);
-        gc->cache(value);
+        gc->pushTempRoot(value);
         cachedMethods->insert(NanBox::fromObj(name), value);
-        gc->releaseCache(1);
+        gc->popTempRoot(1);
         return NanBox::TrueValue;
     }
     return NanBox::FalseValue;
@@ -128,15 +128,15 @@ Value ObjList::createIter(GC *gc)
 Value ObjList::copy(GC *gc)
 {
     ObjList *newObj = newObjList(gc);
-    gc->cache(NanBox::fromObj(newObj));
+    gc->pushTempRoot(NanBox::fromObj(newObj));
     newObj->list->copy(list);
-    gc->releaseCache(1);
+    gc->popTempRoot(1);
     return NanBox::fromObj(newObj);
 }
 
 ObjList *newObjList(GC *gc)
 {
-    auto obj = gc->allocate_object<ObjList>(gc);
+    auto obj = gc->allocateObject<ObjList>(gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate bytes {} (object LIST)", toVoidPtr(obj), sizeof(ObjList));
 #endif
@@ -145,7 +145,7 @@ ObjList *newObjList(GC *gc)
 
 ObjList *newObjList(Value *values, uint32_t count, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjList>(values, count, gc);
+    auto obj = gc->allocateObject<ObjList>(values, count, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate bytes {} (object LIST)", toVoidPtr(obj), sizeof(ObjList));
 #endif
@@ -154,7 +154,7 @@ ObjList *newObjList(Value *values, uint32_t count, GC *gc)
 
 ObjList *newObjList(uint32_t begin, uint32_t end, ObjList *other, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjList>(begin, end, other, gc);
+    auto obj = gc->allocateObject<ObjList>(begin, end, other, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate bytes {} (object LIST)", toVoidPtr(obj), sizeof(ObjList));
 #endif

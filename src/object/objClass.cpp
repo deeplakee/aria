@@ -36,7 +36,7 @@ void ObjClass::blacken()
 
 ObjClass *newObjClass(ObjString *name, GC *gc)
 {
-    auto *obj = gc->allocate_object<ObjClass>(name, gc);
+    auto *obj = gc->allocateObject<ObjClass>(name, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object CLASS)", toVoidPtr(obj), sizeof(ObjClass));
 #endif

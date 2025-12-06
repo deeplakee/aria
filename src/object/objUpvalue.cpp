@@ -27,7 +27,7 @@ void ObjUpvalue::blacken()
 
 ObjUpvalue *newObjUpvalue(Value *location, GC *gc)
 {
-    ObjUpvalue *obj = gc->allocate_object<ObjUpvalue>(location, gc);
+    ObjUpvalue *obj = gc->allocateObject<ObjUpvalue>(location, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object UPVALUE)", toVoidPtr(obj), sizeof(ObjUpvalue));
 #endif

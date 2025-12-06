@@ -29,8 +29,8 @@ Chunk::Chunk(ValueHashTable *_globals, GC *_gc)
 
 Chunk::~Chunk()
 {
-    gc->free_array<uint8_t>(codes, capacity);
-    gc->free_array<uint32_t>(lines, capacity);
+    gc->freeArray<uint8_t>(codes, capacity);
+    gc->freeArray<uint32_t>(lines, capacity);
     if (globalsManageable) {
         delete globals;
     }
@@ -44,12 +44,12 @@ uint8_t Chunk::operator[](uint32_t offset) const
 void Chunk::emitByte(uint8_t byte, uint32_t line)
 {
     if (capacity < count + 1) {
-        uint64_t newCapacity = GC::grow_capacity(capacity);
+        uint64_t newCapacity = GC::growCapacity(capacity);
         if (newCapacity > UINT32_MAX) {
             fatalError(ErrorCode::RESOURCE_CHUNK_OVERFLOW, "Too many codes in one chunk");
         }
-        codes = gc->grow_array<uint8_t>(codes, capacity, newCapacity);
-        lines = gc->grow_array<uint32_t>(lines, capacity, newCapacity);
+        codes = gc->resizeArray<uint8_t>(codes, capacity, newCapacity);
+        lines = gc->resizeArray<uint32_t>(lines, capacity, newCapacity);
         capacity = static_cast<uint32_t>(newCapacity);
     }
     codes[count] = byte;
@@ -59,7 +59,7 @@ void Chunk::emitByte(uint8_t byte, uint32_t line)
 
 void Chunk::emitByte(uint8_t byte)
 {
-    emitByte(byte, lastOpLine());
+    emitByte(byte, lineOfLastCode());
 }
 
 void Chunk::emitWord(uint16_t word, uint32_t line)
@@ -78,7 +78,7 @@ void Chunk::emitWord(uint16_t word)
 
 void Chunk::emitOp(opCode op)
 {
-    emitByte(static_cast<uint8_t>(op), lastOpLine());
+    emitByte(static_cast<uint8_t>(op), lineOfLastCode());
 }
 
 void Chunk::emitOp(opCode op, uint32_t line)
@@ -98,11 +98,11 @@ void Chunk::emitOpArg16(opCode op, uint16_t arg, uint32_t line)
     emitWord(arg, line);
 }
 
-void Chunk::emitOpData(opCode op, Value value, uint32_t line)
+void Chunk::emitOpValue(opCode op, Value value, uint32_t line)
 {
-    gc->cache(value);
+    gc->pushTempRoot(value);
     consts.push(value);
-    gc->releaseCache(1);
+    gc->popTempRoot(1);
     uint32_t index = consts.size() - 1;
     if (index > UINT16_MAX) {
         fatalError(ErrorCode::RESOURCE_CHUNK_OVERFLOW, "Too many constants in one chunk.");
@@ -195,7 +195,7 @@ void Chunk::disassemble(StringView name) const
     Disassembler::disassembleChunk(this, name);
 }
 
-uint32_t Chunk::lastOpLine() const
+uint32_t Chunk::lineOfLastCode() const
 {
     if (count == 0) {
         return 0;

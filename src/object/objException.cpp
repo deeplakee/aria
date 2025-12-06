@@ -43,7 +43,7 @@ const char *ObjException::what() const
 
 ObjException *newObjException(const char *msg, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjException>(msg, gc);
+    auto obj = gc->allocateObject<ObjException>(msg, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object EXCEPTION)", toVoidPtr(obj), sizeof(ObjException));
 #endif
@@ -52,7 +52,7 @@ ObjException *newObjException(const char *msg, GC *gc)
 
 ObjException *newObjException(ErrorCode code, const char *msg, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjException>(msg, gc, code);
+    auto obj = gc->allocateObject<ObjException>(msg, gc, code);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object EXCEPTION)", toVoidPtr(obj), sizeof(ObjException));
 #endif
@@ -61,7 +61,7 @@ ObjException *newObjException(ErrorCode code, const char *msg, GC *gc)
 
 ObjException *newObjException(ObjString *msg, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjException>(msg, gc);
+    auto obj = gc->allocateObject<ObjException>(msg, gc);
 #ifdef DEBUG_LOG_GC
     println("{:p} allocate {} bytes (object EXCEPTION)", toVoidPtr(obj), sizeof(ObjException));
 #endif

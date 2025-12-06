@@ -37,14 +37,14 @@ ValueHashTable::ValueHashTable(const Value *_values, uint32_t _count, GC *_gc)
 
 ValueHashTable::~ValueHashTable()
 {
-    gc->free_array<KVPair>(entry, capacity);
-    gc->free_array<uint8_t>(ctrl, capacity);
+    gc->freeArray<KVPair>(entry, capacity);
+    gc->freeArray<uint8_t>(ctrl, capacity);
 }
 
 bool ValueHashTable::insert(Value k, Value v)
 {
     if (used + 1 > capacity * TABLE_MAX_LOAD) {
-        uint64_t newCapacity = GC::grow_capacity(capacity);
+        uint64_t newCapacity = GC::growCapacity(capacity);
         if (newCapacity > UINT32_MAX) {
             fatalError(ErrorCode::RESOURCE_MAP_OVERFLOW, "Too many values in a map");
         }
@@ -143,8 +143,8 @@ bool ValueHashTable::equals(const ValueHashTable *other) const
 
 void ValueHashTable::clear()
 {
-    gc->free_array<KVPair>(entry, capacity);
-    gc->free_array<uint8_t>(ctrl, capacity);
+    gc->freeArray<KVPair>(entry, capacity);
+    gc->freeArray<uint8_t>(ctrl, capacity);
     count = 0;
     used = 0;
     capacity = 0;
@@ -238,8 +238,8 @@ uint32_t ValueHashTable::findNew(
 
 void ValueHashTable::adjustCapacity(const uint32_t newCapacity)
 {
-    auto *newEntry = gc->allocate_array<KVPair>(newCapacity);
-    auto *newCtrl = gc->allocate_array<uint8_t>(newCapacity);
+    auto *newEntry = gc->allocateArray<KVPair>(newCapacity);
+    auto *newCtrl = gc->allocateArray<uint8_t>(newCapacity);
     for (int i = 0; i < newCapacity; i++) {
         initKVPair(&newEntry[i]);
         newCtrl[i] = kEmpty;
@@ -256,8 +256,8 @@ void ValueHashTable::adjustCapacity(const uint32_t newCapacity)
         used++;
     }
 
-    gc->free_array<KVPair>(entry, capacity);
-    gc->free_array<uint8_t>(ctrl, capacity);
+    gc->freeArray<KVPair>(entry, capacity);
+    gc->freeArray<uint8_t>(ctrl, capacity);
     entry = newEntry;
     ctrl = newCtrl;
     capacity = newCapacity;
@@ -316,17 +316,17 @@ Value ValueHashTable::getByIndex(const int64_t index) const
 ObjList *ValueHashTable::createPair(const uint32_t index) const
 {
     ObjList *list = newObjList(gc);
-    gc->cache(NanBox::fromObj(list));
+    gc->pushTempRoot(NanBox::fromObj(list));
     list->list->push(entry[index].key);
     list->list->push(entry[index].value);
-    gc->releaseCache(1);
+    gc->popTempRoot(1);
     return list;
 }
 
 ObjList *ValueHashTable::createPairList() const
 {
     ObjList *list = newObjList(gc);
-    gc->cache(NanBox::fromObj(list));
+    gc->pushTempRoot(NanBox::fromObj(list));
     list->list->reserve(nextPowerOf2(count));
     for (uint32_t i = 0; i < capacity; i++) {
         if (ctrlNotFull(ctrl[i])) {
@@ -335,14 +335,14 @@ ObjList *ValueHashTable::createPairList() const
         auto pair = NanBox::fromObj(createPair(i));
         list->list->push(pair);
     }
-    gc->releaseCache(1);
+    gc->popTempRoot(1);
     return list;
 }
 
 ObjList *ValueHashTable::createKeyList() const
 {
     ObjList *list = newObjList(gc);
-    gc->cache(NanBox::fromObj(list));
+    gc->pushTempRoot(NanBox::fromObj(list));
     list->list->reserve(nextPowerOf2(count));
     for (uint32_t i = 0; i < capacity; i++) {
         if (ctrlNotFull(ctrl[i])) {
@@ -350,14 +350,14 @@ ObjList *ValueHashTable::createKeyList() const
         }
         list->list->push(entry[i].key);
     }
-    gc->releaseCache(1);
+    gc->popTempRoot(1);
     return list;
 }
 
 ObjList *ValueHashTable::createValueList() const
 {
     ObjList *list = newObjList(gc);
-    gc->cache(NanBox::fromObj(list));
+    gc->pushTempRoot(NanBox::fromObj(list));
     list->list->reserve(nextPowerOf2(count));
     for (uint32_t i = 0; i < capacity; i++) {
         if (ctrlNotFull(ctrl[i])) {
@@ -365,7 +365,7 @@ ObjList *ValueHashTable::createValueList() const
         }
         list->list->push(entry[i].value);
     }
-    gc->releaseCache(1);
+    gc->popTempRoot(1);
     return list;
 }
 
