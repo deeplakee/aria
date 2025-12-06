@@ -1,7 +1,7 @@
 #ifndef ARIA_OBJFUNCTION_H
 #define ARIA_OBJFUNCTION_H
 
-#include "funDef.h"
+#include "object/funDef.h"
 #include "object/object.h"
 
 namespace aria {
