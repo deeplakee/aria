@@ -157,14 +157,14 @@ uint32_t Disassembler::disassembleInstruction(
 }
 
 // one byte instruction
-uint32_t Disassembler::simpleInstruction(const char *name, const uint32_t offset)
+uint32_t Disassembler::simpleInstruction(const char *name, uint32_t offset)
 {
     println("{}", name);
     return offset + 1;
 }
 
 // three bytes instruction
-uint32_t Disassembler::constantInstruction(const Chunk *chunk, String name, const uint32_t offset)
+uint32_t Disassembler::constantInstruction(const Chunk *chunk, String name, uint32_t offset)
 {
     uint16_t slot = getU16data(chunk->codes, offset + 1);
     if (name == "LOAD_CONST") {
@@ -179,7 +179,7 @@ uint32_t Disassembler::constantInstruction(const Chunk *chunk, String name, cons
 }
 
 // two bytes instruction
-uint32_t Disassembler::twoBytesInstruction(const Chunk *chunk, String name, const uint32_t offset)
+uint32_t Disassembler::twoBytesInstruction(const Chunk *chunk, String name, uint32_t offset)
 {
     const uint8_t n = (*chunk)[offset + 1];
     println("{:<18} {}", name, n);
@@ -187,7 +187,7 @@ uint32_t Disassembler::twoBytesInstruction(const Chunk *chunk, String name, cons
 }
 
 // three bytes instruction
-uint32_t Disassembler::threeBytesInstruction(const Chunk *chunk, String name, const uint32_t offset)
+uint32_t Disassembler::threeBytesInstruction(const Chunk *chunk, String name, uint32_t offset)
 {
     uint16_t slot = getU16data(chunk->codes, offset + 1);
     if (name == "LOAD_LOCAL" || name == "STORE_LOCAL") {
@@ -201,8 +201,7 @@ uint32_t Disassembler::threeBytesInstruction(const Chunk *chunk, String name, co
 }
 
 // three bytes instruction
-uint32_t Disassembler::jumpInstruction(
-    const Chunk *chunk, String name, const uint32_t offset, const int sign)
+uint32_t Disassembler::jumpInstruction(const Chunk *chunk, String name, uint32_t offset, int sign)
 {
     uint16_t jump = getU16data(chunk->codes, offset + 1);
     println("{:<18} {} -> {}", name, offset, offset + 3 + sign * jump);
@@ -210,24 +209,23 @@ uint32_t Disassembler::jumpInstruction(
 }
 
 //  1+3k bytes instruction
-uint32_t Disassembler::closureInstruction(const Chunk *chunk, const uint32_t offset)
+uint32_t Disassembler::closureInstruction(const Chunk *chunk, uint32_t offset)
 {
-    uint32_t _offset = offset;
-    uint16_t funIndex = getU16data(chunk->codes, _offset + 1);
-    _offset += 3;
+    uint16_t funIndex = getU16data(chunk->codes, offset + 1);
+    offset += 3;
     ObjFunction *function = asObjFunction(chunk->consts[funIndex]);
     print("{:<18} {}\n", "CLOSURE", function->toString());
     for (int j = 0; j < function->upvalueCount; j++) {
-        auto isLocal = (*chunk)[_offset++];
+        auto isLocal = (*chunk)[offset++];
         String varType = isLocal ? "local" : "upvalue";
-        uint16_t index = getU16data(chunk->codes, _offset);
-        _offset += 2;
-        println("{:06}      |{:<20}{}({})", _offset - 3, " ——————", varType, index);
+        uint16_t index = getU16data(chunk->codes, offset);
+        offset += 2;
+        println("{:06}      |{:<20}{}({})", offset - 3, " ——————", varType, index);
     }
-    return _offset;
+    return offset;
 }
 
-uint32_t Disassembler::readInstruction(const Chunk *chunk, const uint32_t offset)
+uint32_t Disassembler::readInstruction(const Chunk *chunk, uint32_t offset)
 {
     if (offset >= chunk->count) {
         return 0;
@@ -314,12 +312,11 @@ uint32_t Disassembler::readInstruction(const Chunk *chunk, const uint32_t offset
     case opCode::CALL:
         return offset + 2;
     case opCode::CLOSURE: {
-        uint32_t _offset = offset;
-        uint16_t funIndex = getU16data(chunk->codes, _offset + 1);
-        _offset += 3;
+        uint16_t funIndex = getU16data(chunk->codes, offset + 1);
+        offset += 3;
         ObjFunction *function = asObjFunction(chunk->consts[funIndex]);
-        _offset += 2 * function->upvalueCount;
-        return _offset;
+        offset += 2 * function->upvalueCount;
+        return offset;
     }
     case opCode::MAKE_CLASS:
         return offset + 3;
