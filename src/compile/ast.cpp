@@ -13,8 +13,8 @@ void ProgramNode::display(String indent)
     println("{}ProgramNode", indent);
     for (auto it = decls.begin(); it != decls.end(); ++it) {
         const bool isLast = (std::next(it) == decls.end());
-        const auto prefix = isLast ? "└── " : "├── ";
-        const auto connector = isLast ? ADDED_INDENT : "│   ";
+        const char *prefix = isLast ? "└── " : "├── ";
+        const char *connector = isLast ? ADDED_INDENT : "│   ";
 
         println("{}decl:", indent + ADDED_INDENT + prefix);
         (*it)->display(indent + ADDED_INDENT + connector + ADDED_INDENT);
@@ -71,8 +71,8 @@ void ClassDeclNode::display(String indent)
 
     for (auto it = methods.begin(); it != methods.end(); ++it) {
         const bool isLast = (std::next(it) == methods.end());
-        const auto prefix = isLast ? "└── " : "├── ";
-        const auto connector = isLast ? ADDED_INDENT : "│   ";
+        const char *prefix = isLast ? "└── " : "├── ";
+        const char *connector = isLast ? ADDED_INDENT : "│   ";
 
         println("{}method:", indent + ADDED_INDENT + prefix);
         (*it)->display(indent + ADDED_INDENT + connector + ADDED_INDENT);
@@ -89,8 +89,8 @@ void VarDeclNode::display(String indent)
     println("{}VarDeclNode", indent);
     for (auto i = 0; i < names.size(); i++) {
         const bool isLast = (i + 1 == names.size());
-        const auto prefix = isLast ? "└── " : "├── ";
-        const auto connector = isLast ? ADDED_INDENT : "│   ";
+        const char *prefix = isLast ? "└── " : "├── ";
+        const char *connector = isLast ? ADDED_INDENT : "│   ";
 
         println("{}{}:", indent + ADDED_INDENT + prefix, names[i].text);
         exprs[i]->display(indent + ADDED_INDENT + connector + ADDED_INDENT);
@@ -107,8 +107,8 @@ void BlockNode::display(String indent)
     println("{}BlockNode", indent);
     for (auto it = decls.begin(); it != decls.end(); ++it) {
         const bool isLast = (std::next(it) == decls.end());
-        const auto prefix = isLast ? "└── " : "├── ";
-        const auto connector = isLast ? ADDED_INDENT : "│   ";
+        const char *prefix = isLast ? "└── " : "├── ";
+        const char *connector = isLast ? ADDED_INDENT : "│   ";
 
         println("{}decl:", indent + ADDED_INDENT + prefix);
         (*it)->display(indent + ADDED_INDENT + connector + ADDED_INDENT);
@@ -372,8 +372,8 @@ void CallExprNode::display(String indent)
     }
     for (auto it = args.begin(); it != args.end(); ++it) {
         const bool isLast = (std::next(it) == args.end());
-        const auto prefix = isLast ? "└── " : "├── ";
-        const auto connector = isLast ? ADDED_INDENT : "│   ";
+        const char *prefix = isLast ? "└── " : "├── ";
+        const char *connector = isLast ? ADDED_INDENT : "│   ";
 
         println("{}argument:", indent + ADDED_INDENT + prefix);
         (*it)->display(indent + ADDED_INDENT + connector + ADDED_INDENT);
@@ -418,8 +418,8 @@ void ListExprNode::display(String indent)
     println("{}ListExprNode", indent);
     for (auto it = list.begin(); it != list.end(); ++it) {
         const bool isLast = (std::next(it) == list.end());
-        const auto prefix = isLast ? "└── " : "├── ";
-        const auto connector = isLast ? ADDED_INDENT : "│   ";
+        const char *prefix = isLast ? "└── " : "├── ";
+        const char *connector = isLast ? ADDED_INDENT : "│   ";
 
         println("{}val:", indent + ADDED_INDENT + prefix);
         (*it)->display(indent + ADDED_INDENT + connector + ADDED_INDENT);
@@ -436,8 +436,8 @@ void MapExprNode::display(String indent)
     println("{}MapExprNode", indent);
     for (auto it = pairs.begin(); it != pairs.end(); ++it) {
         const bool isLast = (std::next(it) == pairs.end());
-        const auto prefix = isLast ? "└── " : "├── ";
-        const auto connector = isLast ? ADDED_INDENT : "│   ";
+        const char *prefix = isLast ? "└── " : "├── ";
+        const char *connector = isLast ? ADDED_INDENT : "│   ";
 
         println("{}pair:", indent + ADDED_INDENT + prefix);
         (*it)->display(indent + ADDED_INDENT + connector + ADDED_INDENT);
