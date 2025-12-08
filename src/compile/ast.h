@@ -10,7 +10,7 @@
 namespace aria {
 class FunctionContext;
 
-constexpr const char *add_indent = "    ";
+inline constexpr const char *ADDED_INDENT = "    ";
 
 struct ASTNode
 {
@@ -40,19 +40,19 @@ struct ProgramNode : ASTNode
 
 struct FunDeclNode : ASTNode
 {
-    Token token_name;
+    Token funNameToken;
     List<Token> params;
     UniquePtr<ASTNode> body;
     bool acceptsVarargs;
     uint32_t endLine;
 
     FunDeclNode(
-        Token _token_name,
+        Token _funNameToken,
         List<Token> _params,
         UniquePtr<ASTNode> _body,
         bool _acceptsVarargs,
         uint32_t _endLine)
-        : token_name{std::move(_token_name)}
+        : funNameToken{std::move(_funNameToken)}
         , params{std::move(_params)}
         , body{std::move(_body)}
         , acceptsVarargs{_acceptsVarargs}
@@ -66,13 +66,13 @@ struct FunDeclNode : ASTNode
 
 struct ClassDeclNode : ASTNode
 {
-    Token token_name;
-    Token token_super_name;
+    Token nameToken;
+    Token superNameToken;
     List<UniquePtr<ASTNode>> methods;
 
-    ClassDeclNode(Token _token_name, Token _token_super_name, List<UniquePtr<ASTNode>> _methods)
-        : token_name{std::move(_token_name)}
-        , token_super_name{std::move(_token_super_name)}
+    ClassDeclNode(Token _nameToken, Token _superNameToken, List<UniquePtr<ASTNode>> _methods)
+        : nameToken{std::move(_nameToken)}
+        , superNameToken{std::move(_superNameToken)}
         , methods{std::move(_methods)}
     {}
 
@@ -169,12 +169,12 @@ struct ForInStmtNode : ASTNode
 {
     UniquePtr<ASTNode> expr;
     UniquePtr<ASTNode> body;
-    Token token_name;
+    Token iterNameToken;
 
-    ForInStmtNode(Token _token_name, UniquePtr<ASTNode> _expr, UniquePtr<ASTNode> _body)
+    ForInStmtNode(Token _iterNameToken, UniquePtr<ASTNode> _expr, UniquePtr<ASTNode> _body)
         : expr{std::move(_expr)}
         , body{std::move(_body)}
-        , token_name{std::move(_token_name)}
+        , iterNameToken{std::move(_iterNameToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -184,9 +184,9 @@ struct ForInStmtNode : ASTNode
 
 struct BreakStmtNode : ASTNode
 {
-    Token token_break;
-    explicit BreakStmtNode(Token _token_break)
-        : token_break{std::move(_token_break)}
+    Token breakToken;
+    explicit BreakStmtNode(Token _breakToken)
+        : breakToken{std::move(_breakToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -196,9 +196,9 @@ struct BreakStmtNode : ASTNode
 
 struct ContinueStmtNode : ASTNode
 {
-    Token token_continue;
-    explicit ContinueStmtNode(Token _token_continue)
-        : token_continue{std::move(_token_continue)}
+    Token continueToken;
+    explicit ContinueStmtNode(Token _continueToken)
+        : continueToken{std::move(_continueToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -208,11 +208,11 @@ struct ContinueStmtNode : ASTNode
 
 struct ReturnStmtNode : ASTNode
 {
-    Token token_return;
+    Token returnToken;
     UniquePtr<ASTNode> expr;
 
-    explicit ReturnStmtNode(Token _token_return, UniquePtr<ASTNode> _expr)
-        : token_return{std::move(_token_return)}
+    explicit ReturnStmtNode(Token _returnToken, UniquePtr<ASTNode> _expr)
+        : returnToken{std::move(_returnToken)}
         , expr{std::move(_expr)}
     {}
 
@@ -223,14 +223,14 @@ struct ReturnStmtNode : ASTNode
 
 struct ImportStmtNode : ASTNode
 {
-    Token token_import;
-    Token token_module;
-    Token token_name;
+    Token importToken;
+    Token moduleToken;
+    Token nameToken;
 
-    ImportStmtNode(Token _token_import, Token _token_module, Token _token_name)
-        : token_import{std::move(_token_import)}
-        , token_module{std::move(_token_module)}
-        , token_name{std::move(_token_name)}
+    ImportStmtNode(Token _importToken, Token _moduleToken, Token _nameToken)
+        : importToken{std::move(_importToken)}
+        , moduleToken{std::move(_moduleToken)}
+        , nameToken{std::move(_nameToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -242,21 +242,21 @@ struct TryCatchStmtNode : ASTNode
 {
     UniquePtr<ASTNode> tryBody;
     UniquePtr<ASTNode> catchBody;
-    Token token_try;
-    Token token_catch;
-    Token token_err;
+    Token tryToken;
+    Token catchToken;
+    Token errToken;
 
     TryCatchStmtNode(
         UniquePtr<ASTNode> _tryBody,
         UniquePtr<ASTNode> _catchBody,
-        Token _token_try,
-        Token _token_catch,
-        Token _token_err)
+        Token _tryToken,
+        Token _catchToken,
+        Token _errToken)
         : tryBody{std::move(_tryBody)}
         , catchBody{std::move(_catchBody)}
-        , token_try{std::move(_token_try)}
-        , token_catch{std::move(_token_catch)}
-        , token_err{std::move(_token_err)}
+        , tryToken{std::move(_tryToken)}
+        , catchToken{std::move(_catchToken)}
+        , errToken{std::move(_errToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -266,11 +266,11 @@ struct TryCatchStmtNode : ASTNode
 
 struct ThrowStmtNode : ASTNode
 {
-    Token token_throw;
+    Token throwToken;
     UniquePtr<ASTNode> e;
 
-    explicit ThrowStmtNode(Token _token_throw, UniquePtr<ASTNode> _e)
-        : token_throw{std::move(_token_throw)}
+    explicit ThrowStmtNode(Token _throwToken, UniquePtr<ASTNode> _e)
+        : throwToken{std::move(_throwToken)}
         , e{std::move(_e)}
     {}
 
@@ -309,12 +309,12 @@ struct AssignExprNode : ASTNode
 {
     UniquePtr<ASTNode> lhs;
     UniquePtr<ASTNode> rhs;
-    Token op;
+    Token opToken;
 
-    AssignExprNode(UniquePtr<ASTNode> _lhs, Token _op, UniquePtr<ASTNode> _rhs)
+    AssignExprNode(UniquePtr<ASTNode> _lhs, Token _opToken, UniquePtr<ASTNode> _rhs)
         : lhs{std::move(_lhs)}
         , rhs{std::move(_rhs)}
-        , op{std::move(_op)}
+        , opToken{std::move(_opToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -324,12 +324,12 @@ struct AssignExprNode : ASTNode
 
 struct IncExprNode : ASTNode
 {
-    UniquePtr<ASTNode> expr;
-    Token op;
+    UniquePtr<ASTNode> operand;
+    Token opToken;
 
-    IncExprNode(UniquePtr<ASTNode> _expr, Token _op)
-        : expr{std::move(_expr)}
-        , op{std::move(_op)}
+    IncExprNode(UniquePtr<ASTNode> _operand, Token _opToken)
+        : operand{std::move(_operand)}
+        , opToken{std::move(_opToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -341,12 +341,12 @@ struct BinaryExprNode : ASTNode
 {
     UniquePtr<ASTNode> lhs;
     UniquePtr<ASTNode> rhs;
-    Token op;
+    Token opToken;
 
-    BinaryExprNode(UniquePtr<ASTNode> _lhs, Token _op, UniquePtr<ASTNode> _rhs)
+    BinaryExprNode(UniquePtr<ASTNode> _lhs, Token _opToken, UniquePtr<ASTNode> _rhs)
         : lhs(std::move(_lhs))
         , rhs(std::move(_rhs))
-        , op(std::move(_op))
+        , opToken(std::move(_opToken))
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -357,11 +357,11 @@ struct BinaryExprNode : ASTNode
 struct UnaryExprNode : ASTNode
 {
     UniquePtr<ASTNode> operand;
-    Token op;
+    Token opToken;
 
-    UnaryExprNode(UniquePtr<ASTNode> _operand, Token _op)
+    UnaryExprNode(UniquePtr<ASTNode> _operand, Token _opToken)
         : operand{std::move(_operand)}
-        , op{std::move(_op)}
+        , opToken{std::move(_opToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -371,11 +371,11 @@ struct UnaryExprNode : ASTNode
 
 struct CallExprNode : ASTNode
 {
-    UniquePtr<ASTNode> calledExpr;
+    UniquePtr<ASTNode> callee;
     List<UniquePtr<ASTNode>> args;
 
-    CallExprNode(UniquePtr<ASTNode> _calledExpr, List<UniquePtr<ASTNode>> _args)
-        : calledExpr{std::move(_calledExpr)}
+    CallExprNode(UniquePtr<ASTNode> _callee, List<UniquePtr<ASTNode>> _args)
+        : callee{std::move(_callee)}
         , args{std::move(_args)}
     {}
 
@@ -387,11 +387,11 @@ struct CallExprNode : ASTNode
 struct FieldExprNode : ASTNode
 {
     UniquePtr<ASTNode> receiver;
-    Token token_field_name;
+    Token fieldNameToken;
 
-    FieldExprNode(UniquePtr<ASTNode> _receiver, Token _token_field_name)
+    FieldExprNode(UniquePtr<ASTNode> _receiver, Token _fieldNameToken)
         : receiver{std::move(_receiver)}
-        , token_field_name{std::move(_token_field_name)}
+        , fieldNameToken{std::move(_fieldNameToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -455,20 +455,20 @@ struct PairNode : ASTNode
     void display(String indent) override;
 };
 
-enum class VarTag : uint8_t { _var, _this, _super };
+enum class VarTag : uint8_t { VAR, THIS, SUPER };
 
 struct VarNode : ASTNode
 {
-    Token var;
+    Token varNameToken;
     VarTag tag;
 
-    explicit VarNode(Token _var)
-        : var{std::move(_var)}
-        , tag{VarTag::_var}
+    explicit VarNode(Token _varNameToken)
+        : varNameToken{std::move(_varNameToken)}
+        , tag{VarTag::VAR}
     {}
 
-    VarNode(Token _var, VarTag _tag)
-        : var{std::move(_var)}
+    VarNode(Token _varNameToken, VarTag _tag)
+        : varNameToken{std::move(_varNameToken)}
         , tag{_tag}
     {}
 
@@ -479,10 +479,10 @@ struct VarNode : ASTNode
 
 struct NumberNode : ASTNode
 {
-    Token num;
+    Token numToken;
 
-    explicit NumberNode(Token _num)
-        : num{std::move(_num)}
+    explicit NumberNode(Token _numToken)
+        : numToken{std::move(_numToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -492,10 +492,10 @@ struct NumberNode : ASTNode
 
 struct StringNode : ASTNode
 {
-    Token str;
+    Token strToken;
 
-    explicit StringNode(Token _str)
-        : str{std::move(_str)}
+    explicit StringNode(Token _strToken)
+        : strToken{std::move(_strToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -505,10 +505,10 @@ struct StringNode : ASTNode
 
 struct TrueNode : ASTNode
 {
-    Token token_true;
+    Token trueToken;
 
-    explicit TrueNode(Token _token_true)
-        : token_true{std::move(_token_true)}
+    explicit TrueNode(Token _trueToken)
+        : trueToken{std::move(_trueToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -518,10 +518,10 @@ struct TrueNode : ASTNode
 
 struct FalseNode : ASTNode
 {
-    Token token_false;
+    Token falseToken;
 
-    explicit FalseNode(Token _token_false)
-        : token_false{std::move(_token_false)}
+    explicit FalseNode(Token _falseToken)
+        : falseToken{std::move(_falseToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -531,10 +531,10 @@ struct FalseNode : ASTNode
 
 struct NilNode : ASTNode
 {
-    Token token_nil;
+    Token nilToken;
 
-    explicit NilNode(Token _token_nil)
-        : token_nil{std::move(_token_nil)}
+    explicit NilNode(Token _nilToken)
+        : nilToken{std::move(_nilToken)}
     {}
 
     void accept(AstVisitor &visitor) override;
@@ -544,10 +544,10 @@ struct NilNode : ASTNode
 
 struct ErrorNode : ASTNode
 {
-    Token err;
+    Token errToken;
 
-    explicit ErrorNode(Token _err)
-        : err{std::move(_err)}
+    explicit ErrorNode(Token _errToken)
+        : errToken{std::move(_errToken)}
     {}
 
     void accept(AstVisitor &visitor) override;

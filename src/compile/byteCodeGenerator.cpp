@@ -33,7 +33,7 @@ static Map<TokenType, opCode> tokenToBinaryOpCode = {
 static bool isSuperVarNode(const ASTNode *node)
 {
     if (auto var = dynamic_cast<const VarNode *>(node)) {
-        return var->tag == VarTag::_super;
+        return var->tag == VarTag::SUPER;
     }
     return false;
 }
@@ -96,7 +96,7 @@ FunctionContext *ByteCodeGenerator::createLocalFunctionContext(
     return new FunctionContext{
         type,
         context,
-        node->token_name.text,
+        node->funNameToken.text,
         static_cast<int>(node->params.size()),
         node->acceptsVarargs};
 }
@@ -109,8 +109,8 @@ void ByteCodeGenerator::defineFunction(FunDeclNode *node, FunctionContext *inner
 
     chunk->emitOpValue(opCode::LOAD_CONST, NanBox::fromObj(fun), endLine);
     if (context->scopeDepth > 0) {
-        checkDefine(context, node->token_name);
-        declareLocalVariable(context, node->token_name);
+        checkDefine(context, node->funNameToken);
+        declareLocalVariable(context, node->funNameToken);
         context->finalizeLocal();
     } else {
         chunk->emitOpValue(opCode::DEF_GLOBAL, NanBox::fromObj(fun->name), endLine);
@@ -179,7 +179,7 @@ ObjString *ByteCodeGenerator::genMethodCode(ASTNode *node)
 {
     Chunk *chunk = context->chunk;
     auto *method = dynamic_cast<FunDeclNode *>(node);
-    auto name = method->token_name;
+    auto name = method->funNameToken;
     auto params = method->params;
     auto endLine = method->endLine;
 
@@ -220,18 +220,20 @@ void ByteCodeGenerator::defineAndLoadClass(const Token &className)
         declareLocalVariable(context, className);
         context->finalizeLocal();
         int localSlot = context->findLocalVariable(className.text);
-        chunk->emitOpArg16(opCode::LOAD_LOCAL, static_cast<uint16_t>(localSlot), chunk->lineOfLastCode());
+        chunk->emitOpArg16(
+            opCode::LOAD_LOCAL, static_cast<uint16_t>(localSlot), chunk->lineOfLastCode());
     } else {
         chunk->emitOpValue(opCode::DEF_GLOBAL, NanBox::fromObj(classNameObj), chunk->lineOfLastCode());
-        chunk->emitOpValue(opCode::LOAD_GLOBAL, NanBox::fromObj(classNameObj), chunk->lineOfLastCode());
+        chunk->emitOpValue(
+            opCode::LOAD_GLOBAL, NanBox::fromObj(classNameObj), chunk->lineOfLastCode());
     }
 }
 
 void ByteCodeGenerator::visitClassDeclNode(ClassDeclNode *node)
 {
     Chunk *chunk = context->chunk;
-    auto token_name = node->token_name;
-    auto token_super_name = node->token_super_name;
+    auto token_name = node->nameToken;
+    auto token_super_name = node->superNameToken;
     ObjString *className = newObjString(token_name.text, context->gc);
     chunk->emitOpValue(opCode::MAKE_CLASS, NanBox::fromObj(className), token_name.line);
 
@@ -250,7 +252,8 @@ void ByteCodeGenerator::visitClassDeclNode(ClassDeclNode *node)
         if (methodName->length == 4 && memcmp(methodName->C_str_ref(), "init", 4) == 0) {
             chunk->emitOp(opCode::MAKE_INIT_METHOD);
         } else {
-            chunk->emitOpValue(opCode::MAKE_METHOD, NanBox::fromObj(methodName), chunk->lineOfLastCode());
+            chunk->emitOpValue(
+                opCode::MAKE_METHOD, NanBox::fromObj(methodName), chunk->lineOfLastCode());
         }
     }
 
@@ -411,8 +414,8 @@ void ByteCodeGenerator::visitForStmtNode(ForStmtNode *node)
 
 void ByteCodeGenerator::visitForInStmtNode(ForInStmtNode *node)
 {
-    Token tk_loop_var_name = node->token_name;
-    Token tk_iter_name = node->token_name;
+    Token tk_loop_var_name = node->iterNameToken;
+    Token tk_iter_name = node->iterNameToken;
     tk_iter_name.text = "__" + tk_iter_name.text + "__ITER__";
 
     Chunk *chunk = context->chunk;
@@ -441,7 +444,8 @@ void ByteCodeGenerator::visitForInStmtNode(ForInStmtNode *node)
     int loopVarSlot = context->findLocalVariable(tk_loop_var_name.text);
     chunk->emitOpArg16(opCode::LOAD_LOCAL, static_cast<uint16_t>(iterSlot), chunk->lineOfLastCode());
     chunk->emitOp(opCode::ITER_GET_NEXT);
-    chunk->emitOpArg16(opCode::STORE_LOCAL, static_cast<uint16_t>(loopVarSlot), chunk->lineOfLastCode());
+    chunk->emitOpArg16(
+        opCode::STORE_LOCAL, static_cast<uint16_t>(loopVarSlot), chunk->lineOfLastCode());
     chunk->emitOp(opCode::POP);
 
     node->body->accept(*this);
@@ -466,13 +470,13 @@ void ByteCodeGenerator::visitBreakStmtNode(BreakStmtNode *node)
     Chunk *chunk = context->chunk;
     if (context->loopDepths.empty()) {
         String msg
-            = semanticError("Break statement should inside a loop.\n{}", node->token_break.info());
+            = semanticError("Break statement should inside a loop.\n{}", node->breakToken.info());
         throw ariaCompilingException(ErrorCode::SEMANTIC_INVALID_BREAK, msg);
     }
     int popCount = context->popLocalsOnControlFlow();
-    chunk->emitPopN(popCount, node->token_break.line);
+    chunk->emitPopN(popCount, node->breakToken.line);
 
-    auto breakJump = chunk->emitJump(opCode::JUMP_BWD, node->token_break.line);
+    auto breakJump = chunk->emitJump(opCode::JUMP_BWD, node->breakToken.line);
     context->loopBreaks.top().push_back(breakJump);
 }
 
@@ -481,15 +485,15 @@ void ByteCodeGenerator::visitContinueStmtNode(ContinueStmtNode *node)
     Chunk *chunk = context->chunk;
     if (context->loopDepths.empty()) {
         String msg = semanticError(
-            "Continue statement should inside a loop.\n{}", node->token_continue.info());
+            "Continue statement should inside a loop.\n{}", node->continueToken.info());
         throw ariaCompilingException(ErrorCode::SEMANTIC_INVALID_CONTINUE, msg);
     }
     int popCount = context->popLocalsOnControlFlow();
-    chunk->emitPopN(popCount, node->token_continue.line);
+    chunk->emitPopN(popCount, node->continueToken.line);
 
     // opCode::JUMP_BWD may be modified
     // because in forStmt the continue jumps backward,but in whileStmt the continue jumps forward.
-    auto continueJump = chunk->emitJump(opCode::JUMP_BWD, node->token_continue.line);
+    auto continueJump = chunk->emitJump(opCode::JUMP_BWD, node->continueToken.line);
     context->loopContinues.top().push_back(continueJump);
 }
 
@@ -497,12 +501,12 @@ void ByteCodeGenerator::visitReturnStmtNode(ReturnStmtNode *node)
 {
     if (context->fun->type == FunctionType::SCRIPT) {
         String msg
-            = semanticError("Can't return from top-level code.\n{}", node->token_return.info());
+            = semanticError("Can't return from top-level code.\n{}", node->returnToken.info());
         throw ariaCompilingException{ErrorCode::SEMANTIC_INVALID_RETURN, msg};
     }
     if (context->fun->type == FunctionType::INIT_METHOD) {
         String msg = semanticError(
-            "Can't return a value from an initializer.\n{}", node->token_return.info());
+            "Can't return a value from an initializer.\n{}", node->returnToken.info());
         throw ariaCompilingException{ErrorCode::SEMANTIC_INVALID_RETURN, msg};
     }
     node->expr->accept(*this);
@@ -512,10 +516,10 @@ void ByteCodeGenerator::visitReturnStmtNode(ReturnStmtNode *node)
 void ByteCodeGenerator::visitImportStmtNode(ImportStmtNode *node)
 {
     Chunk *chunk = context->chunk;
-    ObjString *module = newObjString(node->token_module.text, context->gc);
-    Token tk_name = node->token_name;
+    ObjString *module = newObjString(node->moduleToken.text, context->gc);
+    Token tk_name = node->nameToken;
     uint32_t line = chunk->lineOfLastCode();
-    chunk->emitOpValue(opCode::IMPORT, NanBox::fromObj(module), node->token_import.line);
+    chunk->emitOpValue(opCode::IMPORT, NanBox::fromObj(module), node->importToken.line);
 
     if (context->scopeDepth > 0) {
         checkDefine(context, tk_name);
@@ -531,15 +535,15 @@ void ByteCodeGenerator::visitTryCatchStmtNode(TryCatchStmtNode *node)
 {
     Chunk *chunk = context->chunk;
 
-    uint32_t begin = chunk->emitJump(opCode::SETUP_EXCEPT, node->token_try.line);
+    uint32_t begin = chunk->emitJump(opCode::SETUP_EXCEPT, node->tryToken.line);
     node->tryBody->accept(*this);
     chunk->emitOp(opCode::END_EXCEPT);
 
-    uint32_t exitJump = chunk->emitJump(opCode::JUMP_BWD, node->token_catch.line);
+    uint32_t exitJump = chunk->emitJump(opCode::JUMP_BWD, node->catchToken.line);
     chunk->patchJump(begin);
 
     context->beginScope();
-    declareLocalVariable(context, node->token_err);
+    declareLocalVariable(context, node->errToken);
     context->finalizeLocal();
     node->catchBody->accept(*this);
     auto ops = context->endScope();
@@ -569,7 +573,7 @@ void ByteCodeGenerator::visitExprStmtNode(ExprStmtNode *node)
 void ByteCodeGenerator::visitAssignExprNode(AssignExprNode *node)
 {
     checkAssignFlag(node);
-    auto &op = node->op;
+    auto &op = node->opToken;
     if (op.type != TokenType::EQUAL) {
         node->lhs->accept(*this);
     }
@@ -582,7 +586,7 @@ void ByteCodeGenerator::visitAssignExprNode(AssignExprNode *node)
         node->lhs->accept(*this);
         node->lhs->asLvalue = false;
     } catch ([[maybe_unused]] const ariaInvalidAssignException &e) {
-        String msg = semanticError("Invalid assignment target.\n{}", node->op.posInfo());
+        String msg = semanticError("Invalid assignment target.\n{}", node->opToken.posInfo());
         throw ariaCompilingException(ErrorCode::SEMANTIC_INVALID_ASSIGNMENT, msg);
     }
 }
@@ -591,8 +595,8 @@ void ByteCodeGenerator::visitIncExprNode(IncExprNode *node)
 {
     checkAssignFlag(node);
     Chunk *chunk = context->chunk;
-    auto &expr = node->expr;
-    Token op = node->op;
+    auto &expr = node->operand;
+    Token op = node->opToken;
     expr->accept(*this);
     chunk->emitOpValue(opCode::LOAD_CONST, NanBox::fromNumber(1), op.line);
     chunk->emitOp(tokenToBinaryOpCode[op.type], op.line);
@@ -601,7 +605,7 @@ void ByteCodeGenerator::visitIncExprNode(IncExprNode *node)
         expr->accept(*this);
         expr->asLvalue = false;
     } catch ([[maybe_unused]] const ariaInvalidAssignException &e) {
-        String msg = semanticError("Invalid assignment target.\n{}", node->op.posInfo());
+        String msg = semanticError("Invalid assignment target.\n{}", node->opToken.posInfo());
         throw ariaCompilingException(ErrorCode::SEMANTIC_INVALID_ASSIGNMENT, msg);
     }
 }
@@ -610,8 +614,8 @@ void ByteCodeGenerator::visitBinaryExprNode(BinaryExprNode *node)
 {
     checkAssignFlag(node);
     auto chunk = context->chunk;
-    auto t = node->op.type;
-    const auto line = node->op.line;
+    auto t = node->opToken.type;
+    const auto line = node->opToken.line;
     if (t == TokenType::AND || t == TokenType::OR) {
         node->lhs->accept(*this);
         auto jump = (t == TokenType::AND) ? opCode::JUMP_FALSE_NOPOP : opCode::JUMP_TRUE_NOPOP;
@@ -630,15 +634,15 @@ void ByteCodeGenerator::visitUnaryExprNode(UnaryExprNode *node)
 {
     checkAssignFlag(node);
     auto chunk = context->chunk;
-    const auto t = node->op.type;
-    const auto line = node->op.line;
+    const auto t = node->opToken.type;
+    const auto line = node->opToken.line;
     node->operand->accept(*this);
     if (t == TokenType::NOT) {
         chunk->emitOp(opCode::NOT, line);
     } else if (t == TokenType::MINUS) {
         chunk->emitOp(opCode::NEGATE, line);
     } else {
-        String msg = semanticError("Invalid unary operator.\n{}", node->op.info());
+        String msg = semanticError("Invalid unary operator.\n{}", node->opToken.info());
         throw ariaCompilingException(ErrorCode::SEMANTIC_UNKNOWN_OPERATOR, msg);
     }
 }
@@ -647,7 +651,7 @@ void ByteCodeGenerator::visitCallExprNode(CallExprNode *node)
 {
     checkAssignFlag(node);
     Chunk *chunk = context->chunk;
-    node->calledExpr->accept(*this);
+    node->callee->accept(*this);
     for (const auto &arg : node->args) {
         arg->accept(*this);
     }
@@ -658,7 +662,7 @@ void ByteCodeGenerator::visitCallExprNode(CallExprNode *node)
 void ByteCodeGenerator::genLoadFieldNodeCode(FieldExprNode *node)
 {
     Chunk *chunk = context->chunk;
-    Token tk_fieldName = node->token_field_name;
+    Token tk_fieldName = node->fieldNameToken;
 
     node->receiver->accept(*this);
 
@@ -676,11 +680,12 @@ void ByteCodeGenerator::genStoreFieldNodeCode(FieldExprNode *node)
 {
     if (isSuperVarNode(node->receiver.get())) {
         auto superNode = dynamic_cast<VarNode *>(node->receiver.get());
-        String msg = semanticError("Can't use 'super' as left value.\n{}", superNode->var.posInfo());
+        String msg = semanticError(
+            "Can't use 'super' as left value.\n{}", superNode->varNameToken.posInfo());
         throw ariaCompilingException{ErrorCode::SEMANTIC_INVALID_SUPER, msg};
     }
     Chunk *chunk = context->chunk;
-    Token tk_fieldName = node->token_field_name;
+    Token tk_fieldName = node->fieldNameToken;
 
     node->receiver->accept(*this);
 
@@ -753,25 +758,27 @@ void ByteCodeGenerator::visitPairNode(PairNode *node)
 
 void ByteCodeGenerator::genStoreVarNodeCode(const VarNode *node) const
 {
-    if (node->tag == VarTag::_super) {
-        String msg = semanticError("Can't use 'super' as left value.\n{}", node->var.posInfo());
+    if (node->tag == VarTag::SUPER) {
+        String msg
+            = semanticError("Can't use 'super' as left value.\n{}", node->varNameToken.posInfo());
         throw ariaCompilingException{ErrorCode::SEMANTIC_INVALID_SUPER, msg};
     }
-    if (node->tag == VarTag::_this && context->currentClass == nullptr) {
-        String msg = semanticError("Can't use 'this' outside of a class.\n{}", node->var.posInfo());
+    if (node->tag == VarTag::THIS && context->currentClass == nullptr) {
+        String msg
+            = semanticError("Can't use 'this' outside of a class.\n{}", node->varNameToken.posInfo());
         throw ariaCompilingException{ErrorCode::SEMANTIC_INVALID_THIS, msg};
     }
     Chunk *chunk = context->chunk;
-    String varName = node->var.text;
-    uint32_t line = node->var.line;
+    String varName = node->varNameToken.text;
+    uint32_t line = node->varNameToken.line;
     int localOffset = context->findLocalVariable(varName);
     if (localOffset >= 0) {
         chunk->emitOpArg16(opCode::STORE_LOCAL, static_cast<uint16_t>(localOffset), line);
         return;
     }
     if (localOffset == -1) {
-        String msg
-            = format("Can't read local variable in its own initializer.\n{}", node->var.info());
+        String msg = format(
+            "Can't read local variable in its own initializer.\n{}", node->varNameToken.info());
         throw ariaCompilingException{ErrorCode::SEMANTIC_UNDEFINED_VARIABLE, msg};
     }
     if (localOffset == -2) {
@@ -789,7 +796,7 @@ void ByteCodeGenerator::genStoreVarNodeCode(const VarNode *node) const
             fatalError(
                 ErrorCode::RESOURCE_VARIABLE_OVERFLOW,
                 "Too many closure variables in function.\n{}",
-                node->var.info());
+                node->varNameToken.info());
         }
     }
     fatalError(ErrorCode::INTERNAL_UNKNOWN, "Unknown error in StoreVarNode::generateByteCode.");
@@ -798,25 +805,27 @@ void ByteCodeGenerator::genStoreVarNodeCode(const VarNode *node) const
 void ByteCodeGenerator::genLoadVarNodeCode(const VarNode *node) const
 {
     Chunk *chunk = context->chunk;
-    uint32_t line = node->var.line;
-    String varName = node->var.text;
-    if (node->tag == VarTag::_super) {
+    uint32_t line = node->varNameToken.line;
+    String varName = node->varNameToken.text;
+    if (node->tag == VarTag::SUPER) {
         if (context->currentClass == nullptr) {
-            String msg
-                = semanticError("Can't use 'super' outside of a class.\n{}", node->var.posInfo());
+            String msg = semanticError(
+                "Can't use 'super' outside of a class.\n{}", node->varNameToken.posInfo());
             throw ariaCompilingException{ErrorCode::SEMANTIC_INVALID_SUPER, msg};
         }
         if (!context->currentClass->hasSuperClass) {
             String msg = semanticError(
-                "Can't use 'super' in a class with no superclass.\n{}", node->var.posInfo());
+                "Can't use 'super' in a class with no superclass.\n{}",
+                node->varNameToken.posInfo());
             throw ariaCompilingException{ErrorCode::SEMANTIC_INVALID_SUPER, msg};
         }
         context->chunk->emitOpArg16(opCode::LOAD_LOCAL, 0, line);
         return;
     }
 
-    if (node->tag == VarTag::_this && context->currentClass == nullptr) {
-        String msg = semanticError("Can't use 'this' outside of a class.\n{}", node->var.posInfo());
+    if (node->tag == VarTag::THIS && context->currentClass == nullptr) {
+        String msg
+            = semanticError("Can't use 'this' outside of a class.\n{}", node->varNameToken.posInfo());
         throw ariaCompilingException{ErrorCode::SEMANTIC_INVALID_THIS, msg};
     }
 
@@ -826,8 +835,8 @@ void ByteCodeGenerator::genLoadVarNodeCode(const VarNode *node) const
         return;
     }
     if (localOffset == -1) {
-        String msg
-            = format("Can't read local variable in its own initializer.\n{}", node->var.info());
+        String msg = format(
+            "Can't read local variable in its own initializer.\n{}", node->varNameToken.info());
         throw ariaCompilingException{ErrorCode::SEMANTIC_UNDEFINED_VARIABLE, msg};
     }
     if (localOffset == -2) {
@@ -845,7 +854,7 @@ void ByteCodeGenerator::genLoadVarNodeCode(const VarNode *node) const
             fatalError(
                 ErrorCode::RESOURCE_VARIABLE_OVERFLOW,
                 "Too many closure variables in function.\n{}",
-                node->var.info());
+                node->varNameToken.info());
         }
     }
     fatalError(ErrorCode::INTERNAL_UNKNOWN, "Unknown error in LoadVarNode::generateByteCode.");
@@ -864,7 +873,7 @@ void ByteCodeGenerator::visitNumberNode(NumberNode *node)
 {
     checkAssignFlag(node);
     double value = INFINITY;
-    auto &num = node->num;
+    auto &num = node->numToken;
     try {
         value = std::stod(num.text);
     } catch ([[maybe_unused]] const std::invalid_argument &e) {
@@ -880,7 +889,7 @@ void ByteCodeGenerator::visitNumberNode(NumberNode *node)
 void ByteCodeGenerator::visitStringNode(StringNode *node)
 {
     checkAssignFlag(node);
-    auto &str = node->str;
+    auto &str = node->strToken;
     Value strObj = NanBox::fromObj(newObjString(str.text, context->gc));
     context->chunk->emitOpValue(opCode::LOAD_CONST, strObj, str.line);
 }
@@ -888,24 +897,24 @@ void ByteCodeGenerator::visitStringNode(StringNode *node)
 void ByteCodeGenerator::visitTrueNode(TrueNode *node)
 {
     checkAssignFlag(node);
-    context->chunk->emitOp(opCode::LOAD_TRUE, node->token_true.line);
+    context->chunk->emitOp(opCode::LOAD_TRUE, node->trueToken.line);
 }
 
 void ByteCodeGenerator::visitFalseNode(FalseNode *node)
 {
     checkAssignFlag(node);
-    context->chunk->emitOp(opCode::LOAD_FALSE, node->token_false.line);
+    context->chunk->emitOp(opCode::LOAD_FALSE, node->falseToken.line);
 }
 
 void ByteCodeGenerator::visitNilNode(NilNode *node)
 {
     checkAssignFlag(node);
-    context->chunk->emitOp(opCode::LOAD_NIL, node->token_nil.line);
+    context->chunk->emitOp(opCode::LOAD_NIL, node->nilToken.line);
 }
 
 void ByteCodeGenerator::visitErrorNode(ErrorNode *node)
 {
-    throw ariaCompilingException(ErrorCode::SEMANTIC_UNKNOWN, node->err.text);
+    throw ariaCompilingException(ErrorCode::SEMANTIC_UNKNOWN, node->errToken.text);
 }
 
 } // namespace aria

@@ -665,10 +665,10 @@ UniquePtr<ASTNode> Parser::parsePrimary()
         return std::make_unique<FalseNode>(tk);
     }
     case TokenType::THIS: {
-        return std::make_unique<VarNode>(tk, VarTag::_this);
+        return std::make_unique<VarNode>(tk, VarTag::THIS);
     }
     case TokenType::SUPER: {
-        return std::make_unique<VarNode>(tk, VarTag::_super);
+        return std::make_unique<VarNode>(tk, VarTag::SUPER);
     }
     case TokenType::LEFT_PAREN: {
         return parseParenExpr();
