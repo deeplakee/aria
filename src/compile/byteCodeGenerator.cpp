@@ -46,22 +46,24 @@ static void checkAssignFlag(ASTNode *node)
     }
 }
 
-static void checkDefine(const FunctionContext *context, const Token &tk_name)
+static void checkDefine(const FunctionContext *context, const Token &nameToken)
 {
-    if (context->isDefined(tk_name.text)) {
+    if (context->isDefined(nameToken.text)) {
         String msg = semanticError(
-            "Variable '{}' already declared in this scope.\n{}", tk_name.text, tk_name.posInfo());
+            "Variable '{}' already declared in this scope.\n{}",
+            nameToken.text,
+            nameToken.posInfo());
         throw ariaCompilingException(ErrorCode::SEMANTIC_DUPLICATE_DECL, msg);
     }
 }
 
-static void declareLocalVariable(FunctionContext *context, const Token &tk_name)
+static void declareLocalVariable(FunctionContext *context, const Token &nameToken)
 {
-    if (!context->addLocal(tk_name.text)) {
+    if (!context->addLocal(nameToken.text)) {
         fatalError(
             ErrorCode::INTERNAL_BYTECODE_GEN_FAIL,
             "Too many local variables have been declared within the current scope.\n{}",
-            tk_name.posInfo());
+            nameToken.posInfo());
     }
 }
 
@@ -101,19 +103,18 @@ FunctionContext *ByteCodeGenerator::createLocalFunctionContext(
         node->acceptsVarargs};
 }
 
-void ByteCodeGenerator::defineFunction(FunDeclNode *node, FunctionContext *innerCtx) const
+void ByteCodeGenerator::defineFunction(
+    ObjFunction *fun, const Token &funNameToken, uint32_t line) const
 {
     Chunk *chunk = context->chunk;
-    auto endLine = node->endLine;
-    ObjFunction *fun = innerCtx->fun;
 
-    chunk->emitOpValue(opCode::LOAD_CONST, NanBox::fromObj(fun), endLine);
+    chunk->emitOpValue(opCode::LOAD_CONST, NanBox::fromObj(fun), line);
     if (context->scopeDepth > 0) {
-        checkDefine(context, node->funNameToken);
-        declareLocalVariable(context, node->funNameToken);
+        checkDefine(context, funNameToken);
+        declareLocalVariable(context, funNameToken);
         context->finalizeLocal();
     } else {
-        chunk->emitOpValue(opCode::DEF_GLOBAL, NanBox::fromObj(fun->name), endLine);
+        chunk->emitOpValue(opCode::DEF_GLOBAL, NanBox::fromObj(fun->name), line);
     }
 }
 
@@ -141,29 +142,27 @@ void ByteCodeGenerator::emitClosure(Chunk *chunk, ObjFunction *fun, uint32_t lin
 
 void ByteCodeGenerator::visitFunDeclNode(FunDeclNode *node)
 {
-    Chunk *chunk = context->chunk;
-    auto endLine = node->endLine;
-    auto *innerCtx = createLocalFunctionContext(node, FunctionType::FUNCTION);
-    auto fun = innerCtx->fun;
+    FunctionContext *innerCtx = createLocalFunctionContext(node, FunctionType::FUNCTION);
+    ObjFunction *fun = innerCtx->currentFunction();
 
-    defineFunction(node, innerCtx);
-
+    defineFunction(fun, node->funNameToken, node->endLine);
     context = innerCtx;
-    context->beginScope();
 
+    // Call beginScope() then all parameters will be local variables
+    context->beginScope();
     for (auto &param : node->params) {
         defineParam(param);
     }
 
     node->body->accept(*this);
     context->chunk->emitFunEndRet(context->chunk->lineOfLastCode());
-    emitClosure(chunk, fun, endLine);
 
 #ifdef DEBUG_PRINT_COMPILED_CODE
     fun->chunk->disassemble(fun->toString());
 #endif
 
     context = context->enclosing;
+    emitClosure(context->chunk, fun, node->endLine);
     delete innerCtx;
 }
 

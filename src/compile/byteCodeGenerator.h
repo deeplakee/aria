@@ -50,7 +50,7 @@ private:
 
     FunctionContext *createLocalFunctionContext(const FunDeclNode *node, FunctionType type) const;
 
-    void defineFunction(FunDeclNode *node, FunctionContext *innerCtx) const;
+    void defineFunction(ObjFunction *fun, const Token &funNameToken, uint32_t line) const;
 
     void defineParam(const Token &param) const;
 
