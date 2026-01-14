@@ -130,7 +130,7 @@ void ByteCodeGenerator::defineParam(const Token &param) const
 
 void ByteCodeGenerator::emitClosure(Chunk *chunk, ObjFunction *fun, uint32_t line)
 {
-    fun->initUpvalues(context->gc);
+    fun->initUpvalues();
     if (fun->upvalueCount != 0) {
         chunk->emitOpValue(opCode::CLOSURE, NanBox::fromObj(fun), line);
         for (int i = 0; i < fun->upvalueCount; i++) {

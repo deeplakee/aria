@@ -43,7 +43,7 @@ public:
 
     Value op_call(AriaEnv *env, int argCount) override;
 
-    void initUpvalues(GC *gc);
+    void initUpvalues();
 
     ObjString *location;
     ObjString *name;

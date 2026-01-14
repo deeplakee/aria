@@ -103,7 +103,7 @@ Value ObjFunction::op_call(AriaEnv *env, int argCount)
     return env->createCallFrame(this);
 }
 
-void ObjFunction::initUpvalues(GC *gc)
+void ObjFunction::initUpvalues()
 {
     if (upvalueCount == 0) {
         return;
