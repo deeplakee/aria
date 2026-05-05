@@ -144,7 +144,7 @@ void ByteCodeGenerator::visitFunDeclNode(FunDeclNode *node)
 {
     FunctionContext *innerCtx = createLocalFunctionContext(node, FunctionType::FUNCTION);
     ObjFunction *fun = innerCtx->currentFunction();
-
+    Chunk* outerCtxChunk = context->chunk;
     defineFunction(fun, node->funNameToken, node->endLine);
     context = innerCtx;
 
@@ -156,13 +156,13 @@ void ByteCodeGenerator::visitFunDeclNode(FunDeclNode *node)
 
     node->body->accept(*this);
     context->chunk->emitFunEndRet(context->chunk->lineOfLastCode());
+    emitClosure(outerCtxChunk, fun, node->endLine);
 
 #ifdef DEBUG_PRINT_COMPILED_CODE
     fun->chunk->disassemble(fun->toString());
 #endif
 
     context = context->enclosing;
-    emitClosure(context->chunk, fun, node->endLine);
     delete innerCtx;
 }
 
