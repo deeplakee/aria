@@ -118,13 +118,13 @@ void ByteCodeGenerator::defineFunction(
     }
 }
 
-void ByteCodeGenerator::defineParam(const Token &param) const
+void ByteCodeGenerator::defineParam(const Token &paramNameToken) const
 {
-    if (context->isDefined(param.text)) {
-        String msg = semanticError("The parameter has been used before.\n{}", param.info());
+    if (context->isDefined(paramNameToken.text)) {
+        String msg = semanticError("The parameter has been used before.\n{}", paramNameToken.info());
         throw ariaCompilingException(ErrorCode::SEMANTIC_DUPLICATE_DECL, msg);
     }
-    declareLocalVariable(context, param);
+    declareLocalVariable(context, paramNameToken);
     context->finalizeLocal();
 }
 
@@ -166,9 +166,9 @@ void ByteCodeGenerator::visitFunDeclNode(FunDeclNode *node)
     delete innerCtx;
 }
 
-void ByteCodeGenerator::genInheritCode(const Token &super_name)
+void ByteCodeGenerator::genInheritCode(const Token &superClassNameToken)
 {
-    UniquePtr<ASTNode> loadSuperKlassNode = std::make_unique<VarNode>(super_name);
+    UniquePtr<ASTNode> loadSuperKlassNode = std::make_unique<VarNode>(superClassNameToken);
     loadSuperKlassNode->accept(*this);
     context->chunk->emitOp(opCode::INHERIT);
     context->currentClass->hasSuperClass = true;

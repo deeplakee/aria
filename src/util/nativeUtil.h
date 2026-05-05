@@ -15,7 +15,7 @@ namespace aria {
 
 #define CHECK_OBJSTRING(val, what) \
     if (!isObjString(val)) { \
-        return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, #what " must be a map"); \
+        return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, #what " must be a string"); \
     }
 
 #define CHECK_INTEGER(val, int_result, what) \

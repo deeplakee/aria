@@ -26,7 +26,7 @@ public:
 private:
     FunctionContext *context;
 
-    void genInheritCode(const Token &super_name);
+    void genInheritCode(const Token &superClassNameToken);
 
     ObjString *genMethodCode(ASTNode *node);
 
@@ -52,7 +52,7 @@ private:
 
     void defineFunction(ObjFunction *fun, const Token &funNameToken, uint32_t line) const;
 
-    void defineParam(const Token &param) const;
+    void defineParam(const Token &paramNameToken) const;
 
     void emitClosure(Chunk *chunk, ObjFunction *fun, uint32_t line);
 
