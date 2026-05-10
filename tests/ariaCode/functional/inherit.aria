@@ -1,0 +1,54 @@
+class Base{
+	init(name){
+		this.name = name;
+	}
+	hello(){
+		println("This is Base!\n");
+	}
+}
+
+class A1 : Base{
+	init(name){
+		super.init(name);
+	}
+	hello(){
+		println("This is A1!\n");
+	}
+}
+
+class A2 : Base{
+	init(name){
+		super.init(name);
+	}
+	hello(){
+		println("This is A2!\n");
+	}
+}
+
+class B1 : A1{
+	init(name){
+		super.init(name);
+	}
+	hello(){
+		println("This is B1!\n");
+	}
+}
+
+class B2 : A2{
+	init(name){
+		super.init(name);
+	}
+	hello(){
+		println("This is B2!\n");
+	}
+}
+
+var a1 = A1("a_1");
+var a2 = A2("a_2");
+var b1 = B1("b_1");
+var b2 = B2("b_2");
+
+a1.hello();
+a2.hello();
+b1.hello();
+b2.hello();

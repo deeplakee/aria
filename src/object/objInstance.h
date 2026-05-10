@@ -31,6 +31,8 @@ public:
 
     Value copy(GC *gc) override;
 
+    Value getSuperMethod(ObjClass *methodKlass, ObjString *methodName, Value &superMethod);
+
     ObjClass *klass;
     ValueHashTable fields;
     ValueHashTable *cachedMethods;

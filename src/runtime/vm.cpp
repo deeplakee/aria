@@ -857,6 +857,7 @@ Value AriaVM::run(int retFrame)
             Value methodName = NanBox::fromObj(frame->readObjString());
             Value method = stack.peek(0);
             ObjClass *klass = asObjClass(stack.peek(1));
+            asObjFunction(method)->enclosingClass = klass;
             klass->methods.insert(methodName, method);
             stack.pop();
             break;
@@ -864,6 +865,7 @@ Value AriaVM::run(int retFrame)
         case opCode::MAKE_INIT_METHOD: {
             Value method = stack.pop();
             ObjClass *klass = asObjClass(stack.peek());
+            asObjFunction(method)->enclosingClass = klass;
             klass->initMethod = asObjFunction(method);
             break;
         }
@@ -873,26 +875,15 @@ Value AriaVM::run(int retFrame)
         }
         case opCode::LOAD_SUPER_METHOD: {
             ObjString *methodName = frame->readObjString();
-            Value instance = stack.peek();
-            ObjClass *superKlass = asObjInstance(instance)->klass->superKlass;
+            ObjInstance *instance = asObjInstance(stack.peek());
+            ObjClass *klass = frame->function->enclosingClass;
             Value superMethod = NanBox::NilValue;
-            if (!superKlass->methods.get(NanBox::fromObj(methodName), superMethod)) {
-                if (superKlass->initMethod != nullptr && methodName->length == 4
-                    && memcmp(methodName->C_str_ref(), "init", 4) == 0) {
-                    superMethod = NanBox::fromObj(superKlass->initMethod);
-                } else {
-                    String msg = format(
-                        "Superclass '{}' has no method '{}",
-                        superKlass->toString(),
-                        methodName->toString());
-                    throwException(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
-                    break;
-                }
+            if (auto result = instance->getSuperMethod(klass, methodName, superMethod);
+                NanBox::isFalse(result)) {
+                String msg = format("Superclass has no method '{}", methodName->toString());
+                throwException(ErrorCode::RUNTIME_INVALID_FIELD_OP, msg);
+                break;
             }
-            ObjFunction *unpackedMethod = asObjFunction(superMethod);
-            ObjBoundMethod *boundMethod = newObjBoundMethod(instance, unpackedMethod, gc);
-            superMethod = NanBox::fromObj(boundMethod);
-
             stack.setTopVal(superMethod);
             break;
         }

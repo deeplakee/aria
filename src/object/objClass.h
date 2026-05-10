@@ -25,6 +25,8 @@ public:
 
     void blacken() override;
 
+    bool getSuperMethod(ObjString *methodName, Value &method) const;
+
     ObjString *name;
     ValueHashTable methods;
     ObjClass *superKlass;

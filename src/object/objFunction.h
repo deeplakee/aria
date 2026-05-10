@@ -5,6 +5,7 @@
 #include "object/object.h"
 
 namespace aria {
+class ObjClass;
 
 class ValueHashTable;
 class ObjUpvalue;
@@ -46,6 +47,7 @@ public:
     void initUpvalues();
 
     ObjString *location;
+    ObjClass *enclosingClass;
     ObjString *name;
     Chunk *chunk;
     int arity;

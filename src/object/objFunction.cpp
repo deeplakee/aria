@@ -21,6 +21,7 @@ ObjFunction::ObjFunction(
     GC *_gc)
     : Obj{ObjType::FUNCTION, hashObj(this, ObjType::FUNCTION), _gc}
     , location(_location)
+    , enclosingClass(nullptr)
     , name{_name}
     , chunk{new Chunk{_globals, _gc}}
     , arity{_arity}
@@ -28,12 +29,12 @@ ObjFunction::ObjFunction(
     , upvalues{nullptr}
     , upvalueCount{0}
     , acceptsVarargs{_acceptsVarargs}
-{
-}
+{}
 
 ObjFunction::ObjFunction(FunctionType _type, ObjString *_location, ObjString *_name, GC *_gc)
     : Obj{ObjType::FUNCTION, hashObj(this, ObjType::FUNCTION), _gc}
     , location(_location)
+    , enclosingClass(nullptr)
     , name{_name}
     , chunk{new Chunk{_gc}}
     , arity{0}
@@ -47,6 +48,7 @@ ObjFunction::ObjFunction(
     FunctionType _type, ObjString *_location, ObjString *_name, ValueHashTable *_globals, GC *_gc)
     : Obj{ObjType::FUNCTION, hashObj(this, ObjType::FUNCTION), _gc}
     , location(_location)
+    , enclosingClass(nullptr)
     , name{_name}
     , chunk{new Chunk{_globals, _gc}}
     , arity{0}
@@ -54,8 +56,7 @@ ObjFunction::ObjFunction(
     , upvalues{nullptr}
     , upvalueCount{0}
     , acceptsVarargs{false}
-{
-}
+{}
 
 ObjFunction::~ObjFunction()
 {
@@ -77,6 +78,9 @@ String ObjFunction::toString(ValueStack *printStack)
 void ObjFunction::blacken()
 {
     location->mark();
+    if (enclosingClass != nullptr) {
+        enclosingClass->mark();
+    }
     name->mark();
     chunk->consts.mark();
     chunk->globals->mark();

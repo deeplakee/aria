@@ -8,3 +8,4 @@ import "list" as f7;
 import "map" as f8;
 import "quicksort" as f9;
 import "type" as f10;
+import "inherit" as f11;

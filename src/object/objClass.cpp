@@ -34,6 +34,23 @@ void ObjClass::blacken()
     }
 }
 
+bool ObjClass::getSuperMethod(ObjString *methodName, Value &method) const
+{
+    if (superKlass == nullptr) {
+        return false;
+    }
+
+    if (methodName->length == 4 && memcmp(methodName->C_str_ref(), "init", 4) == 0) {
+        if (superKlass->initMethod != nullptr) {
+            method = NanBox::fromObj(superKlass->initMethod);
+            return true;
+        }
+        return false;
+    }
+
+    return superKlass->methods.get(NanBox::fromObj(methodName), method);
+}
+
 ObjClass *newObjClass(ObjString *name, GC *gc)
 {
     auto *obj = gc->allocateObject<ObjClass>(name, gc);

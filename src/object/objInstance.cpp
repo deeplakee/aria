@@ -79,6 +79,18 @@ Value ObjInstance::copy(GC *gc)
     return NanBox::fromObj(newObj);
 }
 
+Value ObjInstance::getSuperMethod(ObjClass *methodKlass, ObjString *methodName, Value &superMethod)
+{
+
+    if (!methodKlass->getSuperMethod(methodName, superMethod)) [[unlikely]] {
+        return NanBox::FalseValue;
+    }
+    ObjBoundMethod *boundMethod
+        = newObjBoundMethod(NanBox::fromObj(this), asObjFunction(superMethod), gc);
+    superMethod = NanBox::fromObj(boundMethod);
+    return NanBox::TrueValue;
+}
+
 ObjInstance *newObjInstance(ObjClass *klass, GC *gc)
 {
     auto *obj = gc->allocateObject<ObjInstance>(klass, gc);
