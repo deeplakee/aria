@@ -33,6 +33,7 @@ inline constexpr const char *AriaSourceSuffix = ".aria";
 inline constexpr const char *tmp_aria_file_name = "__tmp_aria_file__.aria";
 inline constexpr const char *tmp_aria_file_path = "./__tmp_aria_file__.aria";
 
+inline constexpr const char *Init_FunName = "init";
 inline constexpr const char *overloadingAdd_FunName = "__add__";
 inline constexpr const char *overloadingSub_FunName = "__sub__";
 inline constexpr const char *overloadingMul_FunName = "__mul__";

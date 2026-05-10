@@ -40,7 +40,8 @@ bool ObjClass::getSuperMethod(ObjString *methodName, Value &method) const
         return false;
     }
 
-    if (methodName->length == 4 && memcmp(methodName->C_str_ref(), "init", 4) == 0) {
+    if (const auto strLen = std::strlen(Init_FunName);
+        methodName->length == strLen && memcmp(methodName->C_str_ref(), Init_FunName, strLen) == 0) {
         if (superKlass->initMethod != nullptr) {
             method = NanBox::fromObj(superKlass->initMethod);
             return true;

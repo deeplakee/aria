@@ -144,7 +144,7 @@ void ByteCodeGenerator::visitFunDeclNode(FunDeclNode *node)
 {
     FunctionContext *innerCtx = createLocalFunctionContext(node, FunctionType::FUNCTION);
     ObjFunction *fun = innerCtx->currentFunction();
-    Chunk* outerCtxChunk = context->chunk;
+    Chunk *outerCtxChunk = context->chunk;
     defineFunction(fun, node->funNameToken, node->endLine);
     context = innerCtx;
 
@@ -182,7 +182,7 @@ ObjString *ByteCodeGenerator::genMethodCode(ASTNode *node)
     auto params = method->params;
     auto endLine = method->endLine;
 
-    auto isInit = (name.text == "init");
+    auto isInit = (name.text == Init_FunName);
     auto methodType = isInit ? FunctionType::INIT_METHOD : FunctionType::METHOD;
     FunctionContext *innerCtx = createLocalFunctionContext(method, methodType);
     context = innerCtx;
@@ -248,7 +248,9 @@ void ByteCodeGenerator::visitClassDeclNode(ClassDeclNode *node)
     for (const auto &method : node->methods) {
         ASTNode *rawMethodNodePtr = method.get();
         ObjString *methodName = genMethodCode(rawMethodNodePtr);
-        if (methodName->length == 4 && memcmp(methodName->C_str_ref(), "init", 4) == 0) {
+        if (const auto strLen = std::strlen(Init_FunName);
+            methodName->length == strLen
+            && memcmp(methodName->C_str_ref(), Init_FunName, strLen) == 0) {
             chunk->emitOp(opCode::MAKE_INIT_METHOD);
         } else {
             chunk->emitOpValue(
