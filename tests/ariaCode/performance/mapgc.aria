@@ -2,7 +2,7 @@
 fun makeBigObject() {
   var obj = {};
   for (var i = 1; i <= 1000; i++) {
-    obj[str(i) + "key"] = random();
+    obj[str(i) + "key"] = random(0, 10000000);
   }
   return obj;
 }

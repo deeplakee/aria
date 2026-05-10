@@ -4,6 +4,7 @@
 #include "object/objList.h"
 #include "object/objString.h"
 #include "runtime/vm.h"
+#include "util/nativeUtil.h"
 #include "value/valueArray.h"
 
 #include <cstring>
@@ -19,10 +20,13 @@ Value Native::_aria_clock_(AriaEnv *env, int argCount, Value *args)
 
 Value Native::_aria_random_(AriaEnv *env, int argCount, Value *args)
 {
+    CHECK_INTEGER(args[0], min, Argument);
+    CHECK_INTEGER(args[1], max, Argument);
     static std::mt19937 gen(std::random_device{}());
-    // std::mt19937::max() failed,
-    // so I use INT_MAX
-    static std::uniform_int_distribution<> dis(std::mt19937::min(), INT_MAX);
+    static std::uniform_int_distribution<uint32_t> dis;
+    dis.param(
+        std::uniform_int_distribution<uint32_t>::param_type{
+            static_cast<uint32_t>(min), static_cast<uint32_t>(max)});
 
     return NanBox::fromNumber(dis(gen));
 }
@@ -165,7 +169,7 @@ List<NativeFnEntry> &Native::nativeFnTable()
 {
     static List<NativeFnEntry> table = {
         {"clock", 0, _aria_clock_},
-        {"random", 0, _aria_random_},
+        {"random", 2, _aria_random_},
         {"println", 0, _aria_println_, true},
         {"readline", 0, _aria_readline_},
         {"typeof", 1, _aria_typeof_},
