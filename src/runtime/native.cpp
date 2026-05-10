@@ -94,9 +94,7 @@ Value Native::_aria_repr_(AriaEnv *env, int argCount, Value *args)
 
 Value Native::_aria_num_(AriaEnv *env, int argCount, Value *args)
 {
-    if (!isObjString(args[0])) {
-        return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, "argument must be a string");
-    }
+    CHECK_OBJSTRING(args[0], argument);
     try {
         return NanBox::fromNumber(std::stod(asCString(args[0])));
     } catch ([[maybe_unused]] const std::exception &e) {
@@ -106,9 +104,7 @@ Value Native::_aria_num_(AriaEnv *env, int argCount, Value *args)
 
 Value Native::_aria_bool_(AriaEnv *env, int argCount, Value *args)
 {
-    if (!isObjString(args[0])) {
-        return env->newException(ErrorCode::RUNTIME_TYPE_ERROR, "argument must be a string");
-    }
+    CHECK_OBJSTRING(args[0], argument);
     ObjString *str = asObjString(args[0]);
     if (str->length == 4 && memcmp(str->C_str_ref(), "true", 4) == 0) {
         return NanBox::TrueValue;
