@@ -248,9 +248,8 @@ void ByteCodeGenerator::visitClassDeclNode(ClassDeclNode *node)
     for (const auto &method : node->methods) {
         ASTNode *rawMethodNodePtr = method.get();
         ObjString *methodName = genMethodCode(rawMethodNodePtr);
-        if (const auto strLen = std::strlen(Init_FunName);
-            methodName->length == strLen
-            && memcmp(methodName->C_str_ref(), Init_FunName, strLen) == 0) {
+        if (methodName->length == Init_FunName_Len
+            && memcmp(methodName->C_str_ref(), Init_FunName, Init_FunName_Len) == 0) {
             chunk->emitOp(opCode::MAKE_INIT_METHOD);
         } else {
             chunk->emitOpValue(
