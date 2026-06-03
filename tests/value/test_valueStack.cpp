@@ -15,7 +15,7 @@ TEST_F(ValueTestFixture, ValueStackOperation1)
     auto val_1 = aria::NanBox::NilValue;
     auto val_2 = aria::NanBox::TrueValue;
     auto val_3 = aria::NanBox::FalseValue;
-    auto val_4 = aria::NanBox::fromObj(aria::newObjString("hello", gc));
+    auto val_4 = aria::NanBox::fromObj(aria::new_ObjString("hello", gc));
     auto val_5 = aria::NanBox::FalseValue;
     stack.push(val_1);
     stack.push(val_2);

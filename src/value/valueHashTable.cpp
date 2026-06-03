@@ -4,32 +4,32 @@
 #include "value/valueArray.h"
 
 namespace aria {
-ValueHashTable::ValueHashTable(GC *_gc)
-    : count{0}
-    , used{0}
-    , capacity{0}
-    , entry{nullptr}
-    , ctrl{nullptr}
-    , gc{_gc}
+ValueHashTable::ValueHashTable(GC *gc)
+    : count_{0}
+    , used_{0}
+    , capacity_{0}
+    , entry_{nullptr}
+    , ctrl_{nullptr}
+    , gc_{gc}
 {}
 
-ValueHashTable::ValueHashTable(const Value *_values, uint32_t _count, GC *_gc)
-    : count{0}
-    , used{0}
-    , capacity{0}
-    , entry{nullptr}
-    , ctrl{nullptr}
-    , gc{_gc}
+ValueHashTable::ValueHashTable(const Value *values, uint32_t count, GC *gc)
+    : count_{0}
+    , used_{0}
+    , capacity_{0}
+    , entry_{nullptr}
+    , ctrl_{nullptr}
+    , gc_{gc}
 {
-    if (_count > 0 && _values == nullptr) {
-        fatalError(
+    if (count > 0 && values == nullptr) {
+        fatal_error(
             ErrorCode::RESOURCE_MAP_CONSTRUCT_FAIL,
-            "ValueHashTable constructor error: _values is null but _count > 0.");
+            "ValueHashTable constructor error: values is null but count > 0.");
     }
-    if (_values != nullptr) {
-        for (uint32_t i = 0; i < _count; ++i) {
-            auto k = _values[2 * i];
-            auto v = _values[2 * i + 1];
+    if (values != nullptr) {
+        for (uint32_t i = 0; i < count; ++i) {
+            auto k = values[2 * i];
+            auto v = values[2 * i + 1];
             insert(k, v);
         }
     }
@@ -37,55 +37,55 @@ ValueHashTable::ValueHashTable(const Value *_values, uint32_t _count, GC *_gc)
 
 ValueHashTable::~ValueHashTable()
 {
-    gc->freeArray<KVPair>(entry, capacity);
-    gc->freeArray<uint8_t>(ctrl, capacity);
+    gc_->free_array<KVPair>(entry_, capacity_);
+    gc_->free_array<uint8_t>(ctrl_, capacity_);
 }
 
 bool ValueHashTable::insert(Value k, Value v)
 {
-    if (used + 1 > capacity * TABLE_MAX_LOAD) {
-        uint64_t newCapacity = GC::growCapacity(capacity);
-        if (newCapacity > UINT32_MAX) {
-            fatalError(ErrorCode::RESOURCE_MAP_OVERFLOW, "Too many values in a map");
+    if (used_ + 1 > capacity_ * k_table_max_load) {
+        uint64_t new_capacity = GC::grow_capacity(capacity_);
+        if (new_capacity > UINT32_MAX) {
+            fatal_error(ErrorCode::RESOURCE_MAP_OVERFLOW, "Too many values in a map");
         }
-        adjustCapacity(newCapacity);
+        adjust_capacity(new_capacity);
     }
-    uint32_t hash = valueHash(k);
-    uint32_t destIndex = findPosition(k, hash);
-    const bool notFull = ctrlNotFull(ctrl[destIndex]);
-    if (notFull) {
-        count++;
-        if (ctrl[destIndex] == kEmpty) {
-            used++;
+    uint32_t hash = value_hash(k);
+    uint32_t dest_index = find_position(k, hash);
+    const bool not_full = ctrl_not_full(ctrl_[dest_index]);
+    if (not_full) {
+        count_++;
+        if (ctrl_[dest_index] == k_empty) {
+            used_++;
         }
     }
 
-    ctrl[destIndex] = getHashH2(hash);
-    entry[destIndex].key = k;
-    entry[destIndex].value = v;
-    return notFull;
+    ctrl_[dest_index] = get_hash_h2(hash);
+    entry_[dest_index].key = k;
+    entry_[dest_index].value = v;
+    return not_full;
 }
 
 bool ValueHashTable::get(Value k, Value &v) const
 {
-    if (count == 0) {
+    if (count_ == 0) {
         return false;
     }
-    int64_t destIndex = findExist(k);
-    if (destIndex == -1) {
+    int64_t dest_index = find_exist(k);
+    if (dest_index == -1) {
         return false;
     }
-    v = entry[destIndex].value;
+    v = entry_[dest_index].value;
     return true;
 }
 
 bool ValueHashTable::has(Value k) const
 {
-    if (count == 0) {
+    if (count_ == 0) {
         return false;
     }
-    int64_t destIndex = findExist(k);
-    if (destIndex == -1) {
+    int64_t dest_index = find_exist(k);
+    if (dest_index == -1) {
         return false;
     }
     return true;
@@ -93,48 +93,48 @@ bool ValueHashTable::has(Value k) const
 
 bool ValueHashTable::remove(Value k)
 {
-    if (count == 0) {
+    if (count_ == 0) {
         return false;
     }
 
-    int64_t destIndex = findExist(k);
-    if (destIndex == -1) {
+    int64_t dest_index = find_exist(k);
+    if (dest_index == -1) {
         return false;
     }
 
-    ctrl[destIndex] = kDeleted;
-    entry[destIndex].key = NanBox::NilValue;
-    entry[destIndex].value = NanBox::NilValue;
-    count--;
+    ctrl_[dest_index] = k_deleted;
+    entry_[dest_index].key = NanBox::NilValue;
+    entry_[dest_index].value = NanBox::NilValue;
+    count_--;
     return true;
 }
 
 void ValueHashTable::copy(const ValueHashTable *other)
 {
-    auto otherEntry = other->entry;
-    auto otherCtrl = other->ctrl;
-    for (int i = 0; i < other->capacity; i++) {
-        if (ctrlNotFull(otherCtrl[i])) {
+    auto other_entry = other->entry_;
+    auto other_ctrl = other->ctrl_;
+    for (int i = 0; i < other->capacity_; i++) {
+        if (ctrl_not_full(other_ctrl[i])) {
             continue;
         }
-        insert(otherEntry[i].key, otherEntry[i].value);
+        insert(other_entry[i].key, other_entry[i].value);
     }
 }
 
 bool ValueHashTable::equals(const ValueHashTable *other) const
 {
-    if (count != other->count) {
+    if (count_ != other->count_) {
         return false;
     }
-    for (int i = 0; i < capacity; i++) {
-        if (ctrlNotFull(ctrl[i])) {
+    for (int i = 0; i < capacity_; i++) {
+        if (ctrl_not_full(ctrl_[i])) {
             continue;
         }
         Value v = NanBox::NilValue;
-        if (!other->get(entry[i].key, v)) {
+        if (!other->get(entry_[i].key, v)) {
             return false;
         }
-        if (!valuesEqual(entry[i].value, v)) {
+        if (!values_equal(entry_[i].value, v)) {
             return false;
         }
     }
@@ -143,139 +143,139 @@ bool ValueHashTable::equals(const ValueHashTable *other) const
 
 void ValueHashTable::clear()
 {
-    gc->freeArray<KVPair>(entry, capacity);
-    gc->freeArray<uint8_t>(ctrl, capacity);
-    count = 0;
-    used = 0;
-    capacity = 0;
-    entry = nullptr;
+    gc_->free_array<KVPair>(entry_, capacity_);
+    gc_->free_array<uint8_t>(ctrl_, capacity_);
+    count_ = 0;
+    used_ = 0;
+    capacity_ = 0;
+    entry_ = nullptr;
+    ctrl_ = nullptr;
 }
 
-String ValueHashTable::toString(ValueStack *printStack) const
+String ValueHashTable::to_string() const
 {
     String str;
-    str.reserve(count * 6);
+    str.reserve(count_ * 6);
     str += "{";
     bool first = true;
-    for (int i = 0; i < capacity; i++) {
-        if (ctrlNotFull(ctrl[i])) {
+    for (int i = 0; i < capacity_; i++) {
+        if (ctrl_not_full(ctrl_[i])) {
             continue;
         }
         if (!first) {
             str += ",";
         }
         first = false;
-        str += valueRepresentation(entry[i].key, printStack);
+        str += value_representation(entry_[i].key);
         str += ":";
-        str += valueRepresentation(entry[i].value, printStack);
+        str += value_representation(entry_[i].value);
     }
     str += "}";
     return str;
-    // 大表可以使用 ostringstream，避免频繁拷贝
 }
 
-int64_t ValueHashTable::findExist(Value key) const
+int64_t ValueHashTable::find_exist(Value key) const
 {
-    uint32_t hash = valueHash(key);
-    uint8_t h2 = getHashH2(hash);
-    uint32_t index = hash & (capacity - 1);
+    uint32_t hash = value_hash(key);
+    uint8_t h2 = get_hash_h2(hash);
+    uint32_t index = hash & (capacity_ - 1);
 
     for (;;) {
-        auto c = ctrl[index];
-        if (c == kEmpty) {
+        auto c = ctrl_[index];
+        if (c == k_empty) {
             return -1;
         }
-        if (c == kDeleted) {
+        if (c == k_deleted) {
             // pass
-        } else if (c == h2 && valuesSame(entry[index].key, key)) {
+        } else if (c == h2 && values_same(entry_[index].key, key)) {
             return index;
         }
-        index = (index + 1) & (capacity - 1);
+        index = (index + 1) & (capacity_ - 1);
     }
 }
 
-uint32_t ValueHashTable::findPosition(Value key, uint32_t hash) const
+uint32_t ValueHashTable::find_position(Value key, uint32_t hash) const
 {
-    uint8_t h2 = getHashH2(hash);
-    uint32_t index = hash & (capacity - 1);
+    uint8_t h2 = get_hash_h2(hash);
+    uint32_t index = hash & (capacity_ - 1);
 
     for (;;) {
-        auto c = ctrl[index];
-        if (c == kEmpty) {
+        auto c = ctrl_[index];
+        if (c == k_empty) {
             return index;
         }
-        if (c == kDeleted) {
+        if (c == k_deleted) {
             return index;
         }
-        if (c == h2 && valuesSame(entry[index].key, key)) {
+        if (c == h2 && values_same(entry_[index].key, key)) {
             return index;
         }
-        index = (index + 1) & (capacity - 1);
+        index = (index + 1) & (capacity_ - 1);
     }
 }
 
-uint32_t ValueHashTable::findNew(
+uint32_t ValueHashTable::find_new(
     const KVPair *h_entry, const uint8_t *h_ctrl, uint32_t h_capacity, Value key)
 {
-    uint32_t hash = valueHash(key);
-    uint8_t h2 = getHashH2(hash);
+    uint32_t hash = value_hash(key);
+    uint8_t h2 = get_hash_h2(hash);
     uint32_t index = hash & (h_capacity - 1);
 
     for (;;) {
         auto c = h_ctrl[index];
-        if (c == kEmpty) {
+        if (c == k_empty) {
             return index;
         }
-        if (c == kDeleted) {
+        if (c == k_deleted) {
             return index;
         }
-        if (c == h2 && valuesSame(h_entry[index].key, key)) {
+        if (c == h2 && values_same(h_entry[index].key, key)) {
             return index;
         }
         index = (index + 1) & (h_capacity - 1);
     }
 }
 
-void ValueHashTable::adjustCapacity(const uint32_t newCapacity)
+void ValueHashTable::adjust_capacity(const uint32_t new_capacity)
 {
-    auto *newEntry = gc->allocateArray<KVPair>(newCapacity);
-    auto *newCtrl = gc->allocateArray<uint8_t>(newCapacity);
-    for (int i = 0; i < newCapacity; i++) {
-        initKVPair(&newEntry[i]);
-        newCtrl[i] = kEmpty;
+    auto *new_entry = gc_->allocate_array<KVPair>(new_capacity);
+    auto *new_ctrl = gc_->allocate_array<uint8_t>(new_capacity);
+    for (int i = 0; i < new_capacity; i++) {
+        init_kv_pair(&new_entry[i]);
+        new_ctrl[i] = k_empty;
     }
 
-    used = 0;
-    for (int i = 0; i < capacity; i++) {
-        if (ctrlNotFull(ctrl[i])) {
+    used_ = 0;
+    for (int i = 0; i < capacity_; i++) {
+        if (ctrl_not_full(ctrl_[i])) {
             continue;
         }
-        uint32_t destIndex = findNew(newEntry, newCtrl, newCapacity, entry[i].key);
-        initKVPair(newEntry + destIndex, entry[i].key, entry[i].value);
-        newCtrl[destIndex] = ctrl[i];
-        used++;
+        uint32_t dest_index = find_new(new_entry, new_ctrl, new_capacity, entry_[i].key);
+        init_kv_pair(new_entry + dest_index, entry_[i].key, entry_[i].value);
+        new_ctrl[dest_index] = ctrl_[i];
+        used_++;
     }
 
-    gc->freeArray<KVPair>(entry, capacity);
-    gc->freeArray<uint8_t>(ctrl, capacity);
-    entry = newEntry;
-    ctrl = newCtrl;
-    capacity = newCapacity;
-    count = used;
+    gc_->free_array<KVPair>(entry_, capacity_);
+    gc_->free_array<uint8_t>(ctrl_, capacity_);
+    entry_ = new_entry;
+    ctrl_ = new_ctrl;
+    capacity_ = new_capacity;
+    count_ = used_;
 }
 
 void ValueHashTable::mark()
 {
-    for (int i = 0; i < capacity; i++) {
-        if (ctrlNotFull(ctrl[i])) {
+    for (int i = 0; i < capacity_; i++) {
+        if (ctrl_not_full(ctrl_[i])) {
             continue;
         }
-        markValue(entry[i].key);
-        markValue(entry[i].value);
+        mark_value(entry_[i].key);
+        mark_value(entry_[i].value);
     }
 }
 
-int64_t ValueHashTable::getNextIndex(const int64_t pre) const
+int64_t ValueHashTable::get_next_index(const int64_t pre) const
 {
     // -2 means reach the end
     if (pre == -2) {
@@ -283,8 +283,8 @@ int64_t ValueHashTable::getNextIndex(const int64_t pre) const
     }
     // -1 means begin
     if (pre == -1) {
-        for (int i = 0; i < capacity; i++) {
-            if (ctrlNotFull(ctrl[i])) {
+        for (int i = 0; i < capacity_; i++) {
+            if (ctrl_not_full(ctrl_[i])) {
                 continue;
             }
             return i;
@@ -292,11 +292,11 @@ int64_t ValueHashTable::getNextIndex(const int64_t pre) const
         return -2;
     }
     // Check if pre is within valid range
-    if (pre < 0 || pre >= capacity) {
+    if (pre < 0 || pre >= capacity_) {
         return -2;
     }
-    for (auto i = pre + 1; i < capacity; i++) {
-        if (ctrlNotFull(ctrl[i])) {
+    for (auto i = pre + 1; i < capacity_; i++) {
+        if (ctrl_not_full(ctrl_[i])) {
             continue;
         }
         return i;
@@ -304,69 +304,58 @@ int64_t ValueHashTable::getNextIndex(const int64_t pre) const
     return -2;
 }
 
-Value ValueHashTable::getByIndex(const int64_t index) const
+Value ValueHashTable::get_by_index(const int64_t index) const
 {
-    if (index < 0 || index >= capacity) {
+    if (index < 0 || index >= capacity_) {
         return NanBox::NilValue;
     }
-    ObjList *obj = createPair(index);
+    ObjList *obj = create_pair(index);
     return NanBox::fromObj(obj);
 }
 
-ObjList *ValueHashTable::createPair(const uint32_t index) const
+ObjList *ValueHashTable::create_pair(const uint32_t index) const
 {
-    ObjList *list = newObjList(gc);
-    gc->pushTempRoot(NanBox::fromObj(list));
-    list->list->push(entry[index].key);
-    list->list->push(entry[index].value);
-    gc->popTempRoot(1);
+    ObjList *list = new_ObjList(gc_);
+    GcTempRootGuard guard{gc_, NanBox::fromObj(list)};
+    list->list_->push(entry_[index].key);
+    list->list_->push(entry_[index].value);
     return list;
 }
 
-ObjList *ValueHashTable::createPairList() const
+template<typename F>
+ObjList *ValueHashTable::collect_entries(F &&selector) const
 {
-    ObjList *list = newObjList(gc);
-    gc->pushTempRoot(NanBox::fromObj(list));
-    list->list->reserve(nextPowerOf2(count));
-    for (uint32_t i = 0; i < capacity; i++) {
-        if (ctrlNotFull(ctrl[i])) {
+    ObjList *list = new_ObjList(gc_);
+    GcTempRootGuard guard{gc_, NanBox::fromObj(list)};
+    list->list_->reserve(next_power_of_2(count_));
+    for (uint32_t i = 0; i < capacity_; i++) {
+        if (ctrl_not_full(ctrl_[i])) {
             continue;
         }
-        auto pair = NanBox::fromObj(createPair(i));
-        list->list->push(pair);
+        selector(list, i);
     }
-    gc->popTempRoot(1);
     return list;
 }
 
-ObjList *ValueHashTable::createKeyList() const
+ObjList *ValueHashTable::create_pair_list() const
 {
-    ObjList *list = newObjList(gc);
-    gc->pushTempRoot(NanBox::fromObj(list));
-    list->list->reserve(nextPowerOf2(count));
-    for (uint32_t i = 0; i < capacity; i++) {
-        if (ctrlNotFull(ctrl[i])) {
-            continue;
-        }
-        list->list->push(entry[i].key);
-    }
-    gc->popTempRoot(1);
-    return list;
+    return collect_entries([this](ObjList *list, uint32_t i) {
+        list->list_->push(NanBox::fromObj(create_pair(i)));
+    });
 }
 
-ObjList *ValueHashTable::createValueList() const
+ObjList *ValueHashTable::create_key_list() const
 {
-    ObjList *list = newObjList(gc);
-    gc->pushTempRoot(NanBox::fromObj(list));
-    list->list->reserve(nextPowerOf2(count));
-    for (uint32_t i = 0; i < capacity; i++) {
-        if (ctrlNotFull(ctrl[i])) {
-            continue;
-        }
-        list->list->push(entry[i].value);
-    }
-    gc->popTempRoot(1);
-    return list;
+    return collect_entries([this](ObjList *list, uint32_t i) {
+        list->list_->push(entry_[i].key);
+    });
+}
+
+ObjList *ValueHashTable::create_value_list() const
+{
+    return collect_entries([this](ObjList *list, uint32_t i) {
+        list->list_->push(entry_[i].value);
+    });
 }
 
 } // namespace aria

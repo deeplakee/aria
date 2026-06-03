@@ -12,28 +12,28 @@ AriaDebugger::AriaDebugger() {}
 void AriaDebugger::attach(AriaVM *v)
 {
     vm = v;
-    vm->setDebugger(this);
+    vm->set_debugger(this);
 }
 
 void AriaDebugger::runScript(const String &path)
 {
-    String ariaDir = getProgramDirectory();
-    srcPath = getAbsolutePath(getWorkingDirectory(), path);
+    String ariaDir = get_program_directory();
+    srcPath = get_absolute_path(get_working_directory(), path);
     println("debugging file:{}", srcPath);
     println("Aria Debugger {}", version);
     println("Type 'help' for commands.");
     repl();
 
-    vm->interpretFromFile(path);
+    vm->interpret_from_file(path);
     println("Program finished.");
 }
 
 void AriaDebugger::hookBeforeExec(CallFrame *frame, uint32_t offset)
 {
     checkAndBindBreakpoint(frame, offset);
-    const auto line = frame->function->chunk->lines[offset];
-    const auto ins = frame->function->chunk->codes + offset;
-    const auto module = frame->function->location->C_str_ref();
+    const auto line = frame->function->chunk_->lines_[offset];
+    const auto ins = frame->function->chunk_->codes_ + offset;
+    const auto module = frame->function->location_->c_str();
     if (activeBreakpoints[module].contains(line) && activeBreakpoints[module][line].ins == ins) {
         println("[*] Breakpoint hit at line {}", line);
         stepping = false;
@@ -86,9 +86,9 @@ void AriaDebugger::handleCommand(const String &cmd)
         String module;
         uint32_t line;
         try {
-            if (size_t colonPos = arg.find(':') != String::npos) {
+            if (size_t colonPos = arg.find(':'); colonPos != String::npos) {
                 module = arg.substr(0, colonPos);
-                module = getAbsoluteModulePath(srcPath, module);
+                module = get_absolute_module_path(srcPath, module);
                 line = std::stoi(arg.substr(colonPos + 1));
             } else {
                 module = srcPath;
@@ -129,9 +129,9 @@ void AriaDebugger::addPendingBreakpoint(Breakpoint bp)
 
 void AriaDebugger::checkAndBindBreakpoint(CallFrame *frame, uint32_t offset)
 {
-    auto line = frame->function->chunk->lines[offset];
-    auto ins = frame->function->chunk->codes + offset;
-    auto module = frame->function->location->C_str_ref();
+    auto line = frame->function->chunk_->lines_[offset];
+    auto ins = frame->function->chunk_->codes_ + offset;
+    auto module = frame->function->location_->c_str();
 
     if (isActiveBreakpoint(module, line)) {
         return;
@@ -143,11 +143,11 @@ void AriaDebugger::checkAndBindBreakpoint(CallFrame *frame, uint32_t offset)
         return;
     }
 
-    auto nextOffset = Disassembler::readInstruction(frame->function->chunk, offset);
+    auto nextOffset = Disassembler::readInstruction(frame->function->chunk_, offset);
     if (nextOffset == 0) {
         return;
     }
-    auto nextLine = frame->function->chunk->lines[nextOffset];
+    auto nextLine = frame->function->chunk_->lines_[nextOffset];
     // find breakpoint in empty or comment lines
     auto bpLines = findPendingBreakpoints(module, line, nextLine);
 

@@ -96,16 +96,16 @@ public:
         , column{_column}
     {}
 
-    String typeStr() const { return tokenText[static_cast<uint8_t>(type)]; }
+    String type_str() const { return token_text[static_cast<uint8_t>(type)]; }
 
-    String toString() const { return format("<{} {} {} '{}'>", line, column, typeStr(), text); }
+    String to_string() const { return format("<{} {} {} '{}'>", line, column, type_str(), text); }
 
     String info() const
     {
-        return format("{}:{}:{} `{}`", filename.get(), line, column, escapeBraces(text));
+        return format("{}:{}:{} `{}`", filename.get(), line, column, escape_braces(text));
     }
 
-    String posInfo() const { return format("{}:{}:{}", filename.get(), line, column); }
+    String pos_info() const { return format("{}:{}:{}", filename.get(), line, column); }
 
     static TokenType str2Type(const String &text)
     {
@@ -121,7 +121,7 @@ public:
 private:
     static Map<String, TokenType> keywords;
 
-    static const char *tokenText[];
+    static const char *token_text[];
 };
 
 void printTokenList(const List<Token> &tokens);

@@ -6,65 +6,59 @@
 
 namespace aria {
 
-ObjException::ObjException(const char *_msg, GC *_gc)
-    : Obj{ObjType::EXCEPTION, hashObj(this, ObjType::EXCEPTION), _gc}
-    , msg{newObjString(_msg, _gc)}
-    , code{ErrorCode::INTERNAL_UNKNOWN}
+ObjException::ObjException(const char *msg, GC *gc)
+    : Obj{ObjType::EXCEPTION, hash_obj(this, ObjType::EXCEPTION), gc}
+    , msg_{new_ObjString(msg, gc)}
+    , code_{ErrorCode::INTERNAL_UNKNOWN}
 {}
 
-ObjException::ObjException(const char *_msg, GC *_gc, ErrorCode _code)
-    : Obj{ObjType::EXCEPTION, hashObj(this, ObjType::EXCEPTION), _gc}
-    , msg{newObjString(_msg, _gc)}
-    , code{_code}
+ObjException::ObjException(const char *msg, GC *gc, ErrorCode code)
+    : Obj{ObjType::EXCEPTION, hash_obj(this, ObjType::EXCEPTION), gc}
+    , msg_{new_ObjString(msg, gc)}
+    , code_{code}
 {}
 
-ObjException::ObjException(ObjString *_msg, GC *_gc)
-    : Obj{ObjType::EXCEPTION, hashObj(this, ObjType::EXCEPTION), _gc}
-    , msg{_msg}
-    , code{ErrorCode::INTERNAL_UNKNOWN}
+ObjException::ObjException(ObjString *msg, GC *gc)
+    : Obj{ObjType::EXCEPTION, hash_obj(this, ObjType::EXCEPTION), gc}
+    , msg_{msg}
+    , code_{ErrorCode::INTERNAL_UNKNOWN}
 {}
 
 ObjException::~ObjException() = default;
 
-String ObjException::toString(ValueStack *printStack)
+String ObjException::to_string()
 {
-    return format("<exception: {}>", msg->C_str_ref());
+    return format("<exception: {}>", msg_->c_str());
 }
 
 void ObjException::blacken()
 {
-    msg->mark();
+    msg_->mark();
 }
 
 const char *ObjException::what() const
 {
-    return msg->C_str_ref();
+    return msg_->c_str();
 }
 
-ObjException *newObjException(const char *msg, GC *gc)
+ObjException *new_ObjException(const char *msg, GC *gc)
 {
-    auto obj = gc->allocateObject<ObjException>(msg, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object EXCEPTION)", toVoidPtr(obj), sizeof(ObjException));
-#endif
+    auto obj = gc->allocate_object<ObjException>(msg, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 
-ObjException *newObjException(ErrorCode code, const char *msg, GC *gc)
+ObjException *new_ObjException(ErrorCode code, const char *msg, GC *gc)
 {
-    auto obj = gc->allocateObject<ObjException>(msg, gc, code);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object EXCEPTION)", toVoidPtr(obj), sizeof(ObjException));
-#endif
+    auto obj = gc->allocate_object<ObjException>(msg, gc, code);
+    log_obj_allocation(obj);
     return obj;
 }
 
-ObjException *newObjException(ObjString *msg, GC *gc)
+ObjException *new_ObjException(ObjString *msg, GC *gc)
 {
-    auto obj = gc->allocateObject<ObjException>(msg, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object EXCEPTION)", toVoidPtr(obj), sizeof(ObjException));
-#endif
+    auto obj = gc->allocate_object<ObjException>(msg, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 

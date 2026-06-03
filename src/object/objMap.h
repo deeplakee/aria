@@ -2,67 +2,58 @@
 #define ARIA_OBJMAP_H
 
 #include "object/object.h"
+#include "value/valueHashTable.h"
 
 namespace aria {
-
-class ValueHashTable;
 
 class ObjMap : public Obj
 {
 public:
     ObjMap() = delete;
 
-    explicit ObjMap(GC *_gc);
+    explicit ObjMap(GC *gc);
 
-    ObjMap(Value *_values, uint32_t _count, GC *_gc);
+    ObjMap(Value *values, uint32_t count, GC *gc);
 
     ~ObjMap() override;
 
-    using Obj::toString;
+    String to_string() override;
 
-    using Obj::representation;
+    String representation() override;
 
-    String toString(ValueStack *printStack) override;
+    size_t obj_size() override { return sizeof(ObjMap); }
 
-    String representation(ValueStack *printStack) override;
+    Value get_by_field(ObjString *name, Value &value) override;
 
-    size_t objSize() override { return sizeof(ObjMap); }
+    Value get_by_index(Value k, Value &v) override;
 
-    Value getByField(ObjString *name, Value &value) override;
+    Value set_by_index(Value k, Value v) override;
 
-    Value getByIndex(Value k, Value &v) override;
-
-    Value setByIndex(Value k, Value v) override;
-
-    Value createIter(GC *gc) override;
+    Value create_iter(GC *gc) override;
 
     Value copy(GC *gc) override;
 
     void blacken() override;
 
-    ValueHashTable *map;
-    ValueHashTable *cachedMethods;
+    ValueHashTable *map_;
+    ValueHashTable cached_methods_;
 
     static void init(GC *_gc,ValueHashTable *builtins);
 };
 
-inline bool isObjMap(Value value)
+inline bool is_obj_map(Value value)
 {
-    return isObjType(value, ObjType::MAP);
+    return is_obj_type(value, ObjType::MAP);
 }
 
-inline ObjMap *asObjMap(Value value)
+inline ObjMap *as_obj_map(Value value)
 {
-#ifdef DEBUG_MODE
-    return dynamic_cast<ObjMap *>(NanBox::toObj(value));
-#else
-    return static_cast<ObjMap *>(NanBox::toObj(value));
-#endif
+    return as_Obj<ObjMap>(value);
 }
 
-ObjMap *newObjMap(GC *gc);
+ObjMap *new_ObjMap(GC *gc);
 
-ObjMap *newObjMap(Value *values, uint32_t count, GC *gc);
+ObjMap *new_ObjMap(Value *values, uint32_t count, GC *gc);
 
 } // namespace aria
 

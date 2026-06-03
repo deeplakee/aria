@@ -306,7 +306,7 @@ void AssignExprNode::display(String indent)
 {
     println("{}AssignExprNode", indent);
     println("{}op:", indent + ADDED_INDENT + "├── ");
-    println("{}{}", indent + ADDED_INDENT + "│       ", opToken.typeStr());
+    println("{}{}", indent + ADDED_INDENT + "│       ", opToken.type_str());
     println("{}lhs:", indent + ADDED_INDENT + "├── ");
     lhs->display(indent + ADDED_INDENT + "│   " + ADDED_INDENT);
     println("{}rhs:", indent + ADDED_INDENT + "└── ");
@@ -322,7 +322,7 @@ void IncExprNode::display(String indent)
 {
     println("{}IncExprNode", indent);
     println("{}op:", indent + ADDED_INDENT + "├── ");
-    println("{}{}", indent + ADDED_INDENT + "│       ", opToken.typeStr());
+    println("{}{}", indent + ADDED_INDENT + "│       ", opToken.type_str());
     println("{}operand:", indent + ADDED_INDENT + "└── ");
     operand->display(indent + ADDED_INDENT + ADDED_INDENT + ADDED_INDENT);
 }
@@ -336,7 +336,7 @@ void BinaryExprNode::display(String indent)
 {
     println("{}BinaryExprNode", indent);
     println("{}op:", indent + ADDED_INDENT + "├── ");
-    println("{}{}", indent + ADDED_INDENT + "│       ", opToken.typeStr());
+    println("{}{}", indent + ADDED_INDENT + "│       ", opToken.type_str());
     println("{}lhs:", indent + ADDED_INDENT + "├── ");
     lhs->display(indent + ADDED_INDENT + "│   " + ADDED_INDENT);
     println("{}rhs:", indent + ADDED_INDENT + "└── ");
@@ -352,7 +352,7 @@ void UnaryExprNode::display(String indent)
 {
     println("{}UnaryExprNode", indent);
     println("{}op:", indent + ADDED_INDENT + "├── ");
-    println("{}{}", indent + ADDED_INDENT + "│       ", opToken.typeStr());
+    println("{}{}", indent + ADDED_INDENT + "│       ", opToken.type_str());
     println("{}operand:", indent + ADDED_INDENT + "└── ");
     operand->display(indent + ADDED_INDENT + ADDED_INDENT + ADDED_INDENT);
 }

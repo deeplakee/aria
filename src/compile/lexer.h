@@ -32,13 +32,13 @@ public:
 
     List<Token> tokenize();
 
-    Token scanToken();
+    Token scan_token();
 
-    [[nodiscard]] uint32_t getLine() const { return line; }
+    [[nodiscard]] uint32_t get_line() const { return line; }
 
-    [[nodiscard]] uint32_t getColumn() const { return column; }
+    [[nodiscard]] uint32_t get_column() const { return column; }
 
-    [[nodiscard]] bool hadError() const { return err_flag; }
+    [[nodiscard]] bool had_error() const { return err_flag; }
 
 private:
     SharedPtr<char[]> file;
@@ -56,20 +56,20 @@ private:
         return source[current - 1];
     }
 
-    [[nodiscard]] bool isAtEnd() const { return current >= source.length(); }
+    [[nodiscard]] bool is_at_end() const { return current >= source.length(); }
 
-    [[nodiscard]] char peek() const { return isAtEnd() ? '\0' : source[current]; }
+    [[nodiscard]] char peek() const { return is_at_end() ? '\0' : source[current]; }
 
     [[nodiscard]] char last() const { return source[current - 1]; }
 
-    [[nodiscard]] char peekNext() const
+    [[nodiscard]] char peek_next() const
     {
         return (current + 1 >= source.length()) ? '\0' : source[current + 1];
     }
 
     [[nodiscard]] bool match(char expected)
     {
-        if (isAtEnd() || source[current] != expected) {
+        if (is_at_end() || source[current] != expected) {
             return false;
         }
         current++;
@@ -77,33 +77,33 @@ private:
         return true;
     }
 
-    [[nodiscard]] Token makeToken(TokenType type) const
+    [[nodiscard]] Token make_token(TokenType type) const
     {
         return Token{type, file, line, static_cast<uint32_t>(column - (current - start))};
     }
 
-    [[nodiscard]] Token makeToken(TokenType type, String msg) const
+    [[nodiscard]] Token make_token(TokenType type, String msg) const
     {
         return Token{
             type, std::move(msg), file, line, static_cast<uint32_t>(column - (current - start))};
     }
 
-    [[nodiscard]] String fileInfo() { return format("{}:{}:{}", file.get(), line, column); }
+    [[nodiscard]] String file_info() { return format("{}:{}:{}", file.get(), line, column); }
 
-    [[nodiscard]] String lexerError(String token, StringView msg)
+    [[nodiscard]] String lexer_error(String token, StringView msg)
     {
-        return syntaxError("{}\n{} '{}'", msg, fileInfo(), token);
+        return syntax_error("{}\n{} '{}'", msg, file_info(), token);
     }
 
-    Token makeNumber();
+    Token make_number();
 
-    Token makeDecimal();
+    Token make_decimal();
 
-    Token makeString(char front);
+    Token make_string(char front);
 
-    Token makeIdentifier();
+    Token make_identifier();
 
-    void skipWhitespace();
+    void skip_whitespace();
 };
 
 } // namespace aria

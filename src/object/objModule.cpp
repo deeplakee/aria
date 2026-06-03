@@ -9,25 +9,25 @@
 
 namespace aria {
 
-ObjModule::ObjModule(ObjFunction *_module, GC *_gc)
-    : Obj{ObjType::MODULE, hashObj(this, ObjType::MODULE), _gc}
-    , name{_module->name}
-    , module{_module->chunk->globals}
+ObjModule::ObjModule(ObjFunction *module, GC *gc)
+    : Obj{ObjType::MODULE, hash_obj(this, ObjType::MODULE), gc}
+    , name_{module->name_}
+    , module_{module->chunk_->globals_}
 {}
 
 ObjModule::~ObjModule()
 {
-    delete module;
+    delete module_;
 }
 
-String ObjModule::toString(ValueStack *printStack)
+String ObjModule::to_string()
 {
-    return format("<module {}>", name->C_str_ref());
+    return format("<module {}>", name_->c_str());
 }
 
-Value ObjModule::getByField(ObjString *name, Value &value)
+Value ObjModule::get_by_field(ObjString *name, Value &value)
 {
-    if (module->get(NanBox::fromObj(name), value)) {
+    if (module_->get(NanBox::fromObj(name), value)) {
         return NanBox::TrueValue;
     }
     return NanBox::FalseValue;
@@ -35,16 +35,14 @@ Value ObjModule::getByField(ObjString *name, Value &value)
 
 void ObjModule::blacken()
 {
-    name->mark();
-    module->mark();
+    name_->mark();
+    module_->mark();
 }
 
-ObjModule *newObjModule(ObjFunction *module, GC *gc)
+ObjModule *new_ObjModule(ObjFunction *module, GC *gc)
 {
-    auto obj = gc->allocateObject<ObjModule>(module, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object MODULE)", toVoidPtr(obj), sizeof(ObjModule));
-#endif
+    auto obj = gc->allocate_object<ObjModule>(module, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 

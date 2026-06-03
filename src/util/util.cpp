@@ -22,7 +22,7 @@ namespace aria {
 
 namespace fs = std::filesystem;
 
-uint32_t nextPowerOf2(uint32_t a)
+uint32_t next_power_of_2(uint32_t a)
 {
     if (a == UINT32_MAX) {
         return UINT32_MAX;
@@ -34,7 +34,7 @@ uint32_t nextPowerOf2(uint32_t a)
     return begin;
 }
 
-String escapeBraces(String s)
+String escape_braces(String s)
 {
     size_t pos = 0;
     while ((pos = s.find('{', pos)) != std::string::npos) {
@@ -49,14 +49,14 @@ String escapeBraces(String s)
     return s;
 }
 
-String readFile(const String &path)
+String read_file(const String &path)
 {
-    String filePath = getAbsolutePath(getWorkingDirectory(), path);
-    if (filePath.empty()) {
+    String file_path = get_absolute_path(get_working_directory(), path);
+    if (file_path.empty()) {
         throw std::runtime_error("could not get absolute path");
     }
 
-    std::ifstream file(filePath, std::ios::in);
+    std::ifstream file(file_path, std::ios::in);
     if (!file) {
         throw std::runtime_error("Failed to open file: " + path);
     }
@@ -66,11 +66,11 @@ String readFile(const String &path)
     return buffer.str();
 }
 
-String getProgramDirectory()
+String get_program_directory()
 {
-    static String cachedPath;
-    if (!cachedPath.empty()) {
-        return cachedPath;
+    static String cached_path;
+    if (!cached_path.empty()) {
+        return cached_path;
     }
 
     String path;
@@ -95,40 +95,40 @@ String getProgramDirectory()
 #endif
     buffer[length - 1] = '\0';
     path = fs::path(buffer).parent_path().string();
-    cachedPath = path;
-    return cachedPath;
+    cached_path = path;
+    return cached_path;
 }
 
-String getWorkingDirectory()
+String get_working_directory()
 {
-    static String cachedPath;
-    if (!cachedPath.empty()) {
-        return cachedPath;
+    static String cached_path;
+    if (!cached_path.empty()) {
+        return cached_path;
     }
-    cachedPath = fs::current_path().string();
-    return cachedPath;
+    cached_path = fs::current_path().string();
+    return cached_path;
 }
 
-String getAbsolutePath(const String &currentDirectory, const String &filePath)
+String get_absolute_path(const String &current_directory, const String &file_path)
 {
     try {
-        if (currentDirectory.empty() || filePath.empty()) {
+        if (current_directory.empty() || file_path.empty()) {
             return "";
         }
 
-        fs::path pathA = currentDirectory;
-        fs::path pathB = filePath;
+        fs::path path_a = current_directory;
+        fs::path path_b = file_path;
 
-        if (pathB.is_absolute()) {
-            return fs::weakly_canonical(pathB).string();
+        if (path_b.is_absolute()) {
+            return fs::weakly_canonical(path_b).string();
         }
-        return fs::weakly_canonical(pathA / pathB).string();
+        return fs::weakly_canonical(path_a / path_b).string();
     } catch (...) {
         return "";
     }
 }
 
-bool isFilePath(const String &path)
+bool is_file_path(const String &path)
 {
     if (path.empty())
         return false;
@@ -158,57 +158,57 @@ bool isFilePath(const String &path)
     }
 }
 
-String resolveRelativePath(const String &currentFilePath, const String &modulePath)
+String resolve_relative_path(const String &current_file_path, const String &module_path)
 {
-    if (modulePath.empty())
+    if (module_path.empty())
         return "";
 
-    fs::path baseDir = fs::absolute(fs::path(currentFilePath).parent_path());
-    fs::path resolvedPath;
+    fs::path base_dir = fs::absolute(fs::path(current_file_path).parent_path());
+    fs::path resolved_path;
 
     // 1️⃣ 相对路径（例如 "../math.aria" 或 "./utils/math.aria"）
-    if (modulePath.rfind("./", 0) == 0 || modulePath.rfind("../", 0) == 0) {
-        fs::path target = baseDir / modulePath;
+    if (module_path.rfind("./", 0) == 0 || module_path.rfind("../", 0) == 0) {
+        fs::path target = base_dir / module_path;
         if (fs::exists(target))
-            resolvedPath = fs::canonical(target);
+            resolved_path = fs::canonical(target);
         else
             return ""; // 文件不存在
     }
     // 2️⃣ 绝对路径
-    else if (fs::path(modulePath).is_absolute()) {
-        fs::path target = fs::path(modulePath);
+    else if (fs::path(module_path).is_absolute()) {
+        fs::path target = fs::path(module_path);
         if (fs::exists(target))
-            resolvedPath = fs::canonical(target);
+            resolved_path = fs::canonical(target);
         else
             return ""; // 文件不存在
     }
     // 3️⃣ 模块名（如 "math", "core.utils", "network/http"）
     else {
-        String mod = modulePath;
+        String mod = module_path;
         for (auto &ch : mod) {
             if (ch == '.')
                 ch = '/'; // 将模块名的点替换为目录分隔符
         }
 
-        fs::path try1 = baseDir / (mod + AriaSourceSuffix);
-        fs::path try2 = baseDir / mod / "index.aria";
+        fs::path try1 = base_dir / (mod + k_aria_source_suffix);
+        fs::path try2 = base_dir / mod / "index.aria";
 
         if (fs::exists(try1))
-            resolvedPath = fs::canonical(try1);
+            resolved_path = fs::canonical(try1);
         else if (fs::exists(try2))
-            resolvedPath = fs::canonical(try2);
+            resolved_path = fs::canonical(try2);
         else
             return "";
     }
 
-    return resolvedPath.string();
+    return resolved_path.string();
 }
 
-String getAbsoluteModulePath(const String &currentFilePath, const String &modulePath)
+String get_absolute_module_path(const String &current_file_path, const String &module_path)
 {
-    String path = resolveRelativePath(currentFilePath, modulePath);
+    String path = resolve_relative_path(current_file_path, module_path);
     if (path.empty()) {
-        path = resolveRelativePath(getProgramDirectory() + "/lib/", modulePath);
+        path = resolve_relative_path(get_program_directory() + "/lib/", module_path);
     }
     return path;
 }

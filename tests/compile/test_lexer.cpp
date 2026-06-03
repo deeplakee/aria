@@ -34,11 +34,11 @@ TEST(ComplieLexerTest, LexerTest)
     aria::Lexer lexer = aria::Lexer{"Repl", str};
     auto tokens = lexer.tokenize();
     EXPECT_EQ(tokens.size(), 18);
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
 
     std::ostringstream oss;
     for (const auto &token : tokens) {
-        aria::println(oss, token.toString());
+        aria::println(oss, token.to_string());
     }
     EXPECT_STREQ(oss.str().c_str(), result);
 }

@@ -19,6 +19,6 @@ TEST(ComplieTokenTest, TokenTest)
     EXPECT_EQ(aria::Token::str2Type("aaa"), aria::TokenType::IDENTIFIER);
 
     std::ostringstream oss;
-    aria::print(oss, "{}", t.toString());
+    aria::print(oss, "{}", t.to_string());
     EXPECT_STREQ(oss.str().c_str(), "<11 22 COLON ':'>");
 }

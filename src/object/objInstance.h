@@ -13,46 +13,42 @@ class ObjInstance : public Obj
 public:
     ObjInstance() = delete;
 
-    ObjInstance(ObjClass *_klass, GC *_gc);
+    ObjInstance(ObjClass *klass, GC *gc);
 
     ~ObjInstance() override;
 
-    String toString(ValueStack *printStack) override;
+    String to_string() override;
 
-    String representation(ValueStack *printStack) override;
+    String representation() override;
 
-    size_t objSize() override { return sizeof(ObjInstance); }
+    size_t obj_size() override { return sizeof(ObjInstance); }
 
     void blacken() override;
 
-    Value getByField(ObjString *name, Value &value) override;
+    Value get_by_field(ObjString *name, Value &value) override;
 
-    Value setByField(ObjString *name, Value value) override;
+    Value set_by_field(ObjString *name, Value value) override;
 
     Value copy(GC *gc) override;
 
     Value getSuperMethod(ObjClass *methodKlass, ObjString *methodName, Value &superMethod);
 
-    ObjClass *klass;
-    ValueHashTable fields;
-    ValueHashTable *cachedMethods;
+    ObjClass *klass_;
+    ValueHashTable fields_;
+    ValueHashTable cached_methods_;
 };
 
-inline bool isObjInstance(Value value)
+inline bool is_obj_instance(Value value)
 {
-    return isObjType(value, ObjType::INSTANCE);
+    return is_obj_type(value, ObjType::INSTANCE);
 }
 
-inline ObjInstance *asObjInstance(Value value)
+inline ObjInstance *as_obj_instance(Value value)
 {
-#ifdef DEBUG_MODE
-    return dynamic_cast<ObjInstance *>(NanBox::toObj(value));
-#else
-    return static_cast<ObjInstance *>(NanBox::toObj(value));
-#endif
+    return as_Obj<ObjInstance>(value);
 }
 
-ObjInstance *newObjInstance(ObjClass *klass, GC *gc);
+ObjInstance *new_ObjInstance(ObjClass *klass, GC *gc);
 
 } // namespace aria
 

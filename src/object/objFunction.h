@@ -15,30 +15,28 @@ class ObjFunction : public Obj
 {
 public:
     ObjFunction(
-        FunctionType _type,
-        ObjString *_location,
-        ObjString *_name,
-        int _arity,
-        ValueHashTable *_globals,
-        bool _acceptsVarargs,
-        GC *_gc);
+        FunctionType type,
+        ObjString *location,
+        ObjString *name,
+        int arity,
+        ValueHashTable *globals,
+        bool acceptsVarargs,
+        GC *gc);
 
-    ObjFunction(FunctionType _type, ObjString *_location, ObjString *_name, GC *_gc);
+    ObjFunction(FunctionType type, ObjString *location, ObjString *name, GC *gc);
 
     ObjFunction(
-        FunctionType _type,
-        ObjString *_location,
-        ObjString *_name,
-        ValueHashTable *_globals,
-        GC *_gc);
+        FunctionType type,
+        ObjString *location,
+        ObjString *name,
+        ValueHashTable *globals,
+        GC *gc);
 
     ~ObjFunction() override;
 
-    using Obj::toString;
+    String to_string() override;
 
-    String toString(ValueStack *printStack) override;
-
-    size_t objSize() override { return sizeof(ObjFunction); }
+    size_t obj_size() override { return sizeof(ObjFunction); }
 
     void blacken() override;
 
@@ -46,40 +44,36 @@ public:
 
     void initUpvalues();
 
-    ObjString *location;
-    ObjClass *enclosingClass;
-    ObjString *name;
-    Chunk *chunk;
-    int arity;
-    FunctionType type;
-    ObjUpvalue **upvalues;
-    int upvalueCount;
-    bool acceptsVarargs;
+    ObjString *location_;
+    ObjClass *enclosing_class_;
+    ObjString *name_;
+    Chunk *chunk_;
+    int arity_;
+    FunctionType type_;
+    ObjUpvalue **upvalues_;
+    int upvalue_count_;
+    bool accepts_varargs_;
 };
 
-inline bool isObjFunction(Value value)
+inline bool is_obj_function(Value value)
 {
-    return isObjType(value, ObjType::FUNCTION);
+    return is_obj_type(value, ObjType::FUNCTION);
 }
 
-inline ObjFunction *asObjFunction(Value value)
+inline ObjFunction *as_obj_function(Value value)
 {
-#ifdef DEBUG_MODE
-    return dynamic_cast<ObjFunction *>(NanBox::toObj(value));
-#else
-    return static_cast<ObjFunction *>(NanBox::toObj(value));
-#endif
+    return as_Obj<ObjFunction>(value);
 }
 
 // function object for runfile mode
-ObjFunction *newObjFunction(FunctionType type, ObjString *location, ObjString *name, GC *gc);
+ObjFunction *new_ObjFunction(FunctionType type, ObjString *location, ObjString *name, GC *gc);
 
 // function object for repl mode
-ObjFunction *newObjFunction(
+ObjFunction *new_ObjFunction(
     FunctionType type, ObjString *location, ObjString *name, ValueHashTable *globals, GC *gc);
 
 // function object for normal function
-ObjFunction *newObjFunction(
+ObjFunction *new_ObjFunction(
     FunctionType type,
     ObjString *location,
     ObjString *name,

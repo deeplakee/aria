@@ -7,57 +7,55 @@
 #include "util/util.h"
 
 namespace aria {
-ObjClass::ObjClass(ObjString *_name, GC *_gc)
-    : Obj{ObjType::CLASS, hashObj(this, ObjType::CLASS), _gc}
-    , name{_name}
-    , methods{_gc}
-    , superKlass{nullptr}
-    , initMethod{nullptr}
+ObjClass::ObjClass(ObjString *name, GC *gc)
+    : Obj{ObjType::CLASS, hash_obj(this, ObjType::CLASS), gc}
+    , name_{name}
+    , methods_{gc}
+    , super_klass_{nullptr}
+    , init_method_{nullptr}
 {}
 
 ObjClass::~ObjClass() = default;
 
-String ObjClass::toString(ValueStack *printStack)
+String ObjClass::to_string()
 {
-    return format("<class {}>", name->C_str_ref());
+    return format("<class {}>", name_->c_str());
 }
 
 void ObjClass::blacken()
 {
-    name->mark();
-    methods.mark();
-    if (superKlass != nullptr) {
-        superKlass->mark();
+    name_->mark();
+    methods_.mark();
+    if (super_klass_ != nullptr) {
+        super_klass_->mark();
     }
-    if (initMethod != nullptr) {
-        initMethod->mark();
+    if (init_method_ != nullptr) {
+        init_method_->mark();
     }
 }
 
-bool ObjClass::getSuperMethod(ObjString *methodName, Value &method) const
+bool ObjClass::getSuperMethod(ObjString *method_name, Value &method) const
 {
-    if (superKlass == nullptr) {
+    if (super_klass_ == nullptr) {
         return false;
     }
 
-    if (methodName->length == Init_FunName_Len
-        && memcmp(methodName->C_str_ref(), Init_FunName, Init_FunName_Len) == 0) {
-        if (superKlass->initMethod != nullptr) {
-            method = NanBox::fromObj(superKlass->initMethod);
+    if (method_name->length_ == k_init_fun_name_len
+        && memcmp(method_name->c_str(), k_init_fun_name, k_init_fun_name_len) == 0) {
+        if (super_klass_->init_method_ != nullptr) {
+            method = NanBox::fromObj(super_klass_->init_method_);
             return true;
         }
         return false;
     }
 
-    return superKlass->methods.get(NanBox::fromObj(methodName), method);
+    return super_klass_->methods_.get(NanBox::fromObj(method_name), method);
 }
 
-ObjClass *newObjClass(ObjString *name, GC *gc)
+ObjClass *new_ObjClass(ObjString *name, GC *gc)
 {
-    auto *obj = gc->allocateObject<ObjClass>(name, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object CLASS)", toVoidPtr(obj), sizeof(ObjClass));
-#endif
+    auto obj = gc->allocate_object<ObjClass>(name, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 

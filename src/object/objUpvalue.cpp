@@ -6,31 +6,29 @@
 
 namespace aria {
 
-ObjUpvalue::ObjUpvalue(Value *_location, GC *_gc)
-    : Obj{ObjType::STRING, hashObj(this, ObjType::UPVALUE), _gc}
-    , location{_location}
-    , closed{NanBox::NilValue}
-    , nextUpvalue{nullptr}
+ObjUpvalue::ObjUpvalue(Value *location, GC *gc)
+    : Obj{ObjType::STRING, hash_obj(this, ObjType::UPVALUE), gc}
+    , location_{location}
+    , closed_{NanBox::NilValue}
+    , next_upvalue_{nullptr}
 {}
 
 ObjUpvalue::~ObjUpvalue() = default;
 
-String ObjUpvalue::toString(ValueStack *printStack)
+String ObjUpvalue::to_string()
 {
-    return String{"upvalue:" + valueString(*location)};
+    return String{"upvalue:" + value_string(*location_)};
 }
 
 void ObjUpvalue::blacken()
 {
-    markValue(closed);
+    mark_value(closed_);
 }
 
-ObjUpvalue *newObjUpvalue(Value *location, GC *gc)
+ObjUpvalue *new_ObjUpvalue(Value *location, GC *gc)
 {
-    ObjUpvalue *obj = gc->allocateObject<ObjUpvalue>(location, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object UPVALUE)", toVoidPtr(obj), sizeof(ObjUpvalue));
-#endif
+    auto obj = gc->allocate_object<ObjUpvalue>(location, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 

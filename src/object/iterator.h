@@ -35,8 +35,8 @@ public:
     bool hasNext() override;
     Value next() override;
 
-    ObjList *obj;
-    int nextIndex;
+    ObjList *obj_;
+    int next_index_;
 };
 
 class MapIterator : public Iterator
@@ -52,11 +52,11 @@ public:
     bool hasNext() override;
     Value next() override;
 
-    ObjMap *obj;
+    ObjMap *obj_;
     // -1: begin
     // -2: reach the end
     // >0: index of next value
-    int64_t nextIndex;
+    int64_t next_index_;
 };
 
 class StringIterator : public Iterator
@@ -72,8 +72,8 @@ public:
     bool hasNext() override;
     Value next() override;
 
-    ObjString *obj;
-    int nextIndex;
+    ObjString *obj_;
+    int next_index_;
 };
 
 } // namespace aria

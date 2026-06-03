@@ -16,7 +16,7 @@ void error(const String &fmt, Args &&...args)
 }
 
 template<typename... Args>
-[[noreturn]] void fatalError(ErrorCode code, const String &fmt, Args &&...args)
+[[noreturn]] void fatal_error(ErrorCode code, const String &fmt, Args &&...args)
 {
     auto msg = "[fatalError] " + std::vformat(fmt, std::make_format_args(args...));
     error(msg);
@@ -24,19 +24,19 @@ template<typename... Args>
 }
 
 template<typename... Args>
-String syntaxError(const String &fmt, Args &&...args)
+String syntax_error(const String &fmt, Args &&...args)
 {
     return "[SyntaxError]" + std::vformat(fmt, std::make_format_args(args...));
 }
 
 template<typename... Args>
-String semanticError(const String &fmt, Args &&...args)
+String semantic_error(const String &fmt, Args &&...args)
 {
     return "[SemanticError]" + std::vformat(fmt, std::make_format_args(args...));
 }
 
 template<typename... Args>
-String runtimeError(const String &fmt, Args &&...args)
+String runtime_error(const String &fmt, Args &&...args)
 {
     return "[RuntimeError]" + std::vformat(fmt, std::make_format_args(args...));
 }

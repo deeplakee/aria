@@ -14,115 +14,99 @@
 
 namespace aria {
 
-#define genException(code, msg) gc->runningVM->newException((code), (msg))
+#define genException(code, msg) gc_->running_vm_->new_exception((code), (msg))
 
-ObjMap::ObjMap(GC *_gc)
-    : Obj{ObjType::MAP, hashObj(this, ObjType::MAP), _gc}
-    , map{new ValueHashTable{_gc}}
-    , cachedMethods{new ValueHashTable{_gc}}
+ObjMap::ObjMap(GC *gc)
+    : Obj{ObjType::MAP, hash_obj(this, ObjType::MAP), gc}
+    , map_{new ValueHashTable{gc}}
+    , cached_methods_{gc}
 {}
 
-ObjMap::ObjMap(Value *_values, uint32_t _count, GC *_gc)
-    : Obj{ObjType::MAP, hashObj(this, ObjType::MAP), _gc}
-    , map{new ValueHashTable{_values, _count, _gc}}
-    , cachedMethods{new ValueHashTable{_gc}}
+ObjMap::ObjMap(Value *values, uint32_t count, GC *gc)
+    : Obj{ObjType::MAP, hash_obj(this, ObjType::MAP), gc}
+    , map_{new ValueHashTable{values, count, gc}}
+    , cached_methods_{gc}
 {}
 
 ObjMap::~ObjMap()
 {
-    delete map;
-    delete cachedMethods;
+    delete map_;
 }
 
-String ObjMap::toString(ValueStack *printStack)
+String ObjMap::to_string()
 {
-    if (printStack == nullptr) {
-        ValueStack stack;
-        stack.push(NanBox::fromObj(this));
-        return map->toString(&stack);
-    }
-
-    if (printStack->Exist(NanBox::fromObj(this))) {
+    if (PrintGuard::is_cycle(this)) {
         return "{...}";
     }
-    printStack->push(NanBox::fromObj(this));
-    String str = map->toString(printStack);
-    printStack->pop();
-    return str;
+    PrintGuard guard(this);
+    return map_->to_string();
 }
 
-String ObjMap::representation(ValueStack *printStack)
+String ObjMap::representation()
 {
-    return toString(printStack);
-    return String{"<map>"};
+    return to_string();
 }
 
-Value ObjMap::getByField(ObjString *name, Value &value)
+Value ObjMap::get_by_field(ObjString *name, Value &value)
 {
-    if (cachedMethods->get(NanBox::fromObj(name), value)) {
+    if (cached_methods_.get(NanBox::fromObj(name), value)) {
         return NanBox::TrueValue;
     }
-    if (gc->mapMethods->get(NanBox::fromObj(name), value)) {
-        assert(isObjNativeFn(value) && "map builtin method is nativeFn");
-        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
+    if (gc_->map_methods_->get(NanBox::fromObj(name), value)) {
+        assert(is_obj_native_fn(value) && "map builtin method is nativeFn");
+        auto boundMethod = new_ObjBoundMethod(NanBox::fromObj(this), as_obj_native_fn(value), gc_);
         value = NanBox::fromObj(boundMethod);
-        gc->pushTempRoot(value);
-        cachedMethods->insert(NanBox::fromObj(name), value);
-        gc->popTempRoot(1);
+        GcTempRootGuard guard{gc_, value};
+        cached_methods_.insert(NanBox::fromObj(name), value);
         return NanBox::TrueValue;
     }
     return NanBox::FalseValue;
 }
 
-Value ObjMap::getByIndex(Value k, Value &v)
+Value ObjMap::get_by_index(Value k, Value &v)
 {
-    if (map->get(k, v)) {
+    if (map_->get(k, v)) {
         return NanBox::TrueValue;
     }
     return NanBox::FalseValue;
 }
 
-Value ObjMap::setByIndex(Value k, Value v)
+Value ObjMap::set_by_index(Value k, Value v)
 {
-    map->insert(k, v);
+    map_->insert(k, v);
     return NanBox::TrueValue;
 }
 
-Value ObjMap::createIter(GC *gc)
+Value ObjMap::create_iter(GC *gc)
 {
-    return NanBox::fromObj(newObjIterator(this, gc));
+    return NanBox::fromObj(new_ObjIterator(this, gc));
 }
 
 Value ObjMap::copy(GC *gc)
 {
-    ObjMap *newObj = newObjMap(gc);
-    gc->pushTempRoot(NanBox::fromObj(newObj));
-    newObj->map->copy(map);
-    gc->popTempRoot(1);
+    ObjMap *newObj = new_ObjMap(gc);
+    GcTempRootGuard guard{gc, NanBox::fromObj(newObj)};
+    newObj->map_->copy(map_);
     return NanBox::fromObj(newObj);
 }
 
 void ObjMap::blacken()
 {
-    map->mark();
-    cachedMethods->mark();
+    map_->mark();
+    cached_methods_.mark();
 }
 
-ObjMap *newObjMap(GC *gc)
+ObjMap *new_ObjMap(GC *gc)
 {
-    auto obj = gc->allocateObject<ObjMap>(gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object MAP)", toVoidPtr(obj), sizeof(ObjMap));
-#endif
+    auto obj = gc->allocate_object<ObjMap>(gc);
+    log_obj_allocation(obj);
     return obj;
 }
 
-ObjMap *newObjMap(Value *values, uint32_t count, GC *gc)
+ObjMap *new_ObjMap(Value *values, uint32_t count, GC *gc)
 {
-    auto obj = gc->allocateObject<ObjMap>(values, count, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object MAP)", toVoidPtr(obj), sizeof(ObjMap));
-#endif
+    auto obj = gc->allocate_object<ObjMap>(values, count, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 

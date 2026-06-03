@@ -12,39 +12,33 @@ class ObjModule : public Obj
 public:
     ObjModule() = delete;
 
-    ObjModule(ObjFunction *_module, GC *_gc);
+    ObjModule(ObjFunction *module, GC *gc);
 
     ~ObjModule() override;
 
-    using Obj::toString;
+    String to_string() override;
 
-    String toString(ValueStack *printStack) override;
+    size_t obj_size() override { return sizeof(ObjModule); }
 
-    size_t objSize() override { return sizeof(ObjModule); }
-
-    Value getByField(ObjString *name, Value &value) override;
+    Value get_by_field(ObjString *name, Value &value) override;
 
     void blacken() override;
 
-    ObjString *name;
-    ValueHashTable *module;
+    ObjString *name_;
+    ValueHashTable *module_;
 };
 
-inline bool isObjModule(Value value)
+inline bool is_obj_module(Value value)
 {
-    return isObjType(value, ObjType::MODULE);
+    return is_obj_type(value, ObjType::MODULE);
 }
 
-inline ObjModule *asObjModule(Value value)
+inline ObjModule *as_obj_module(Value value)
 {
-#ifdef DEBUG_MODE
-    return dynamic_cast<ObjModule *>(NanBox::toObj(value));
-#else
-    return static_cast<ObjModule *>(NanBox::toObj(value));
-#endif
+    return as_Obj<ObjModule>(value);
 }
 
-ObjModule *newObjModule(ObjFunction *module, GC *gc);
+ObjModule *new_ObjModule(ObjFunction *module, GC *gc);
 
 } // namespace aria
 

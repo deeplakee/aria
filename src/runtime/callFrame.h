@@ -52,9 +52,9 @@ struct CallFrame
 
     opCode readOpcode() { return static_cast<opCode>(readByte()); }
 
-    Value readConstant() { return function->chunk->consts[readWord()]; }
+    Value readConstant() { return function->chunk_->consts_[readWord()]; }
 
-    ObjString *readObjString() { return asObjString(readConstant()); }
+    ObjString *readObjString() { return as_obj_string(readConstant()); }
 
     ObjFunction *function;
     uint8_t *ip;

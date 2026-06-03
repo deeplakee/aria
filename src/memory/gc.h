@@ -33,129 +33,163 @@ public:
 
     ~GC();
 
-    static uint64_t growCapacity(uint32_t capacity) { return capacity < 8 ? 8 : capacity * 2; }
+    static uint64_t grow_capacity(uint32_t capacity) { return capacity < 8 ? 8 : capacity * 2; }
 
-    void markRoots();
+    void mark_roots();
 
-    void traceReferences();
+    void trace_references();
 
     void sweep();
 
-    void collectGarbage();
+    void collect_garbage();
 
     template<Trivial T>
-    T *reallocate(T *pointer, size_t oldCount, size_t newCount)
+    T *reallocate(T *pointer, size_t old_count, size_t new_count)
     {
-        bytesAllocated += (newCount - oldCount) * sizeof(T);
+        bytes_allocated_ += (new_count - old_count) * sizeof(T);
 #ifdef DEBUG_STRESS_GC
-        if (newCount > oldCount) {
-            collectGarbage();
+        if (new_count > old_count) {
+            collect_garbage();
         }
 #endif
-        if (newCount > oldCount && bytesAllocated > nextGC) {
-            collectGarbage();
+        if (new_count > old_count && bytes_allocated_ > next_gc_) {
+            collect_garbage();
         }
 
-        if (newCount == 0) {
+        if (new_count == 0) {
             free(pointer);
             return nullptr;
         }
 
-        void *result = realloc(pointer, newCount * sizeof(T));
+        void *result = realloc(pointer, new_count * sizeof(T));
         if (!result) {
-            fatalError(ErrorCode::RESOURCE_MEMORY_EXHAUSTED, "Memory allocation failed");
+            fatal_error(ErrorCode::RESOURCE_MEMORY_EXHAUSTED, "Memory allocation failed");
         }
 
         return static_cast<T *>(result);
     }
 
     template<Trivial T>
-    T *allocateArray(size_t count)
+    T *allocate_array(size_t count)
     {
         return reallocate<T>(nullptr, 0, count);
     }
 
     template<Trivial T>
-    T *resizeArray(T *pointer, size_t oldCount, size_t newCount)
+    T *resize_array(T *pointer, size_t old_count, size_t new_count)
     {
-        return reallocate<T>(pointer, oldCount, newCount);
+        return reallocate<T>(pointer, old_count, new_count);
     }
 
     template<Trivial T>
-    void freeArray(T *pointer, size_t oldCount)
+    void free_array(T *pointer, size_t old_count)
     {
-        reallocate<T>(pointer, oldCount, 0);
+        reallocate<T>(pointer, old_count, 0);
     }
 
     template<DerivedFromObj T, typename... Args>
-    T *allocateObject(Args &&...args)
+    T *allocate_object(Args &&...args)
     {
-        bytesAllocated += sizeof(T);
+        bytes_allocated_ += sizeof(T);
 #ifdef DEBUG_STRESS_GC
-        collectGarbage();
+        collect_garbage();
 #endif
-        if (bytesAllocated > nextGC) {
-            collectGarbage();
+        if (bytes_allocated_ > next_gc_) {
+            collect_garbage();
         }
         T *obj = nullptr;
         try {
             obj = new T(std::forward<Args>(args)...);
         } catch ([[maybe_unused]] std::bad_alloc &e) {
-            fatalError(ErrorCode::RESOURCE_MEMORY_EXHAUSTED, "Memory allocation failed");
+            fatal_error(ErrorCode::RESOURCE_MEMORY_EXHAUSTED, "Memory allocation failed");
         }
         if constexpr (std::is_same_v<T, ObjString>) {
-            obj->next = internedStringList;
-            internedStringList = obj;
+            obj->next_ = interned_string_list_;
+            interned_string_list_ = obj;
         } else {
-            obj->next = objectList;
-            objectList = obj;
+            obj->next_ = object_list_;
+            object_list_ = obj;
         }
         return obj;
     }
 
-    void freeObject(Obj *obj);
+    void free_object(Obj *obj);
 
-    void freeAllObjects();
+    void free_all_objects();
 
-    bool internString(ObjString *obj);
+    bool intern_string(ObjString *obj);
 
-    ObjString *findInternedString(const char *chars, size_t length, uint32_t hash);
+    ObjString *find_interned_string(const char *chars, size_t length, uint32_t hash);
 
-    void pushTempRoot(Value v) const { tempRootStack->push(v); }
+    void push_temp_root(Value v) const { temp_root_stack_->push(v); }
 
-    void popTempRoot(int n = 1) const { tempRootStack->pop_n(n); }
+    void pop_temp_root(int n = 1) const { temp_root_stack_->pop_n(n); }
 
-    void attachVM(AriaVM *vm) { runningVM = vm; }
+    void attach_vm(AriaVM *vm) { running_vm_ = vm; }
 
-    void attachCompiler(FunctionContext *ctx) { compilingContext = ctx; }
+    void attach_compiler(FunctionContext *ctx) { compiling_context_ = ctx; }
 
-    void pushGrey(Obj *obj) { greyStack.push(obj); }
+    void push_grey(Obj *obj) { grey_stack_.push(obj); }
 
-    static constexpr int GC_INITIAL_SIZE = 1024 * 1024;
-    static constexpr int GC_HEAP_GROW_FACTOR = 2;
-    static constexpr int GC_BUFFER_SIZE = 1024 * 4;
+    static constexpr int k_gc_initial_size = 1024 * 1024;
+    static constexpr int k_gc_heap_grow_factor = 2;
+    static constexpr int k_gc_buffer_size = 1024 * 4;
 
-    size_t bytesAllocated;
-    size_t nextGC;
+    size_t bytes_allocated_;
+    size_t next_gc_;
 
-    Obj *objectList;
-    Obj *internedStringList;
+    Obj *object_list_;
+    Obj *interned_string_list_;
 
-    ValueStack *tempRootStack;
-    StringPool *internPool;
-    ValueHashTable *listMethods;
-    ValueHashTable *mapMethods;
-    ValueHashTable *stringMethods;
-    ValueHashTable *iteratorMethods;
+    ValueStack *temp_root_stack_;
+    StringPool *intern_pool_;
+    ValueHashTable *list_methods_;
+    ValueHashTable *map_methods_;
+    ValueHashTable *string_methods_;
+    ValueHashTable *iterator_methods_;
 
-    char *stringOpBuffer;
+    char *string_op_buffer_;
 
-    Lock gcLock;
-    bool inGC;
+    Lock gc_lock_;
+    bool in_gc_;
 
-    Stack<Obj *> greyStack;
-    AriaVM *runningVM;
-    FunctionContext *compilingContext;
+    Stack<Obj *> grey_stack_;
+    AriaVM *running_vm_;
+    FunctionContext *compiling_context_;
+};
+
+// RAII guard for temporary GC roots
+class GcTempRootGuard
+{
+public:
+    GcTempRootGuard(GC *gc, Value v)
+        : gc_{gc}
+        , count_{1}
+    {
+        gc_->push_temp_root(v);
+    }
+
+    explicit GcTempRootGuard(GC *gc)
+        : gc_{gc}
+        , count_{0}
+    {}
+
+    void push(Value v)
+    {
+        gc_->push_temp_root(v);
+        count_++;
+    }
+
+    ~GcTempRootGuard() { gc_->pop_temp_root(count_); }
+
+    GcTempRootGuard(const GcTempRootGuard &) = delete;
+    GcTempRootGuard &operator=(const GcTempRootGuard &) = delete;
+    GcTempRootGuard(GcTempRootGuard &&) = delete;
+    GcTempRootGuard &operator=(GcTempRootGuard &&) = delete;
+
+private:
+    GC *gc_;
+    int count_;
 };
 
 } // namespace aria

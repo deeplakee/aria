@@ -19,68 +19,68 @@ public:
     void push(Value value)
     {
 #ifdef DEBUG_MODE
-        assert(top < DEFAULT_STACK_SIZE);
+        assert(top_ < k_default_stack_size);
 #endif
-        stack[top] = value;
-        top++;
+        stack_[top_] = value;
+        top_++;
     }
 
     Value pop()
     {
 #ifdef DEBUG_MODE
-        assert(top > 0);
+        assert(top_ > 0);
 #endif
-        top--;
-        return stack[top];
+        top_--;
+        return stack_[top_];
     }
 
-    void reset() { top = 0; }
+    void reset() { top_ = 0; }
 
     void pop_n(uint32_t count)
     {
 #ifdef DEBUG_MODE
-        assert(top >= count);
+        assert(top_ >= count);
 #endif
-        top -= count;
+        top_ -= count;
     }
 
     Value peek(uint32_t depth = 0)
     {
 #ifdef DEBUG_MODE
-        assert(top > depth);
+        assert(top_ > depth);
 #endif
-        return stack[top - 1 - depth];
+        return stack_[top_ - 1 - depth];
     }
 
-    uint32_t size() const { return top; }
+    uint32_t size() const { return top_; }
 
-    void resize(uint32_t newSize) { top = newSize; }
+    void resize(uint32_t new_size) { top_ = new_size; }
 
-    Value &operator[](uint32_t index) { return stack[index]; }
+    Value &operator[](uint32_t index) { return stack_[index]; }
 
-    const Value &operator[](uint32_t index) const { return stack[index]; }
+    const Value &operator[](uint32_t index) const { return stack_[index]; }
 
-    Value *getTopPtr() { return &stack[top]; }
+    Value *get_top_ptr() { return &stack_[top_]; }
 
-    void setTopVal(Value v) { stack[top - 1] = v; }
+    void set_top_val(Value v) { stack_[top_ - 1] = v; }
 
-    Value *base() { return stack; }
+    Value *base() { return stack_; }
 
-    bool Exist(Value v);
+    bool exist(Value v);
 
-    String toString() const;
+    String to_string() const;
 
-    void display(uint32_t base, StringView currentFnName);
+    void display(uint32_t base, StringView current_fn_name);
 
     void mark();
 
 private:
     using stack_size_t = uint16_t;
-    static constexpr int DEFAULT_STACK_SIZE = UINT16_MAX;
+    static constexpr int k_default_stack_size = UINT16_MAX;
 
-    Value *stack;
-    uint32_t max;
-    uint32_t top;
+    Value *stack_;
+    uint32_t max_;
+    uint32_t top_;
 };
 } // namespace aria
 

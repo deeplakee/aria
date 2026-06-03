@@ -10,7 +10,7 @@
 
 namespace aria {
 
-inline uint32_t hashNumber(double value)
+inline uint32_t hash_number(double value)
 {
     uint32_t hash = 0;
     uint64_t temp;
@@ -21,7 +21,7 @@ inline uint32_t hashNumber(double value)
     return hash;
 }
 
-inline uint32_t hashObj(Obj *obj, ObjType type)
+inline uint32_t hash_obj(Obj *obj, ObjType type)
 {
     uint32_t hash = 2166136261U;
 
@@ -42,7 +42,7 @@ inline uint32_t hashObj(Obj *obj, ObjType type)
     return hash;
 }
 
-// inline uint32_t hashString(const char *str, const size_t length, uint32_t hash = 2166136261u)
+// inline uint32_t hash_string(const char *str, const size_t length, uint32_t hash = 2166136261u)
 // {
 //     for (size_t i = 0; i < length; i++) {
 //         hash ^= static_cast<uint8_t>(str[i]);
@@ -51,7 +51,7 @@ inline uint32_t hashObj(Obj *obj, ObjType type)
 //     return hash;
 // }
 
-inline uint32_t hashString(const char *str, const size_t length, uint32_t hash = 2166136261u)
+inline uint32_t hash_string(const char *str, const size_t length, uint32_t hash = 2166136261u)
 {
     for (size_t i = 0; i < length; i++) {
         hash = 31 * hash + static_cast<uint8_t>(str[i]);

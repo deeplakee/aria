@@ -41,7 +41,7 @@ inline NanBox_t fromNumber(double num)
 
 inline NanBox_t fromObj(Obj *obj)
 {
-    return SignBit | QNaN | reinterpret_cast<uint64_t>(obj);
+    return SignBit | QNaN | std::bit_cast<uint64_t>(obj);
 }
 
 //==============================
@@ -60,7 +60,7 @@ inline double toNumber(NanBox_t v)
 
 inline Obj *toObj(NanBox_t v)
 {
-    return reinterpret_cast<Obj *>(v & ~(SignBit | QNaN));
+    return std::bit_cast<Obj *>(v & ~(SignBit | QNaN));
 }
 
 //==============================

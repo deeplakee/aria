@@ -58,7 +58,7 @@ TEST(ComplieParserTest, ParseExpr1Test)
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parseExpression();
     EXPECT_FALSE(parser.hasError());
@@ -87,7 +87,7 @@ TEST(ComplieParserTest, ParseExpr2Test)
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parseExpression();
     EXPECT_FALSE(parser.hasError());
@@ -141,7 +141,7 @@ TEST(ComplieParserTest, ParseExpr3Test)
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parseExpression();
     EXPECT_FALSE(parser.hasError());
@@ -221,7 +221,7 @@ TEST(ComplieParserTest, ParseProgram4Test)
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parse();
     EXPECT_FALSE(parser.hasError());
@@ -357,7 +357,7 @@ print 1+2*4-40/5%6;
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parse();
     EXPECT_FALSE(parser.hasError());
@@ -517,7 +517,7 @@ TEST(ComplieParserTest, ParseProgram6Test)
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parse();
     EXPECT_FALSE(parser.hasError());

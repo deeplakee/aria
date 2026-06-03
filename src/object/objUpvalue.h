@@ -10,38 +10,32 @@ class ObjUpvalue : public Obj
 public:
     ObjUpvalue() = delete;
 
-    ObjUpvalue(Value *_location, GC *_gc);
+    ObjUpvalue(Value *location, GC *gc);
 
     ~ObjUpvalue() override;
 
-    using Obj::toString;
+    String to_string() override;
 
-    String toString(ValueStack *printStack) override;
-
-    size_t objSize() override { return sizeof(ObjUpvalue); }
+    size_t obj_size() override { return sizeof(ObjUpvalue); }
 
     void blacken() override;
 
-    Value *location;
-    Value closed;
-    ObjUpvalue *nextUpvalue;
+    Value *location_;
+    Value closed_;
+    ObjUpvalue *next_upvalue_;
 };
 
-inline bool isObjUpvalue(Value value)
+inline bool is_obj_upvalue(Value value)
 {
-    return isObjType(value, ObjType::UPVALUE);
+    return is_obj_type(value, ObjType::UPVALUE);
 }
 
-inline ObjUpvalue *asObjUpvalue(Value value)
+inline ObjUpvalue *as_obj_upvalue(Value value)
 {
-#ifdef DEBUG_MODE
-    return dynamic_cast<ObjUpvalue *>(NanBox::toObj(value));
-#else
-    return static_cast<ObjUpvalue *>(NanBox::toObj(value));
-#endif
+    return as_Obj<ObjUpvalue>(value);
 }
 
-ObjUpvalue *newObjUpvalue(Value *location, GC *gc);
+ObjUpvalue *new_ObjUpvalue(Value *location, GC *gc);
 
 } // namespace aria
 

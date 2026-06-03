@@ -11,71 +11,66 @@
 
 namespace aria {
 
-ObjInstance::ObjInstance(ObjClass *_klass, GC *_gc)
-    : Obj{ObjType::INSTANCE, hashObj(this, ObjType::INSTANCE), _gc}
-    , klass{_klass}
-    , fields{_gc}
-    , cachedMethods{new ValueHashTable{_gc}}
+ObjInstance::ObjInstance(ObjClass *klass, GC *gc)
+    : Obj{ObjType::INSTANCE, hash_obj(this, ObjType::INSTANCE), gc}
+    , klass_{klass}
+    , fields_{gc}
+    , cached_methods_{gc}
 {}
 
-ObjInstance::~ObjInstance()
+ObjInstance::~ObjInstance() = default;
+
+String ObjInstance::to_string()
 {
-    delete cachedMethods;
+    return format("<{} instance>", klass_->name_->c_str());
 }
 
-String ObjInstance::toString(ValueStack *printStack)
+String ObjInstance::representation()
 {
-    return format("<{} instance>", klass->name->C_str_ref());
-}
-
-String ObjInstance::representation(ValueStack *printStack)
-{
-    return format("<{} instance repr>", klass->name->C_str_ref());
+    return format("<{} instance repr>", klass_->name_->c_str());
 }
 
 void ObjInstance::blacken()
 {
-    klass->mark();
-    fields.mark();
-    cachedMethods->mark();
+    klass_->mark();
+    fields_.mark();
+    cached_methods_.mark();
 }
 
-Value ObjInstance::getByField(ObjString *name, Value &value)
+Value ObjInstance::get_by_field(ObjString *name, Value &value)
 {
-    if (fields.get(NanBox::fromObj(name), value)) {
+    if (fields_.get(NanBox::fromObj(name), value)) {
         return NanBox::TrueValue;
     }
-    if (cachedMethods->get(NanBox::fromObj(name), value)) {
+    if (cached_methods_.get(NanBox::fromObj(name), value)) {
         return NanBox::TrueValue;
     }
-    if (klass->methods.get(NanBox::fromObj(name), value)) {
+    if (klass_->methods_.get(NanBox::fromObj(name), value)) {
         ObjBoundMethod *boundMethod = nullptr;
-        if (isObjNativeFn(value)) {
-            boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
+        if (is_obj_native_fn(value)) {
+            boundMethod = new_ObjBoundMethod(NanBox::fromObj(this), as_obj_native_fn(value), gc_);
         } else {
-            boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjFunction(value), gc);
+            boundMethod = new_ObjBoundMethod(NanBox::fromObj(this), as_obj_function(value), gc_);
         }
         value = NanBox::fromObj(boundMethod);
-        gc->pushTempRoot(value);
-        cachedMethods->insert(NanBox::fromObj(name), value);
-        gc->popTempRoot(1);
+        GcTempRootGuard guard{gc_, value};
+        cached_methods_.insert(NanBox::fromObj(name), value);
         return NanBox::TrueValue;
     }
     return NanBox::FalseValue;
 }
 
-Value ObjInstance::setByField(ObjString *name, Value value)
+Value ObjInstance::set_by_field(ObjString *name, Value value)
 {
-    fields.insert(NanBox::fromObj(name), value);
+    fields_.insert(NanBox::fromObj(name), value);
     return NanBox::TrueValue;
 }
 
 Value ObjInstance::copy(GC *gc)
 {
-    ObjInstance *newObj = newObjInstance(klass, gc);
-    gc->pushTempRoot(NanBox::fromObj(newObj));
-    newObj->fields.copy(&fields);
-    gc->popTempRoot(1);
+    ObjInstance *newObj = new_ObjInstance(klass_, gc);
+    GcTempRootGuard guard{gc, NanBox::fromObj(newObj)};
+    newObj->fields_.copy(&fields_);
     return NanBox::fromObj(newObj);
 }
 
@@ -86,17 +81,15 @@ Value ObjInstance::getSuperMethod(ObjClass *methodKlass, ObjString *methodName, 
         return NanBox::FalseValue;
     }
     ObjBoundMethod *boundMethod
-        = newObjBoundMethod(NanBox::fromObj(this), asObjFunction(superMethod), gc);
+        = new_ObjBoundMethod(NanBox::fromObj(this), as_obj_function(superMethod), gc_);
     superMethod = NanBox::fromObj(boundMethod);
     return NanBox::TrueValue;
 }
 
-ObjInstance *newObjInstance(ObjClass *klass, GC *gc)
+ObjInstance *new_ObjInstance(ObjClass *klass, GC *gc)
 {
-    auto *obj = gc->allocateObject<ObjInstance>(klass, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object INSTANCE)", toVoidPtr(obj), sizeof(ObjInstance));
-#endif
+    auto obj = gc->allocate_object<ObjInstance>(klass, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 

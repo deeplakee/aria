@@ -11,84 +11,75 @@
 
 namespace aria {
 
-#define genException(code, msg) gc->runningVM->newException((code), (msg))
+#define genException(code, msg) gc_->running_vm_->new_exception((code), (msg))
 
-ObjIterator::ObjIterator(Iterator *iter, GC *_gc)
-    : Obj{ObjType::ITERATOR, hashObj(this, ObjType::ITERATOR), _gc}
-    , iter{iter}
-    , cachedMethods{new ValueHashTable{_gc}}
+ObjIterator::ObjIterator(Iterator *iter, GC *gc)
+    : Obj{ObjType::ITERATOR, hash_obj(this, ObjType::ITERATOR), gc}
+    , iter_{iter}
+    , cached_methods_{new ValueHashTable{gc}}
 {}
 
 ObjIterator::~ObjIterator()
 {
-    delete iter;
-    delete cachedMethods;
+    delete iter_;
+    delete cached_methods_;
 }
 
-String ObjIterator::toString(ValueStack *printStack)
+String ObjIterator::to_string()
 {
-    return format("<iter {}>", iter->typeString());
+    return format("<iter {}>", iter_->typeString());
 }
 
 void ObjIterator::blacken()
 {
-    iter->blacken();
-    cachedMethods->mark();
+    iter_->blacken();
+    cached_methods_->mark();
 }
 
-Value ObjIterator::getByField(ObjString *name, Value &value)
+Value ObjIterator::get_by_field(ObjString *name, Value &value)
 {
-    if (cachedMethods->get(NanBox::fromObj(name), value)) {
+    if (cached_methods_->get(NanBox::fromObj(name), value)) {
         return NanBox::TrueValue;
     }
-    if (gc->iteratorMethods->get(NanBox::fromObj(name), value)) {
-        assert(isObjNativeFn(value) && "iterator builtin method is nativeFn");
-        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
+    if (gc_->iterator_methods_->get(NanBox::fromObj(name), value)) {
+        assert(is_obj_native_fn(value) && "iterator builtin method is nativeFn");
+        auto boundMethod = new_ObjBoundMethod(NanBox::fromObj(this), as_obj_native_fn(value), gc_);
         value = NanBox::fromObj(boundMethod);
-        gc->pushTempRoot(value);
-        cachedMethods->insert(NanBox::fromObj(name), value);
-        gc->popTempRoot(1);
+        GcTempRootGuard guard{gc_, value};
+        cached_methods_->insert(NanBox::fromObj(name), value);
         return NanBox::TrueValue;
     }
     return NanBox::FalseValue;
 }
 
-ObjIterator *newObjIterator(Iterator *iter, GC *gc)
+ObjIterator *new_ObjIterator(Iterator *iter, GC *gc)
 {
-    auto *obj = gc->allocateObject<ObjIterator>(iter, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
-#endif
+    auto *obj = gc->allocate_object<ObjIterator>(iter, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 
-ObjIterator *newObjIterator(ObjList *list, GC *gc)
+ObjIterator *new_ObjIterator(ObjList *list, GC *gc)
 {
     auto iter = new ListIterator{list};
-    auto obj = gc->allocateObject<ObjIterator>(iter, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
-#endif
+    auto obj = gc->allocate_object<ObjIterator>(iter, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 
-ObjIterator *newObjIterator(ObjMap *map, GC *gc)
+ObjIterator *new_ObjIterator(ObjMap *map, GC *gc)
 {
     auto iter = new MapIterator{map};
-    auto obj = gc->allocateObject<ObjIterator>(iter, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
-#endif
+    auto obj = gc->allocate_object<ObjIterator>(iter, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 
-ObjIterator *newObjIterator(ObjString *str, GC *gc)
+ObjIterator *new_ObjIterator(ObjString *str, GC *gc)
 {
     auto iter = new StringIterator{str};
-    auto obj = gc->allocateObject<ObjIterator>(iter, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {}  bytes (object ITERATOR)", toVoidPtr(obj), sizeof(ObjIterator));
-#endif
+    auto obj = gc->allocate_object<ObjIterator>(iter, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 

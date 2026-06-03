@@ -22,7 +22,12 @@ Token Parser::advance()
 
 Token Parser::peek(int n)
 {
-    return tokens[current + n];
+    auto index = static_cast<int64_t>(current) + n;
+    if (index < 0 || index >= static_cast<int64_t>(tokens.size())) {
+        throw ariaCompilingException(
+            ErrorCode::SYNTAX_UNEXPECTED_EOF, "Unexpected end of code while peeking");
+    }
+    return tokens[index];
 }
 
 bool Parser::atEnd()
@@ -56,7 +61,7 @@ void Parser::consume(TokenType t, StringView msg)
         return;
     }
     if (atEnd()) {
-        String end_msg = syntaxError("reached end of code, and {}\n{}", msg, tokens.back().info());
+        String end_msg = syntax_error("reached end of code, and {}\n{}", msg, tokens.back().info());
         throw ariaCompilingException(ErrorCode::SYNTAX_UNEXPECTED_EOF, end_msg);
     }
     auto err_msg = parseError(tokens[current], msg);
@@ -108,7 +113,10 @@ UniquePtr<ASTNode> Parser::parseProgram()
 {
     List<UniquePtr<ASTNode>> declarations;
     while (!check(TokenType::CODE_EOF)) {
-        declarations.emplace_back(parseDeclaration());
+        auto decl = parseDeclaration();
+        if (decl != nullptr) {
+            declarations.emplace_back(std::move(decl));
+        }
     }
     return std::make_unique<ProgramNode>(std::move(declarations));
 }
@@ -135,6 +143,11 @@ UniquePtr<ASTNode> Parser::parseDeclaration()
     }
     if (panic) {
         synchronize();
+    }
+    // 错误恢复后 declaration 可能为 nullptr，跳过它避免后续遍历 AST 时崩溃
+    if (declaration == nullptr && !err_flag) {
+        // 正常情况下不应出现 nullptr，说明解析逻辑有误
+        err_flag = true;
     }
     return declaration;
 }

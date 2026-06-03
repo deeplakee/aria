@@ -14,43 +14,37 @@ class ObjBoundMethod : public Obj
 public:
     ObjBoundMethod() = delete;
 
-    ObjBoundMethod(Value _receiver, ObjFunction *_method, GC *_gc);
+    ObjBoundMethod(Value receiver, ObjFunction *method, GC *gc);
 
-    ObjBoundMethod(Value _receiver, ObjNativeFn *_method, GC *_gc);
+    ObjBoundMethod(Value receiver, ObjNativeFn *method, GC *gc);
 
     ~ObjBoundMethod() override;
 
-    using Obj::toString;
+    String to_string() override;
 
-    String toString(ValueStack *printStack) override;
-
-    size_t objSize() override { return sizeof(ObjBoundMethod); }
+    size_t obj_size() override { return sizeof(ObjBoundMethod); }
 
     void blacken() override;
 
-    Value receiver;
-    BoundMethodType methodType;
-    ObjFunction *method;
-    ObjNativeFn *native_method;
+    Value receiver_;
+    BoundMethodType method_type_;
+    ObjFunction *method_;
+    ObjNativeFn *native_method_;
 };
 
-inline bool isObjBoundMethod(Value value)
+inline bool is_obj_bound_method(Value value)
 {
-    return isObjType(value, ObjType::BOUND_METHOD);
+    return is_obj_type(value, ObjType::BOUND_METHOD);
 }
 
-inline ObjBoundMethod *asObjBoundMethod(Value value)
+inline ObjBoundMethod *as_obj_bound_method(Value value)
 {
-#ifdef DEBUG_MODE
-    return dynamic_cast<ObjBoundMethod *>(NanBox::toObj(value));
-#else
-    return static_cast<ObjBoundMethod *>(NanBox::toObj(value));
-#endif
+    return as_Obj<ObjBoundMethod>(value);
 }
 
-ObjBoundMethod *newObjBoundMethod(Value receiver, ObjFunction *method, GC *gc);
+ObjBoundMethod *new_ObjBoundMethod(Value receiver, ObjFunction *method, GC *gc);
 
-ObjBoundMethod *newObjBoundMethod(Value receiver, ObjNativeFn *method, GC *gc);
+ObjBoundMethod *new_ObjBoundMethod(Value receiver, ObjNativeFn *method, GC *gc);
 
 } // namespace aria
 

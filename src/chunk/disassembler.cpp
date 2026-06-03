@@ -14,7 +14,7 @@ void Disassembler::disassembleChunk(const Chunk *chunk, StringView name)
 {
     println("  ======== {:^10} ========", name);
 
-    for (uint32_t offset = 0; offset < chunk->count;) {
+    for (uint32_t offset = 0; offset < chunk->count_;) {
         offset = disassembleInstruction(chunk, offset);
         if (offset == -1) {
             break;
@@ -28,12 +28,12 @@ uint32_t Disassembler::disassembleInstruction(
 {
     print("{:06} ", offset);
     if (alwaysPrintLine) {
-        print("{:6} ", chunk->lines[offset]);
+        print("{:6} ", chunk->lines_[offset]);
     } else {
-        if (offset > 0 && chunk->lines[offset] == chunk->lines[offset - 1]) {
+        if (offset > 0 && chunk->lines_[offset] == chunk->lines_[offset - 1]) {
             print("     | ");
         } else {
-            print("{:6} ", chunk->lines[offset]);
+            print("{:6} ", chunk->lines_[offset]);
         }
     }
 
@@ -166,12 +166,12 @@ uint32_t Disassembler::simpleInstruction(const char *name, uint32_t offset)
 // three bytes instruction
 uint32_t Disassembler::constantInstruction(const Chunk *chunk, String name, uint32_t offset)
 {
-    uint16_t slot = getU16data(chunk->codes, offset + 1);
+    uint16_t slot = getU16data(chunk->codes_, offset + 1);
     if (name == "LOAD_CONST") {
-        String constName = valueRepresentation(chunk->consts[slot]);
+        String constName = value_representation(chunk->consts_[slot]);
         println("{:<18} ({}) {}", name, slot, constName);
     } else {
-        String constName = valueString(chunk->consts[slot]);
+        String constName = value_string(chunk->consts_[slot]);
         println("{:<18} {}", name, constName);
     }
 
@@ -189,7 +189,7 @@ uint32_t Disassembler::twoBytesInstruction(const Chunk *chunk, String name, uint
 // three bytes instruction
 uint32_t Disassembler::threeBytesInstruction(const Chunk *chunk, String name, uint32_t offset)
 {
-    uint16_t slot = getU16data(chunk->codes, offset + 1);
+    uint16_t slot = getU16data(chunk->codes_, offset + 1);
     if (name == "LOAD_LOCAL" || name == "STORE_LOCAL") {
         println("{:<18} base+{}", name, slot);
     } else if (name == "LOAD_UPVALUE" || name == "STORE_UPVALUE") {
@@ -203,7 +203,7 @@ uint32_t Disassembler::threeBytesInstruction(const Chunk *chunk, String name, ui
 // three bytes instruction
 uint32_t Disassembler::jumpInstruction(const Chunk *chunk, String name, uint32_t offset, int sign)
 {
-    uint16_t jump = getU16data(chunk->codes, offset + 1);
+    uint16_t jump = getU16data(chunk->codes_, offset + 1);
     println("{:<18} {} -> {}", name, offset, offset + 3 + sign * jump);
     return offset + 3;
 }
@@ -211,14 +211,14 @@ uint32_t Disassembler::jumpInstruction(const Chunk *chunk, String name, uint32_t
 //  1+3k bytes instruction
 uint32_t Disassembler::closureInstruction(const Chunk *chunk, uint32_t offset)
 {
-    uint16_t funIndex = getU16data(chunk->codes, offset + 1);
+    uint16_t funIndex = getU16data(chunk->codes_, offset + 1);
     offset += 3;
-    ObjFunction *function = asObjFunction(chunk->consts[funIndex]);
-    print("{:<18} {}\n", "CLOSURE", function->toString());
-    for (int j = 0; j < function->upvalueCount; j++) {
+    ObjFunction *function = as_obj_function(chunk->consts_[funIndex]);
+    print("{:<18} {}\n", "CLOSURE", function->to_string());
+    for (int j = 0; j < function->upvalue_count_; j++) {
         auto isLocal = (*chunk)[offset++];
         String varType = isLocal ? "local" : "upvalue";
-        uint16_t index = getU16data(chunk->codes, offset);
+        uint16_t index = getU16data(chunk->codes_, offset);
         offset += 2;
         println("{:06}      |{:<20}{}({})", offset - 3, " ——————", varType, index);
     }
@@ -227,7 +227,7 @@ uint32_t Disassembler::closureInstruction(const Chunk *chunk, uint32_t offset)
 
 uint32_t Disassembler::readInstruction(const Chunk *chunk, uint32_t offset)
 {
-    if (offset >= chunk->count) {
+    if (offset >= chunk->count_) {
         return 0;
     }
     switch (auto instruction = static_cast<opCode>((*chunk)[offset])) {
@@ -312,10 +312,10 @@ uint32_t Disassembler::readInstruction(const Chunk *chunk, uint32_t offset)
     case opCode::CALL:
         return offset + 2;
     case opCode::CLOSURE: {
-        uint16_t funIndex = getU16data(chunk->codes, offset + 1);
+        uint16_t funIndex = getU16data(chunk->codes_, offset + 1);
         offset += 3;
-        ObjFunction *function = asObjFunction(chunk->consts[funIndex]);
-        offset += 2 * function->upvalueCount;
+        ObjFunction *function = as_obj_function(chunk->consts_[funIndex]);
+        offset += 2 * function->upvalue_count_;
         return offset;
     }
     case opCode::MAKE_CLASS:

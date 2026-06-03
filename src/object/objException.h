@@ -19,39 +19,33 @@ public:
 
     ~ObjException() override;
 
-    using Obj::toString;
+    String to_string() override;
 
-    String toString(ValueStack *printStack) override;
-
-    size_t objSize() override { return sizeof(ObjException); }
+    size_t obj_size() override { return sizeof(ObjException); }
 
     void blacken() override;
 
     const char *what() const;
 
-    ObjString *msg;
-    ErrorCode code;
+    ObjString *msg_;
+    ErrorCode code_;
 };
 
-inline bool isObjException(Value value)
+inline bool is_obj_exception(Value value)
 {
-    return isObjType(value, ObjType::EXCEPTION);
+    return is_obj_type(value, ObjType::EXCEPTION);
 }
 
-inline ObjException *asObjException(Value value)
+inline ObjException *as_obj_exception(Value value)
 {
-#ifdef DEBUG_MODE
-    return dynamic_cast<ObjException *>(NanBox::toObj(value));
-#else
-    return static_cast<ObjException *>(NanBox::toObj(value));
-#endif
+    return as_Obj<ObjException>(value);
 }
 
-ObjException *newObjException(const char *msg, GC *gc);
+ObjException *new_ObjException(const char *msg, GC *gc);
 
-ObjException *newObjException(ErrorCode code, const char *msg, GC *gc);
+ObjException *new_ObjException(ErrorCode code, const char *msg, GC *gc);
 
-ObjException *newObjException(ObjString *msg, GC *gc);
+ObjException *new_ObjException(ObjString *msg, GC *gc);
 
 } // namespace aria
 

@@ -35,15 +35,15 @@ static void runFile(const char *path)
 {
     std::string source;
     try {
-        source = aria::readFile(path);
+        source = aria::read_file(path);
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl << std::endl;
         exit(EXIT_FAILURE);
     }
 
     aria::AriaVM vm;
-    aria::interpretResult result = vm.interpret(path, source);
-    if (result != aria::interpretResult::SUCCESS) {
+    aria::InterpretResult result = vm.interpret(path, source);
+    if (result != aria::InterpretResult::SUCCESS) {
         exit(EXIT_FAILURE);
     }
 }
@@ -55,7 +55,7 @@ int main(int argc, const char *argv[])
     } else if (argc == 2) {
         runFile(argv[1]);
     } else {
-        std::cerr << aria::format("Usage: {} [path]\n", aria::AriaProgramName);
+        std::cerr << aria::format("Usage: {} [path]\n", aria::k_aria_program_name);
         exit(EXIT_FAILURE);
     }
     return 0;

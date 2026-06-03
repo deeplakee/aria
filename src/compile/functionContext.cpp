@@ -12,18 +12,18 @@ FunctionContext::FunctionContext(
     , fun{nullptr}
     , scopeDepth{0}
 {
-    auto fnNameObj = newObjString(_fnName, gc);
-    gc->pushTempRoot(NanBox::fromObj(fnNameObj));
-    auto fnLocationObj = newObjString(_fnLocation, gc);
-    gc->pushTempRoot(NanBox::fromObj(fnLocationObj));
+    auto fnNameObj = new_ObjString(_fnName, gc);
+    GcTempRootGuard guard{gc};
+    guard.push(NanBox::fromObj(fnNameObj));
+    auto fnLocationObj = new_ObjString(_fnLocation, gc);
+    guard.push(NanBox::fromObj(fnLocationObj));
     if (_globals == nullptr) {
-        fun = newObjFunction(FunctionType::SCRIPT, fnLocationObj, fnNameObj, _gc);
+        fun = new_ObjFunction(FunctionType::SCRIPT, fnLocationObj, fnNameObj, _gc);
     } else {
-        fun = newObjFunction(FunctionType::SCRIPT, fnLocationObj, fnNameObj, _globals, _gc);
+        fun = new_ObjFunction(FunctionType::SCRIPT, fnLocationObj, fnNameObj, _globals, _gc);
     }
-    gc->popTempRoot(2);
-    chunk = fun->chunk;
-    gc->attachCompiler(this);
+    chunk = fun->chunk_;
+    gc->attach_compiler(this);
     locals.emplace_back();
 }
 
@@ -39,15 +39,14 @@ FunctionContext::FunctionContext(
     , fun{nullptr}
     , scopeDepth{0}
 {
-    auto globals = enclosing->fun->chunk->globals;
-    auto fnNameObj = newObjString(_fnName, gc);
-    gc->pushTempRoot(NanBox::fromObj(fnNameObj));
+    auto globals = enclosing->fun->chunk_->globals_;
+    auto fnNameObj = new_ObjString(_fnName, gc);
+    GcTempRootGuard guard{gc, NanBox::fromObj(fnNameObj)};
     _arity = _acceptsVarargs ? _arity - 1 : _arity;
-    fun = newObjFunction(
-        _type, enclosing->fun->location, fnNameObj, _arity, globals, _acceptsVarargs, gc);
-    gc->popTempRoot(1);
-    chunk = fun->chunk;
-    gc->attachCompiler(this);
+    fun = new_ObjFunction(
+        _type, enclosing->fun->location_, fnNameObj, _arity, globals, _acceptsVarargs, gc);
+    chunk = fun->chunk_;
+    gc->attach_compiler(this);
     locals.emplace_back();
     if (_type == FunctionType::METHOD || _type == FunctionType::INIT_METHOD) {
         locals[0].name = "this";
@@ -56,7 +55,7 @@ FunctionContext::FunctionContext(
 
 FunctionContext::~FunctionContext()
 {
-    gc->attachCompiler(this->enclosing);
+    gc->attach_compiler(this->enclosing);
 }
 
 ObjFunction *FunctionContext::currentFunction()
@@ -160,7 +159,7 @@ int FunctionContext::findUpvalueVariable(StringView name)
 
 int FunctionContext::addUpvalue(uint16_t index, bool isLocal)
 {
-    int upvalueCount = fun->upvalueCount;
+    int upvalueCount = fun->upvalue_count_;
     for (int i = 0; i < upvalues.size(); i++) {
         Upvalue *upvalue = &upvalues[i];
         if (upvalue->index == index && upvalue->isLocal == isLocal) {
@@ -173,7 +172,7 @@ int FunctionContext::addUpvalue(uint16_t index, bool isLocal)
     }
 
     upvalues.emplace_back(index, isLocal);
-    return fun->upvalueCount++;
+    return fun->upvalue_count_++;
 }
 
 void FunctionContext::mark()

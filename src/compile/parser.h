@@ -36,7 +36,14 @@ private:
 
     Token peek(int n = 0);
 
-    Token lastToken() { return tokens[current - 1]; }
+    Token lastToken()
+    {
+        if (current == 0) {
+            throw ariaCompilingException(
+                ErrorCode::SYNTAX_UNEXPECTED_EOF, "No previous token");
+        }
+        return tokens[current - 1];
+    }
 
     bool atEnd();
 
@@ -52,7 +59,7 @@ private:
     {
         err_flag = true;
         panic = true;
-        return syntaxError("{}\n{}", msg, errorToken.info());
+        return syntax_error("{}\n{}", msg, errorToken.info());
     }
 
     void reportParseError(const Token &errorToken, StringView msg)

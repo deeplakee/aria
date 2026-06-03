@@ -15,10 +15,10 @@ TEST_F(ValueTestFixture, ValueArrayOperation1)
 
     const char *msg1 = "this is a spark test for ValueObj";
 
-    auto str1 = aria::newObjString(msg1, gc);
+    auto str1 = aria::new_ObjString(msg1, gc);
     aria::Value val_1 = aria::NanBox::fromObj(str1);
 
-    auto e1 = aria::newObjException(msg1, gc);
+    auto e1 = aria::new_ObjException(msg1, gc);
     aria::Value val_2 = aria::NanBox::fromObj(e1);
 
     aria::Value val_3 = aria::NanBox::NilValue;
@@ -29,11 +29,11 @@ TEST_F(ValueTestFixture, ValueArrayOperation1)
 
     aria::Value val_6 = aria::NanBox::fromNumber(123.456);
 
-    auto str2 = aria::newObjString("oiyuweryuoiew\t\t\t", gc);
+    auto str2 = aria::new_ObjString("oiyuweryuoiew\t\t\t", gc);
 
     aria::Value val_7 = aria::NanBox::fromObj(str2);
 
-    aria::Value val_8 = aria::NanBox::fromObj(aria::newObjException(str2, gc));
+    aria::Value val_8 = aria::NanBox::fromObj(aria::new_ObjException(str2, gc));
 
     arr.push(val_1);
     arr.push(val_2);
@@ -96,6 +96,6 @@ TEST_F(ValueTestFixture, ValueArrayOperation3)
     EXPECT_EQ(arr.size(), 5);
 
     std::ostringstream oss;
-    aria::print(oss, "{}", arr.toString());
+    aria::print(oss, "{}", arr.to_string());
     EXPECT_STREQ(oss.str().c_str(), "[123.456,-123.456,true,false,nil]");
 }

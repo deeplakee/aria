@@ -6,17 +6,15 @@
 
 namespace aria {
 
-class ValueStack;
-
 using Value = NanBox::NanBox_t;
 
-String valueTypeString(Value value);
+String value_type_string(Value value);
 
-String valueString(Value value, ValueStack *printStack = nullptr);
+String value_string(Value value);
 
-String valueRepresentation(Value value, ValueStack *printStack = nullptr);
+String value_representation(Value value);
 
-inline bool valuesSame(Value a, Value b)
+inline bool values_same(Value a, Value b)
 {
     if (NanBox::isNumber(a) && NanBox::isNumber(b)) {
         return NanBox::toNumber(a) == NanBox::toNumber(b);
@@ -24,13 +22,13 @@ inline bool valuesSame(Value a, Value b)
     return a == b;
 }
 
-bool valuesEqual(Value a, Value b);
+bool values_equal(Value a, Value b);
 
-uint32_t valueHash(Value value);
+uint32_t value_hash(Value value);
 
-void markValue(Value value);
+void mark_value(Value value);
 
-inline bool isFalsey(Value value)
+inline bool is_falsey(Value value)
 {
     return NanBox::isNil(value) || (NanBox::isBool(value) && !NanBox::toBool(value));
 }

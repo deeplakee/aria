@@ -7,32 +7,32 @@
 
 namespace aria {
 
-ObjBoundMethod::ObjBoundMethod(Value _receiver, ObjFunction *_method, GC *_gc)
-    : Obj{ObjType::BOUND_METHOD, hashObj(this, ObjType::BOUND_METHOD), _gc}
-    , receiver{_receiver}
-    , methodType{BoundMethodType::FUNCTION}
-    , method{_method}
-    , native_method{nullptr}
+ObjBoundMethod::ObjBoundMethod(Value receiver, ObjFunction *method, GC *gc)
+    : Obj{ObjType::BOUND_METHOD, hash_obj(this, ObjType::BOUND_METHOD), gc}
+    , receiver_{receiver}
+    , method_type_{BoundMethodType::FUNCTION}
+    , method_{method}
+    , native_method_{nullptr}
 {}
 
-ObjBoundMethod::ObjBoundMethod(Value _receiver, ObjNativeFn *_method, GC *_gc)
-    : Obj{ObjType::BOUND_METHOD, hashObj(this, ObjType::BOUND_METHOD), _gc}
-    , receiver{_receiver}
-    , methodType{BoundMethodType::NATIVE_FN}
-    , method{nullptr}
-    , native_method{_method}
+ObjBoundMethod::ObjBoundMethod(Value receiver, ObjNativeFn *method, GC *gc)
+    : Obj{ObjType::BOUND_METHOD, hash_obj(this, ObjType::BOUND_METHOD), gc}
+    , receiver_{receiver}
+    , method_type_{BoundMethodType::NATIVE_FN}
+    , method_{nullptr}
+    , native_method_{method}
 {}
 
 ObjBoundMethod::~ObjBoundMethod() = default;
 
-String ObjBoundMethod::toString(ValueStack *printStack)
+String ObjBoundMethod::to_string()
 {
-    String objStr = valueString(receiver);
+    String objStr = value_string(receiver_);
     String methodStr;
-    if (methodType == BoundMethodType::FUNCTION) {
-        methodStr = method->toString();
-    } else if (methodType == BoundMethodType::NATIVE_FN) {
-        methodStr = native_method->toString();
+    if (method_type_ == BoundMethodType::FUNCTION) {
+        methodStr = method_->to_string();
+    } else if (method_type_ == BoundMethodType::NATIVE_FN) {
+        methodStr = native_method_->to_string();
     } else {
         methodStr = "unknownMethod";
     }
@@ -41,30 +41,26 @@ String ObjBoundMethod::toString(ValueStack *printStack)
 
 void ObjBoundMethod::blacken()
 {
-    markValue(receiver);
-    if (method != nullptr) {
-        method->mark();
+    mark_value(receiver_);
+    if (method_ != nullptr) {
+        method_->mark();
     }
-    if (native_method != nullptr) {
-        native_method->mark();
+    if (native_method_ != nullptr) {
+        native_method_->mark();
     }
 }
 
-ObjBoundMethod *newObjBoundMethod(Value receiver, ObjFunction *method, GC *gc)
+ObjBoundMethod *new_ObjBoundMethod(Value receiver, ObjFunction *method, GC *gc)
 {
-    auto obj = gc->allocateObject<ObjBoundMethod>(receiver, method, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object BOUND_METHOD)", toVoidPtr(obj), sizeof(ObjBoundMethod));
-#endif
+    auto obj = gc->allocate_object<ObjBoundMethod>(receiver, method, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 
-ObjBoundMethod *newObjBoundMethod(Value receiver, ObjNativeFn *method, GC *gc)
+ObjBoundMethod *new_ObjBoundMethod(Value receiver, ObjNativeFn *method, GC *gc)
 {
-    auto obj = gc->allocateObject<ObjBoundMethod>(receiver, method, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object BOUND_METHOD)", toVoidPtr(obj), sizeof(ObjBoundMethod));
-#endif
+    auto obj = gc->allocate_object<ObjBoundMethod>(receiver, method, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 

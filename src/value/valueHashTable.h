@@ -1,11 +1,11 @@
 #ifndef ARIA_VALUEHASHTABLE_H
 #define ARIA_VALUEHASHTABLE_H
 
-#include "object/objList.h"
 #include "value/value.h"
 
 namespace aria {
 class GC;
+class ObjList;
 
 struct KVPair
 {
@@ -13,13 +13,13 @@ struct KVPair
     Value value;
 };
 
-inline void initKVPair(KVPair *pair, Value _key, Value _value)
+inline void init_kv_pair(KVPair *pair, Value key, Value value)
 {
-    pair->key = _key;
-    pair->value = _value;
+    pair->key = key;
+    pair->value = value;
 }
 
-inline void initKVPair(KVPair *pair)
+inline void init_kv_pair(KVPair *pair)
 {
     pair->key = NanBox::NilValue;
     pair->value = NanBox::NilValue;
@@ -30,9 +30,9 @@ class ValueHashTable
 public:
     ValueHashTable() = delete;
 
-    explicit ValueHashTable(GC *_gc);
+    explicit ValueHashTable(GC *gc);
 
-    ValueHashTable(const Value *_values, uint32_t _count, GC *_gc);
+    ValueHashTable(const Value *values, uint32_t count, GC *gc);
 
     ~ValueHashTable();
 
@@ -42,9 +42,9 @@ public:
 
     [[nodiscard]] bool has(Value k) const;
 
-    [[nodiscard]] int size() const { return count; }
+    [[nodiscard]] int size() const { return count_; }
 
-    [[nodiscard]] bool empty() const { return count == 0; }
+    [[nodiscard]] bool empty() const { return count_ == 0; }
 
     bool remove(Value k);
 
@@ -54,50 +54,53 @@ public:
 
     void clear();
 
-    String toString(ValueStack *printStack = nullptr) const;
+    String to_string() const;
 
     void mark();
 
-    int64_t getNextIndex(int64_t pre) const;
+    int64_t get_next_index(int64_t pre) const;
 
-    Value getByIndex(int64_t index) const;
+    Value get_by_index(int64_t index) const;
 
-    [[nodiscard]] ObjList *createPair(uint32_t index) const;
+    [[nodiscard]] ObjList *create_pair(uint32_t index) const;
 
-    [[nodiscard]] ObjList *createPairList() const;
+    [[nodiscard]] ObjList *create_pair_list() const;
 
-    [[nodiscard]] ObjList *createKeyList() const;
+    [[nodiscard]] ObjList *create_key_list() const;
 
-    [[nodiscard]] ObjList *createValueList() const;
+    [[nodiscard]] ObjList *create_value_list() const;
 
 private:
-    static constexpr double TABLE_MAX_LOAD = 0.75;
-    static constexpr uint8_t kEmpty = 0b10000000;
-    static constexpr uint8_t kDeleted = 0b11111110;
+    static constexpr double k_table_max_load = 0.75;
+    static constexpr uint8_t k_empty = 0b10000000;
+    static constexpr uint8_t k_deleted = 0b11111110;
 
-    uint32_t count;
-    uint32_t used;
-    uint32_t capacity;
-    KVPair *entry;
-    uint8_t *ctrl;
-    GC *gc;
+    uint32_t count_;
+    uint32_t used_;
+    uint32_t capacity_;
+    KVPair *entry_;
+    uint8_t *ctrl_;
+    GC *gc_;
 
-    static uint8_t getHashH2(uint32_t h) { return (h >> 25) & 0x7F; }
+    static uint8_t get_hash_h2(uint32_t h) { return (h >> 25) & 0x7F; }
 
-    static uint32_t getHashH1(uint32_t h) { return h & 0x1FFFFFF; }
+    static uint32_t get_hash_h1(uint32_t h) { return h & 0x1FFFFFF; }
 
-    static bool ctrlIsFull(uint8_t ctrl) { return (ctrl & 0b10000000) == 0; }
+    static bool ctrl_is_full(uint8_t ctrl) { return (ctrl & 0b10000000) == 0; }
 
-    static bool ctrlNotFull(uint8_t ctrl) { return (ctrl & 0b10000000) == 0b10000000; }
+    static bool ctrl_not_full(uint8_t ctrl) { return (ctrl & 0b10000000) == 0b10000000; }
 
-    int64_t findExist(Value key) const;
+    int64_t find_exist(Value key) const;
 
-    uint32_t findPosition(Value key, uint32_t hash) const;
+    uint32_t find_position(Value key, uint32_t hash) const;
 
-    static uint32_t findNew(
+    static uint32_t find_new(
         const KVPair *h_entry, const uint8_t *h_ctrl, uint32_t h_capacity, Value key);
 
-    void adjustCapacity(uint32_t newCapacity);
+    void adjust_capacity(uint32_t new_capacity);
+
+    template<typename F>
+    ObjList *collect_entries(F &&selector) const;
 };
 
 } // namespace aria

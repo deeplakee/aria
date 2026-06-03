@@ -3,7 +3,7 @@
 
 namespace aria {
 
-const char *Obj::objTypeStr[]
+const char *Obj::obj_type_str_[]
     = {"BASE",
        "STRING",
        "FUNCTION",
@@ -20,22 +20,22 @@ const char *Obj::objTypeStr[]
 
 void Obj::mark()
 {
-    if (isMarked)
+    if (is_marked_)
         return;
 #ifdef DEBUG_MODE
-    assert(type != ObjType::BASE && "Invalid Object Type");
+    assert(type_ != ObjType::BASE && "Invalid Object Type");
 #endif
 #ifdef DEBUG_LOG_GC
-    print("{:p} mark {}\n", toVoidPtr(this), this->toString());
+    print("{:p} mark {}\n", to_void_ptr(this), this->to_string());
 #endif
-    isMarked = true;
-    gc->pushGrey(this);
+    is_marked_ = true;
+    gc_->push_grey(this);
 }
 
-Value Obj::op_call(AriaEnv *env, int argCount)
+Value Obj::op_call(AriaEnv *env, int arg_count)
 {
-    String msg = format("Cannot call object of {}", valueRepresentation(NanBox::fromObj(this)));
-    return env->newException(msg.c_str());
+    String msg = format("Cannot call object of {}", value_representation(NanBox::fromObj(this)));
+    return env->new_exception(msg.c_str());
 }
 
 } // namespace aria

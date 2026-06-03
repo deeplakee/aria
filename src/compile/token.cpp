@@ -3,10 +3,10 @@
 
 namespace aria {
 
-void printTokenList(const List<Token> &tokens)
+void print_token_list(const List<Token> &tokens)
 {
     for (const Token &token : tokens) {
-        println(token.toString());
+        println(token.to_string());
     }
 }
 
@@ -38,7 +38,7 @@ Map<String, TokenType> Token::keywords = {
     {"while", TokenType::WHILE},       /**< "while" 关键字对应的标记类型。 */
 };
 
-const char *Token::tokenText[] = {
+const char *Token::token_text[] = {
 
     "LEFT_PAREN",    ///< 左括号 (，用于表示代码中的分组或函数调用。
     "RIGHT_PAREN",   ///< 右括号 )，用于表示代码中的分组或函数调用。

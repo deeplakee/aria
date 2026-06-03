@@ -55,11 +55,11 @@ TEST_F(ValueTestFixture, ValueObj)
 {
     const char *msg1 = "this is a spark test for ValueObj";
 
-    auto str1 = aria::newObjString(msg1, gc);
+    auto str1 = aria::new_ObjString(msg1, gc);
     aria::Value str1_value = aria::NanBox::fromObj(str1);
     EXPECT_TRUE(aria::NanBox::isObj(str1_value));
 
-    auto e1 = aria::newObjException(msg1,gc);
+    auto e1 = aria::new_ObjException(msg1,gc);
     aria::Value e1_value = aria::NanBox::fromObj(e1);
     EXPECT_TRUE(aria::NanBox::isObj(e1_value));
 }

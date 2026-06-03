@@ -33,11 +33,11 @@ Value Native::_aria_random_(AriaEnv *env, int argCount, Value *args)
 
 Value Native::_aria_println_(AriaEnv *env, int argCount, Value *args)
 {
-    ObjList *list = asObjList(args[0]);
-    String formatStr = valueString((*list->list)[0]);
+    ObjList *list = as_obj_list(args[0]);
+    String formatStr = value_string((*list->list_)[0]);
 
     if (argCount == 1) {
-        std::cout << valueString((*list->list)[0]) << '\n';
+        std::cout << value_string((*list->list_)[0]) << '\n';
         return NanBox::NilValue;
     }
 
@@ -48,7 +48,7 @@ Value Native::_aria_println_(AriaEnv *env, int argCount, Value *args)
         for (size_t i = 0; i < formatStr.length(); ++i) {
             if (formatStr[i] == '{' && i + 1 < formatStr.length() && formatStr[i + 1] == '}') {
                 if (argIndex < argCount) {
-                    result += valueString((*list->list)[argIndex++]);
+                    result += value_string((*list->list_)[argIndex++]);
                 } else {
                     result += "{}";
                 }
@@ -60,35 +60,35 @@ Value Native::_aria_println_(AriaEnv *env, int argCount, Value *args)
 
         std::cout << result << '\n';
     } catch (const std::exception &e) {
-        return env->newException(ErrorCode::RUNTIME_UNKNOWN, e.what());
+        return env->new_exception(ErrorCode::RUNTIME_UNKNOWN, e.what());
     }
 
-    return list->list->size();
+    return list->list_->size();
 }
 
 Value Native::_aria_readline_(AriaEnv *env, int argCount, Value *args)
 {
     String line;
     std::getline(std::cin, line);
-    ObjString *objLineStr = newObjString(line, env->gc);
+    ObjString *objLineStr = new_ObjString(line, env->gc_);
     return NanBox::fromObj(objLineStr);
 }
 
 Value Native::_aria_typeof_(AriaEnv *env, int argCount, Value *args)
 {
-    ObjString *str = newObjString(valueTypeString(args[0]), env->gc);
+    ObjString *str = new_ObjString(value_type_string(args[0]), env->gc_);
     return NanBox::fromObj(str);
 }
 
 Value Native::_aria_str_(AriaEnv *env, int argCount, Value *args)
 {
-    ObjString *str = newObjString(valueString(args[0]), env->gc);
+    ObjString *str = new_ObjString(value_string(args[0]), env->gc_);
     return NanBox::fromObj(str);
 }
 
 Value Native::_aria_repr_(AriaEnv *env, int argCount, Value *args)
 {
-    ObjString *str = newObjString(valueRepresentation(args[0]), env->gc);
+    ObjString *str = new_ObjString(value_representation(args[0]), env->gc_);
     return NanBox::fromObj(str);
 }
 
@@ -96,42 +96,42 @@ Value Native::_aria_num_(AriaEnv *env, int argCount, Value *args)
 {
     CHECK_OBJSTRING(args[0], argument);
     try {
-        return NanBox::fromNumber(std::stod(asCString(args[0])));
+        return NanBox::fromNumber(std::stod(as_c_string(args[0])));
     } catch ([[maybe_unused]] const std::exception &e) {
-        return env->newException(ErrorCode::RUNTIME_UNKNOWN, "Conversion failed");
+        return env->new_exception(ErrorCode::RUNTIME_UNKNOWN, "Conversion failed");
     }
 }
 
 Value Native::_aria_bool_(AriaEnv *env, int argCount, Value *args)
 {
     CHECK_OBJSTRING(args[0], argument);
-    ObjString *str = asObjString(args[0]);
-    if (str->length == 4 && memcmp(str->C_str_ref(), "true", 4) == 0) {
+    ObjString *str = as_obj_string(args[0]);
+    if (str->length_ == 4 && memcmp(str->c_str(), "true", 4) == 0) {
         return NanBox::TrueValue;
     }
-    if (str->length == 5 && memcmp(str->C_str_ref(), "false", 5) == 0) {
+    if (str->length_ == 5 && memcmp(str->c_str(), "false", 5) == 0) {
         return NanBox::FalseValue;
     }
-    return env->newException(ErrorCode::RUNTIME_UNKNOWN, "Invalid boolean string");
+    return env->new_exception(ErrorCode::RUNTIME_UNKNOWN, "Invalid boolean string");
 }
 
 Value Native::_aria_copy_(AriaEnv *env, int argCount, Value *args)
 {
     if (NanBox::isObj(args[0])) {
-        return NanBox::toObj(args[0])->copy(env->gc);
+        return NanBox::toObj(args[0])->copy(env->gc_);
     }
     return NanBox::NilValue;
 }
 
 Value Native::_aria_equals_(AriaEnv *env, int argCount, Value *args)
 {
-    return NanBox::fromBool(valuesEqual(args[0], args[1]));
+    return NanBox::fromBool(values_equal(args[0], args[1]));
 }
 
 Value Native::_aria_iter_(AriaEnv *env, int argCount, Value *args)
 {
     if (NanBox::isObj(args[0])) {
-        return NanBox::toObj(args[0])->createIter(env->gc);
+        return NanBox::toObj(args[0])->create_iter(env->gc_);
     }
     return NanBox::NilValue;
 }
@@ -152,8 +152,8 @@ Value Native::_aria__foo__(AriaEnv *env, int argCount, Value *args)
 List<NativeVarEntry> &Native::nativeVarTable()
 {
     static List<NativeVarEntry> table = {
-        {"__platform__", obj_wrap(newObjString(platform, gc))},
-        {"__version__", obj_wrap(newObjString(version, gc))},
+        {"__platform__", obj_wrap(new_ObjString(k_platform, gc))},
+        {"__version__", obj_wrap(new_ObjString(k_version, gc))},
         //{"pi", num_wrap(pi)},
         //{"e", num_wrap(e)},
         {"_", val_wrap(NanBox::NilValue)},

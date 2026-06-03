@@ -27,7 +27,7 @@ ObjFunction *Compiler::compile(
 #endif
         Lexer lexer{moduleLocation, std::move(source)};
         auto tokens = lexer.tokenize();
-        if (lexer.hadError()) {
+        if (lexer.had_error()) {
             return nullptr;
         }
         Parser parser{tokens};
@@ -43,7 +43,7 @@ ObjFunction *Compiler::compile(
         auto fn = generator.generateCode(ast);
 
 #ifdef DEBUG_PRINT_COMPILED_CODE
-        fn->chunk->disassemble(moduleName);
+        fn->chunk_->disassemble(moduleName);
 #endif
         return fn;
     } catch (const ariaException &e) {

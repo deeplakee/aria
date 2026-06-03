@@ -5,14 +5,14 @@ namespace aria {
 
 static Value builtin_hasNext(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = asObjIterator(args[-1]);
-    return NanBox::fromBool(self->iter->hasNext());
+    auto self = as_obj_iterator(args[-1]);
+    return NanBox::fromBool(self->iter_->hasNext());
 }
 
 static Value builtin_next(AriaEnv *env, int argCount, Value *args)
 {
-    auto self = asObjIterator(args[-1]);
-    return self->iter->next();
+    auto self = as_obj_iterator(args[-1]);
+    return self->iter_->next();
 }
 
 void ObjIterator::init(GC *_gc, ValueHashTable *builtins)

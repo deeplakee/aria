@@ -19,7 +19,9 @@ class ObjUpvalue;
 class ValueHashTable;
 class AriaDebugger;
 
-enum class interpretResult { SUCCESS, SRC_FILE_ERROR, COMPILE_ERROR, RUNTIME_ERROR };
+enum class InterpretResult { SUCCESS, SRC_FILE_ERROR, COMPILE_ERROR, RUNTIME_ERROR };
+
+enum class NumericBinOp { GT, GE, LT, LE, SUB, MUL, DIV, MOD };
 
 class AriaVM
 {
@@ -28,47 +30,50 @@ public:
 
     ~AriaVM();
 
-    interpretResult interpret(String srcFilePath, String source);
+    InterpretResult interpret(String src_file_path, String source);
 
-    interpretResult interpret(String source);
+    InterpretResult interpret(String source);
 
-    interpretResult interpretFromFile(const String &srcFilePath);
+    InterpretResult interpret_from_file(const String &src_file_path);
 
-    Value runFunction(ObjFunction *fun, int argCount, const Value *args);
+    Value run_function(ObjFunction *fun, int arg_count, const Value *args);
 
-    void setDebugger(AriaDebugger *_debugger);
+    void set_debugger(AriaDebugger *debugger);
 
-    void defineNativeFn(
-        const char *name, int arity, NativeFn_t function, bool acceptsVarargs = false) const;
+    void define_native_fn(
+        const char *name, int arity, NativeFn_t function, bool accepts_varargs = false) const;
 
-    void defineNativeVar(const char *name, Value value) const;
+    void define_native_var(const char *name, Value value) const;
 
-    Value newException(const char *msg);
+    Value new_exception(const char *msg);
 
-    Value newException(ErrorCode code, const char *msg);
+    Value new_exception(ErrorCode code, const char *msg);
 
-    Value newException(ErrorCode code, const String &msg);
+    Value new_exception(ErrorCode code, const String &msg);
 
-    void throwException(ObjException *e);
+    void throw_exception(ObjException *e);
 
-    void throwException(ErrorCode code, ObjException *e);
+    void throw_exception(ErrorCode code, ObjException *e);
 
-    void throwException(ErrorCode code, const char *message);
+    void throw_exception(ErrorCode code, const char *message);
 
-    void throwException(ErrorCode code, const String &message);
+    void throw_exception(ErrorCode code, const String &message);
 
-    void reportRuntimeFatalError(ErrorCode code, const char *msg) const;
+    void report_runtime_fatal_error(ErrorCode code, const char *msg) const;
 
-    GC *gc;
+    void mark_gc_roots();
+
+    GC *gc_;
 
 private:
+    InterpretResult run_source(String sourceLocation, String source);
+
     friend class ObjFunction;
-    friend class GC;
     friend class VMStateHelper;
 
-    enum flagIndex {
+    enum FlagIndex {
         undefined0 = 0,
-        index_Err,
+        index_err,
         undefined2,
         undefined3,
         undefined4,
@@ -77,96 +82,99 @@ private:
         undefined7,
     };
 
-#define defFlag(what) \
-    void set##what##Flag() { flags = flags | (1 << index_##what); } \
-    void unset##what##Flag() { flags = flags & ~(1 << index_##what); } \
-    [[nodiscard]] bool get##what##Flag() const { return (flags & (1 << index_##what)); }
+    #define defFlag(what) \
+    void set_##what##_flag() { flags_ = flags_ | (1 << index_##what); } \
+    void unset_##what##_flag() { flags_ = flags_ & ~(1 << index_##what); } \
+    [[nodiscard]] bool get_##what##_flag() const { return (flags_ & (1 << index_##what)); }
 
-    defFlag(Err);
+    defFlag(err);
 
-#undef defFlag
+    #undef defFlag
 
-    static constexpr int FRAME_SIZE = 256;
+    static constexpr int k_frame_size = 256;
 
-    CallFrame *Cframes;
-    ExceptionFrame *Eframes;
-    Value *Rmodules;
-    int CframeCount;
-    int EframeCount;
-    int RmoduleCount;
-    CallFrame *frame;
-    Chunk *chunk;
+    CallFrame *c_frames_;
+    ExceptionFrame *e_frames_;
+    Value *r_modules_;
+    int c_frame_count_;
+    int e_frame_count_;
+    int r_module_count_;
+    CallFrame *frame_;
+    Chunk *chunk_;
 
-    Value E_REG;
-    uint8_t flags;
+    Value e_reg_;
+    uint8_t flags_;
 
-    ValueHashTable *builtIn;
-    ValueHashTable *cachedModules;
-    ValueStack stack;
-    ObjUpvalue *openUpvalues;
-    String ariaDir;
-    ValueHashTable *globals;
-    AriaDebugger *debugger;
+    ValueHashTable *built_in_;
+    ValueHashTable *cached_modules_;
+    ValueStack stack_;
+    ObjUpvalue *open_upvalues_;
+    String aria_dir_;
+    ValueHashTable *globals_;
+    AriaDebugger *debugger_;
 
-    ExceptionFrame *currentEframe() { return &Eframes[EframeCount - 1]; }
+    ExceptionFrame *current_eframe() { return &e_frames_[e_frame_count_ - 1]; }
 
-    Value *currentRmodule() { return &Rmodules[RmoduleCount - 1]; }
+    Value *current_rmodule() { return &r_modules_[r_module_count_ - 1]; }
 
-    void updateCallFrame();
+    void update_call_frame();
 
-    void pushCallFrame(ObjFunction *_function, uint8_t *_ip, Value *_stakBase);
+    void push_call_frame(ObjFunction *function, uint8_t *ip, Value *stack_base);
 
-    void pushExceptionFrame(int CframeCount_, int RmoduleCount_, uint8_t *_ip, uint32_t _stackSize);
+    void push_exception_frame(int c_frame_count, int r_module_count, uint8_t *ip, uint32_t stack_size);
 
-    void pushRunningModule(const ObjFunction *_function);
+    void push_running_module(const ObjFunction *function);
 
-    void popCallFrame();
+    void pop_call_frame();
 
-    void popExceptionFrame();
+    void pop_exception_frame();
 
-    void popRunningModule();
+    void pop_running_module();
 
-    void packVarargs(int argCount, int arity);
+    void pack_varargs(int arg_count, int arity);
 
-    ObjModule *cacheModule(ObjFunction *moduleFn);
+    ObjModule *cache_module(ObjFunction *module_fn);
 
-    Value createCallFrame(ObjFunction *function);
+    Value create_call_frame(ObjFunction *function);
 
-    Value returnFromCurrentModule(Value result);
+    Value return_from_current_module(Value result);
 
-    Value returnFromCurrentFrame(Value result);
+    Value return_from_current_frame(Value result);
 
-    Value callValue(Value callee, int argCount);
+    Value call_value(Value callee, int arg_count);
 
-    Value callModule(ObjFunction *module);
+    Value call_module(ObjFunction *module);
 
-    Value callFunction(ObjFunction *function, int argCount);
+    Value call_function(ObjFunction *function, int arg_count);
 
-    Value callNativeFn(ObjNativeFn *native, int argCount);
+    Value call_native_fn(ObjNativeFn *native, int arg_count);
 
-    Value callNewInstance(ObjClass *klass, int argCount);
+    Value call_new_instance(ObjClass *klass, int arg_count);
 
-    Value callBoundMethod(const ObjBoundMethod *method, int argCount);
+    Value call_bound_method(const ObjBoundMethod *method, int arg_count);
 
-    ObjUpvalue *captureUpvalue(Value *local);
+    ObjUpvalue *capture_upvalue(Value *local);
 
-    void closeUpvalues(const Value *last);
+    void close_upvalues(const Value *last);
 
-    void registerNative() const;
+    template<NumericBinOp op>
+    bool numeric_bin_op();
 
-    bool isModuleRunning(const String &path) const;
+    void register_native() const;
 
-    ObjModule *getCachedModule(ObjString *path);
+    [[nodiscard]] bool is_module_running(const String &path) const;
 
-    ObjFunction *loadModule(const String &path, ObjString *moduleName);
+    ObjModule *get_cached_module(ObjString *path);
 
-    Value run(int retFrame = 0);
+    ObjFunction *load_module(const String &path, ObjString *module_name);
+
+    Value run(int ret_frame = 0);
 
     void reset();
 
-    void unwindToCatchPoint();
+    void unwind_to_catch_point();
 
-    void maybeDebugStep(uint32_t offset) const;
+    void maybe_debug_step(uint32_t offset) const;
 };
 
 } // namespace aria

@@ -9,7 +9,7 @@
 
 namespace aria {
 
-String valueTypeString(Value value)
+String value_type_string(Value value)
 {
     if (NanBox::isBool(value)) {
         return "bool";
@@ -21,7 +21,7 @@ String valueTypeString(Value value)
         return "number";
     }
     if (NanBox::isObj(value)) {
-        switch (NanBox::toObj(value)->type) {
+        switch (NanBox::toObj(value)->type_) {
         case ObjType::STRING:
             return "string";
         case ObjType::FUNCTION:
@@ -51,7 +51,7 @@ String valueTypeString(Value value)
     return "unknownType";
 }
 
-String valueString(Value value, ValueStack *printStack)
+String value_string(Value value)
 {
     if (NanBox::isBool(value)) {
         if (NanBox::toBool(value)) {
@@ -66,12 +66,12 @@ String valueString(Value value, ValueStack *printStack)
         return std::format("{}", NanBox::toNumber(value));
     }
     if (NanBox::isObj(value)) {
-        return NanBox::toObj(value)->toString(printStack);
+        return NanBox::toObj(value)->to_string();
     }
     return "unknown value";
 }
 
-String valueRepresentation(Value value, ValueStack *printStack)
+String value_representation(Value value)
 {
     if (NanBox::isBool(value)) {
         if (NanBox::toBool(value)) {
@@ -86,46 +86,45 @@ String valueRepresentation(Value value, ValueStack *printStack)
         return std::format("{}", NanBox::toNumber(value));
     }
     if (NanBox::isObj(value)) {
-        auto obj = NanBox::toObj(value);
-        return NanBox::toObj(value)->representation(printStack);
+        return NanBox::toObj(value)->representation();
     }
     return "unknown value";
 }
 
-bool valuesEqual(Value a, Value b)
+bool values_equal(Value a, Value b)
 {
     if (NanBox::isNumber(a) && NanBox::isNumber(b)) {
         return NanBox::toNumber(a) == NanBox::toNumber(b);
     }
-    if (isObjList(a) && isObjList(b)) {
-        return asObjList(a)->list->equals(asObjList(b)->list);
+    if (is_obj_list(a) && is_obj_list(b)) {
+        return as_obj_list(a)->list_->equals(as_obj_list(b)->list_);
     }
-    if (isObjMap(a) && isObjMap(b)) {
-        return asObjMap(a)->map->equals(asObjMap(b)->map);
+    if (is_obj_map(a) && is_obj_map(b)) {
+        return as_obj_map(a)->map_->equals(as_obj_map(b)->map_);
     }
-    if (isObjInstance(a) && isObjInstance(b)) {
-        ObjInstance *aInstance = asObjInstance(a);
-        ObjInstance *bInstance = asObjInstance(b);
-        if (aInstance->klass != bInstance->klass) {
+    if (is_obj_instance(a) && is_obj_instance(b)) {
+        ObjInstance *a_instance = as_obj_instance(a);
+        ObjInstance *b_instance = as_obj_instance(b);
+        if (a_instance->klass_ != b_instance->klass_) {
             return false;
         }
-        return aInstance->fields.equals(&bInstance->fields);
+        return a_instance->fields_.equals(&b_instance->fields_);
     }
     return a == b;
 }
 
-uint32_t valueHash(Value value)
+uint32_t value_hash(Value value)
 {
     if (NanBox::isBool(value))
         return static_cast<uint32_t>(NanBox::toBool(value)) | 0x1da55dda;
     if (NanBox::isNil(value))
         return 0;
     if (NanBox::isNumber(value))
-        return hashNumber(NanBox::toNumber(value));
-    return NanBox::toObj(value)->hash;
+        return hash_number(NanBox::toNumber(value));
+    return NanBox::toObj(value)->hash_;
 }
 
-void markValue(Value value)
+void mark_value(Value value)
 {
     if (NanBox::isObj(value)) {
         NanBox::toObj(value)->mark();

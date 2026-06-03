@@ -12,132 +12,128 @@
 namespace aria {
 
 ObjFunction::ObjFunction(
-    FunctionType _type,
-    ObjString *_location,
-    ObjString *_name,
-    int _arity,
-    ValueHashTable *_globals,
-    bool _acceptsVarargs,
-    GC *_gc)
-    : Obj{ObjType::FUNCTION, hashObj(this, ObjType::FUNCTION), _gc}
-    , location(_location)
-    , enclosingClass(nullptr)
-    , name{_name}
-    , chunk{new Chunk{_globals, _gc}}
-    , arity{_arity}
-    , type{_type}
-    , upvalues{nullptr}
-    , upvalueCount{0}
-    , acceptsVarargs{_acceptsVarargs}
+    FunctionType type,
+    ObjString *location,
+    ObjString *name,
+    int arity,
+    ValueHashTable *globals,
+    bool acceptsVarargs,
+    GC *gc)
+    : Obj{ObjType::FUNCTION, hash_obj(this, ObjType::FUNCTION), gc}
+    , location_{location}
+    , enclosing_class_{nullptr}
+    , name_{name}
+    , chunk_{new Chunk{globals, gc}}
+    , arity_{arity}
+    , type_{type}
+    , upvalues_{nullptr}
+    , upvalue_count_{0}
+    , accepts_varargs_{acceptsVarargs}
 {}
 
-ObjFunction::ObjFunction(FunctionType _type, ObjString *_location, ObjString *_name, GC *_gc)
-    : Obj{ObjType::FUNCTION, hashObj(this, ObjType::FUNCTION), _gc}
-    , location(_location)
-    , enclosingClass(nullptr)
-    , name{_name}
-    , chunk{new Chunk{_gc}}
-    , arity{0}
-    , type{_type}
-    , upvalues{nullptr}
-    , upvalueCount{0}
-    , acceptsVarargs{false}
+ObjFunction::ObjFunction(FunctionType type, ObjString *location, ObjString *name, GC *gc)
+    : Obj{ObjType::FUNCTION, hash_obj(this, ObjType::FUNCTION), gc}
+    , location_{location}
+    , enclosing_class_{nullptr}
+    , name_{name}
+    , chunk_{new Chunk{gc}}
+    , arity_{0}
+    , type_{type}
+    , upvalues_{nullptr}
+    , upvalue_count_{0}
+    , accepts_varargs_{false}
 {}
 
 ObjFunction::ObjFunction(
-    FunctionType _type, ObjString *_location, ObjString *_name, ValueHashTable *_globals, GC *_gc)
-    : Obj{ObjType::FUNCTION, hashObj(this, ObjType::FUNCTION), _gc}
-    , location(_location)
-    , enclosingClass(nullptr)
-    , name{_name}
-    , chunk{new Chunk{_globals, _gc}}
-    , arity{0}
-    , type{_type}
-    , upvalues{nullptr}
-    , upvalueCount{0}
-    , acceptsVarargs{false}
+    FunctionType type, ObjString *location, ObjString *name, ValueHashTable *globals, GC *gc)
+    : Obj{ObjType::FUNCTION, hash_obj(this, ObjType::FUNCTION), gc}
+    , location_{location}
+    , enclosing_class_{nullptr}
+    , name_{name}
+    , chunk_{new Chunk{globals, gc}}
+    , arity_{0}
+    , type_{type}
+    , upvalues_{nullptr}
+    , upvalue_count_{0}
+    , accepts_varargs_{false}
 {}
 
 ObjFunction::~ObjFunction()
 {
-    delete chunk;
-    if (upvalues != nullptr) {
-        gc->freeArray<ObjUpvalue *>(upvalues, upvalueCount);
+    delete chunk_;
+    if (upvalues_ != nullptr) {
+        gc_->free_array<ObjUpvalue *>(upvalues_, upvalue_count_);
     }
 }
 
-String ObjFunction::toString(ValueStack *printStack)
+String ObjFunction::to_string()
 {
-    auto f_name = name->C_str_ref();
-    if (type == FunctionType::SCRIPT) {
-        return format("<module {}>", f_name);
+    auto funcName = name_->c_str();
+    if (type_ == FunctionType::SCRIPT) {
+        return format("<module {}>", funcName);
     }
-    return format("<fn {}>", f_name);
+    return format("<fn {}>", funcName);
 }
 
 void ObjFunction::blacken()
 {
-    location->mark();
-    if (enclosingClass != nullptr) {
-        enclosingClass->mark();
+    location_->mark();
+    if (enclosing_class_ != nullptr) {
+        enclosing_class_->mark();
     }
-    name->mark();
-    chunk->consts.mark();
-    chunk->globals->mark();
-    if (upvalues != nullptr) {
-        for (int i = 0; i < upvalueCount; i++) {
-            if (upvalues[i] == nullptr) {
+    name_->mark();
+    chunk_->consts_.mark();
+    chunk_->globals_->mark();
+    if (upvalues_ != nullptr) {
+        for (int i = 0; i < upvalue_count_; i++) {
+            if (upvalues_[i] == nullptr) {
                 continue;
             }
-            upvalues[i]->mark();
+            upvalues_[i]->mark();
         }
     }
 }
 
 Value ObjFunction::op_call(AriaEnv *env, int argCount)
 {
-    if (acceptsVarargs && argCount >= arity) {
-        env->packVarargs(argCount, arity);
-    } else if (argCount == arity) {
+    if (accepts_varargs_ && argCount >= arity_) {
+        env->pack_varargs(argCount, arity_);
+    } else if (argCount == arity_) {
         // pass
     } else {
-        String msg = format("Expected {} arguments but got {}.", arity, argCount);
-        return env->newException(ErrorCode::RUNTIME_MISMATCH_ARG_COUNT, msg.c_str());
+        String msg = format("Expected {} arguments but got {}.", arity_, argCount);
+        return env->new_exception(ErrorCode::RUNTIME_MISMATCH_ARG_COUNT, msg.c_str());
     }
-    return env->createCallFrame(this);
+    return env->create_call_frame(this);
 }
 
 void ObjFunction::initUpvalues()
 {
-    if (upvalueCount == 0) {
+    if (upvalue_count_ == 0) {
         return;
     }
-    upvalues = gc->allocateArray<ObjUpvalue *>(upvalueCount);
-    for (int i = 0; i < upvalueCount; i++) {
-        upvalues[i] = nullptr;
+    upvalues_ = gc_->allocate_array<ObjUpvalue *>(upvalue_count_);
+    for (int i = 0; i < upvalue_count_; i++) {
+        upvalues_[i] = nullptr;
     }
 }
 
-ObjFunction *newObjFunction(FunctionType type, ObjString *location, ObjString *name, GC *gc)
+ObjFunction *new_ObjFunction(FunctionType type, ObjString *location, ObjString *name, GC *gc)
 {
-    auto obj = gc->allocateObject<ObjFunction>(type, location, name, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object FUNCTION)", toVoidPtr(obj), sizeof(ObjFunction));
-#endif
+    auto obj = gc->allocate_object<ObjFunction>(type, location, name, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 
-ObjFunction *newObjFunction(
+ObjFunction *new_ObjFunction(
     FunctionType type, ObjString *location, ObjString *name, ValueHashTable *globals, GC *gc)
 {
-    auto obj = gc->allocateObject<ObjFunction>(type, location, name, globals, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object FUNCTION)", toVoidPtr(obj), sizeof(ObjFunction));
-#endif
+    auto obj = gc->allocate_object<ObjFunction>(type, location, name, globals, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 
-ObjFunction *newObjFunction(
+ObjFunction *new_ObjFunction(
     FunctionType type,
     ObjString *location,
     ObjString *name,
@@ -147,10 +143,8 @@ ObjFunction *newObjFunction(
     GC *gc)
 {
     auto obj
-        = gc->allocateObject<ObjFunction>(type, location, name, arity, globals, acceptsVarargs, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate {} bytes (object FUNCTION)", toVoidPtr(obj), sizeof(ObjFunction));
-#endif
+        = gc->allocate_object<ObjFunction>(type, location, name, arity, globals, acceptsVarargs, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 

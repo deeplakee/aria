@@ -19,25 +19,25 @@
 namespace aria {
 
 GC::GC()
-    : bytesAllocated{0}
-    , nextGC{GC_INITIAL_SIZE}
-    , objectList{nullptr}
-    , internedStringList{nullptr}
-    , tempRootStack{new ValueStack{}}
-    , stringOpBuffer{new char[GC_BUFFER_SIZE]}
-    , inGC{false}
-    , runningVM{nullptr}
-    , compilingContext{nullptr}
+    : bytes_allocated_{0}
+    , next_gc_{k_gc_initial_size}
+    , object_list_{nullptr}
+    , interned_string_list_{nullptr}
+    , temp_root_stack_{new ValueStack{}}
+    , string_op_buffer_{new char[k_gc_buffer_size]}
+    , in_gc_{false}
+    , running_vm_{nullptr}
+    , compiling_context_{nullptr}
 {
-    internPool = new StringPool{this};
-    listMethods = new ValueHashTable{this};
-    mapMethods = new ValueHashTable{this};
-    stringMethods = new ValueHashTable{this};
-    iteratorMethods = new ValueHashTable{this};
-    ObjList::init(this, listMethods);
-    ObjMap::init(this, mapMethods);
-    ObjString::init(this, stringMethods);
-    ObjIterator::init(this, iteratorMethods);
+    intern_pool_ = new StringPool{this};
+    list_methods_ = new ValueHashTable{this};
+    map_methods_ = new ValueHashTable{this};
+    string_methods_ = new ValueHashTable{this};
+    iterator_methods_ = new ValueHashTable{this};
+    ObjList::init(this, list_methods_);
+    ObjMap::init(this, map_methods_);
+    ObjString::init(this, string_methods_);
+    ObjIterator::init(this, iterator_methods_);
 #ifdef DEBUG_LOG_GC
     println("=== start up GC ===");
 #endif
@@ -45,63 +45,43 @@ GC::GC()
 
 GC::~GC()
 {
-    delete[] stringOpBuffer;
-    delete tempRootStack;
-    delete listMethods;
-    delete mapMethods;
-    delete stringMethods;
-    delete iteratorMethods;
-    delete internPool;
-    freeAllObjects();
+    delete[] string_op_buffer_;
+    delete temp_root_stack_;
+    delete list_methods_;
+    delete map_methods_;
+    delete string_methods_;
+    delete iterator_methods_;
+    delete intern_pool_;
+    free_all_objects();
 #ifdef DEBUG_LOG_GC
     println("=== shut down GC ===");
 #endif
 }
 
-void GC::markRoots()
+void GC::mark_roots()
 {
-    if (runningVM != nullptr) {
-        runningVM->stack.mark();
-
-        markValue(runningVM->E_REG);
-
-        for (int i = 0; i < runningVM->CframeCount; i++) {
-            runningVM->Cframes[i].function->mark();
-        }
-
-        for (int i = 0; i < runningVM->RmoduleCount; i++) {
-            markValue(runningVM->Rmodules[i]);
-        }
-
-        for (ObjUpvalue *p = runningVM->openUpvalues; p != nullptr; p = p->nextUpvalue) {
-            p->mark();
-        }
-
-        runningVM->builtIn->mark();
-        runningVM->cachedModules->mark();
-        if (runningVM->globals != nullptr) {
-            runningVM->globals->mark();
-        }
+    if (running_vm_ != nullptr) {
+        running_vm_->mark_gc_roots();
     }
 
-    if (compilingContext != nullptr) {
-        compilingContext->mark();
+    if (compiling_context_ != nullptr) {
+        compiling_context_->mark();
     }
-    listMethods->mark();
-    mapMethods->mark();
-    stringMethods->mark();
-    iteratorMethods->mark();
-    tempRootStack->mark();
+    list_methods_->mark();
+    map_methods_->mark();
+    string_methods_->mark();
+    iterator_methods_->mark();
+    temp_root_stack_->mark();
     //conStrPool->mark();
 }
 
-void GC::traceReferences()
+void GC::trace_references()
 {
-    while (!greyStack.empty()) {
-        Obj *obj = greyStack.top();
-        greyStack.pop();
+    while (!grey_stack_.empty()) {
+        Obj *obj = grey_stack_.top();
+        grey_stack_.pop();
 #ifdef DEBUG_LOG_GC
-        println("{:p} blacken {}", toVoidPtr(obj), obj->toString());
+        println("{:p} blacken {}", to_void_ptr(obj), obj->to_string());
 #endif
         obj->blacken();
     }
@@ -110,95 +90,95 @@ void GC::traceReferences()
 void GC::sweep()
 {
     Obj *previous = nullptr;
-    Obj *object = objectList;
+    Obj *object = object_list_;
     while (object != nullptr) {
-        if (object->isMarked) {
-            object->isMarked = false;
+        if (object->is_marked_) {
+            object->is_marked_ = false;
             previous = object;
-            object = object->next;
+            object = object->next_;
         } else {
             Obj *unreached = object;
-            object = object->next;
+            object = object->next_;
             if (previous != nullptr) {
-                previous->next = object;
+                previous->next_ = object;
             } else {
-                objectList = object;
+                object_list_ = object;
             }
 
-            freeObject(unreached);
+            free_object(unreached);
         }
     }
 }
 
-void GC::collectGarbage()
+void GC::collect_garbage()
 {
-    if (!gcLock.available() || inGC) {
+    if (!gc_lock_.available() || in_gc_) {
         return;
     }
-    inGC = true;
+    in_gc_ = true;
 
 #ifdef DEBUG_LOG_GC
     println("=== gc begin ===");
-    size_t before = bytesAllocated;
+    size_t before = bytes_allocated_;
 #endif
 
-    markRoots();
+    mark_roots();
 
-    traceReferences();
+    trace_references();
 
     sweep();
 
-    nextGC = bytesAllocated * GC_HEAP_GROW_FACTOR;
+    next_gc_ = bytes_allocated_ * k_gc_heap_grow_factor;
 
 #ifdef DEBUG_LOG_GC
     println("=== gc end ===");
     println(
         "   collected {} bytes (from {} to {}) next at {}",
-        before - bytesAllocated,
+        before - bytes_allocated_,
         before,
-        bytesAllocated,
-        nextGC);
+        bytes_allocated_,
+        next_gc_);
 #endif
 
-    inGC = false;
+    in_gc_ = false;
 }
 
-void GC::freeObject(Obj *obj)
+void GC::free_object(Obj *obj)
 {
-    auto obj_size = obj->objSize();
+    auto size = obj->obj_size();
 #ifdef DEBUG_LOG_GC
-    println("{:p} free {} bytes (object {})", toVoidPtr(obj), obj_size, Obj::type2Str(obj->type));
+    println("{:p} free {} bytes (object {})", to_void_ptr(obj), size, Obj::type_to_str(obj->type_));
 #endif
-    bytesAllocated -= obj_size;
+    bytes_allocated_ -= size;
     delete obj;
 }
 
-void GC::freeAllObjects()
+void GC::free_all_objects()
 {
-    while (objectList != nullptr) {
-        Obj *next = objectList->next;
-        freeObject(objectList);
-        objectList = next;
+    while (object_list_ != nullptr) {
+        Obj *next = object_list_->next_;
+        free_object(object_list_);
+        object_list_ = next;
     }
 
-    while (internedStringList != nullptr) {
-        Obj *next = internedStringList->next;
-        freeObject(internedStringList);
-        internedStringList = next;
+    while (interned_string_list_ != nullptr) {
+        Obj *next = interned_string_list_->next_;
+        free_object(interned_string_list_);
+        interned_string_list_ = next;
     }
 }
 
-bool GC::internString(ObjString *obj)
+bool GC::intern_string(ObjString *obj)
 {
-    pushTempRoot(NanBox::fromObj(obj));
-    bool res = internPool->insert(obj);
-    popTempRoot(1);
+    push_temp_root(NanBox::fromObj(obj));
+    bool res = intern_pool_->insert(obj);
+    pop_temp_root(1);
     return res;
 }
 
-ObjString *GC::findInternedString(const char *chars, size_t length, uint32_t hash)
+ObjString *GC::find_interned_string(const char *chars, size_t length, uint32_t hash)
 {
-    return internPool->findExist(chars, length, hash);
+    return intern_pool_->find_exist(chars, length, hash);
 }
 
 } // namespace aria

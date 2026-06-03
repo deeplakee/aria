@@ -16,79 +16,68 @@
 
 namespace aria {
 
-#define genException(code, msg) gc->runningVM->newException((code), (msg))
+#define genException(code, msg) gc_->running_vm_->new_exception((code), (msg))
 
-ObjList::ObjList(GC *_gc)
-    : Obj{ObjType::LIST, hashObj(this, ObjType::LIST), _gc}
-    , list{new ValueArray{_gc}}
-    , cachedMethods{new ValueHashTable{_gc}}
+ObjList::ObjList(GC *gc)
+    : Obj{ObjType::LIST, hash_obj(this, ObjType::LIST), gc}
+    , list_{new ValueArray{gc}}
+    , cached_methods_{gc}
 {}
 
-ObjList::ObjList(Value *_values, uint32_t _count, GC *_gc)
-    : Obj{ObjType::LIST, hashObj(this, ObjType::LIST), _gc}
-    , list{new ValueArray{_values, _count, _gc}}
-    , cachedMethods{new ValueHashTable{_gc}}
+ObjList::ObjList(Value *values, uint32_t count, GC *gc)
+    : Obj{ObjType::LIST, hash_obj(this, ObjType::LIST), gc}
+    , list_{new ValueArray{values, count, gc}}
+    , cached_methods_{gc}
 {}
 
-ObjList::ObjList(uint32_t begin, uint32_t end, const ObjList *other, GC *_gc)
-    : Obj{ObjType::LIST, hashObj(this, ObjType::LIST), _gc}
-    , list{new ValueArray{begin, end, other->list, _gc}}
-    , cachedMethods{new ValueHashTable{_gc}}
+ObjList::ObjList(uint32_t begin, uint32_t end, const ObjList *other, GC *gc)
+    : Obj{ObjType::LIST, hash_obj(this, ObjType::LIST), gc}
+    , list_{new ValueArray{begin, end, other->list_, gc}}
+    , cached_methods_{gc}
 {}
 
 ObjList::~ObjList()
 {
-    delete list;
-    delete cachedMethods;
+    delete list_;
 }
 
-String ObjList::toString(ValueStack *printStack)
+String ObjList::to_string()
 {
-    if (printStack == nullptr) {
-        ValueStack stack;
-        stack.push(NanBox::fromObj(this));
-        return list->toString(&stack);
-    }
-
-    if (printStack->Exist(NanBox::fromObj(this))) {
+    if (PrintGuard::is_cycle(this)) {
         return "[...]";
     }
-    printStack->push(NanBox::fromObj(this));
-    String str = list->toString(printStack);
-    printStack->pop();
-    return str;
+    PrintGuard guard(this);
+    return list_->to_string();
 }
 
-String ObjList::representation(ValueStack *printStack)
+String ObjList::representation()
 {
-    return toString(printStack);
-    return String{"<list>"};
+    return to_string();
 }
 
 void ObjList::blacken()
 {
-    list->mark();
-    cachedMethods->mark();
+    list_->mark();
+    cached_methods_.mark();
 }
 
-Value ObjList::getByField(ObjString *name, Value &value)
+Value ObjList::get_by_field(ObjString *name, Value &value)
 {
-    if (cachedMethods->get(NanBox::fromObj(name), value)) {
+    if (cached_methods_.get(NanBox::fromObj(name), value)) {
         return NanBox::TrueValue;
     }
-    if (gc->listMethods->get(NanBox::fromObj(name), value)) {
-        assert(isObjNativeFn(value) && "list builtin method is nativeFn");
-        auto boundMethod = newObjBoundMethod(NanBox::fromObj(this), asObjNativeFn(value), gc);
+    if (gc_->list_methods_->get(NanBox::fromObj(name), value)) {
+        assert(is_obj_native_fn(value) && "list builtin method is nativeFn");
+        auto boundMethod = new_ObjBoundMethod(NanBox::fromObj(this), as_obj_native_fn(value), gc_);
         value = NanBox::fromObj(boundMethod);
-        gc->pushTempRoot(value);
-        cachedMethods->insert(NanBox::fromObj(name), value);
-        gc->popTempRoot(1);
+        GcTempRootGuard guard{gc_, value};
+        cached_methods_.insert(NanBox::fromObj(name), value);
         return NanBox::TrueValue;
     }
     return NanBox::FalseValue;
 }
 
-Value ObjList::getByIndex(Value k, Value &v)
+Value ObjList::get_by_index(Value k, Value &v)
 {
     if (!NanBox::isNumber(k)) {
         return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
@@ -97,14 +86,14 @@ Value ObjList::getByIndex(Value k, Value &v)
     if (index != NanBox::toNumber(k)) {
         return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
     }
-    if (index < 0 || index >= list->size()) {
+    if (index < 0 || index >= list_->size()) {
         return genException(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "index out of range");
     }
-    v = (*list)[index];
+    v = (*list_)[index];
     return NanBox::TrueValue;
 }
 
-Value ObjList::setByIndex(Value k, Value v)
+Value ObjList::set_by_index(Value k, Value v)
 {
     if (!NanBox::isNumber(k)) {
         return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
@@ -113,51 +102,44 @@ Value ObjList::setByIndex(Value k, Value v)
     if (index != NanBox::toNumber(k)) {
         return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
     }
-    if (index < 0 || index >= list->size()) {
+    if (index < 0 || index >= list_->size()) {
         return genException(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "index out of range");
     }
-    (*list)[index] = v;
+    (*list_)[index] = v;
     return NanBox::TrueValue;
 }
 
-Value ObjList::createIter(GC *gc)
+Value ObjList::create_iter(GC *gc)
 {
-    return NanBox::fromObj(newObjIterator(this, gc));
+    return NanBox::fromObj(new_ObjIterator(this, gc));
 }
 
 Value ObjList::copy(GC *gc)
 {
-    ObjList *newObj = newObjList(gc);
-    gc->pushTempRoot(NanBox::fromObj(newObj));
-    newObj->list->copy(list);
-    gc->popTempRoot(1);
+    ObjList *newObj = new_ObjList(gc);
+    GcTempRootGuard guard{gc, NanBox::fromObj(newObj)};
+    newObj->list_->copy(list_);
     return NanBox::fromObj(newObj);
 }
 
-ObjList *newObjList(GC *gc)
+ObjList *new_ObjList(GC *gc)
 {
-    auto obj = gc->allocateObject<ObjList>(gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate bytes {} (object LIST)", toVoidPtr(obj), sizeof(ObjList));
-#endif
+    auto obj = gc->allocate_object<ObjList>(gc);
+    log_obj_allocation(obj);
     return obj;
 }
 
-ObjList *newObjList(Value *values, uint32_t count, GC *gc)
+ObjList *new_ObjList(Value *values, uint32_t count, GC *gc)
 {
-    auto obj = gc->allocateObject<ObjList>(values, count, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate bytes {} (object LIST)", toVoidPtr(obj), sizeof(ObjList));
-#endif
+    auto obj = gc->allocate_object<ObjList>(values, count, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 
-ObjList *newObjList(uint32_t begin, uint32_t end, ObjList *other, GC *gc)
+ObjList *new_ObjList(uint32_t begin, uint32_t end, ObjList *other, GC *gc)
 {
-    auto obj = gc->allocateObject<ObjList>(begin, end, other, gc);
-#ifdef DEBUG_LOG_GC
-    println("{:p} allocate bytes {} (object LIST)", toVoidPtr(obj), sizeof(ObjList));
-#endif
+    auto obj = gc->allocate_object<ObjList>(begin, end, other, gc);
+    log_obj_allocation(obj);
     return obj;
 }
 

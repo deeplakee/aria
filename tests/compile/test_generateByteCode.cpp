@@ -28,7 +28,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode1Test)
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parseExpression();
     EXPECT_FALSE(parser.hasError());
@@ -36,7 +36,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode1Test)
     auto fn = generator.generateCode(ast);
     testing::internal::CaptureStdout();
 
-    fn->chunk->disassemble("example1");
+    fn->chunk_->disassemble("example1");
 
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output, result);
@@ -76,7 +76,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode2Test)
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parse();
     EXPECT_FALSE(parser.hasError());
@@ -84,7 +84,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode2Test)
     auto fn = generator.generateCode(ast);
     testing::internal::CaptureStdout();
 
-    fn->chunk->disassemble("example2");
+    fn->chunk_->disassemble("example2");
 
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output, result);
@@ -132,7 +132,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode3Test)
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parse();
     EXPECT_FALSE(parser.hasError());
@@ -140,7 +140,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode3Test)
     auto fn = generator.generateCode(ast);
     testing::internal::CaptureStdout();
 
-    fn->chunk->disassemble("example3");
+    fn->chunk_->disassemble("example3");
 
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output, result);
@@ -234,7 +234,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode4Test)
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parse();
     EXPECT_FALSE(parser.hasError());
@@ -242,7 +242,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode4Test)
     auto fn = generator.generateCode(ast);
     testing::internal::CaptureStdout();
 
-    fn->chunk->disassemble("example4");
+    fn->chunk_->disassemble("example4");
 
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output, result);
@@ -301,7 +301,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode5Test)
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parse();
     EXPECT_FALSE(parser.hasError());
@@ -309,7 +309,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode5Test)
     auto fn = generator.generateCode(ast);
     testing::internal::CaptureStdout();
 
-    fn->chunk->disassemble("example5");
+    fn->chunk_->disassemble("example5");
 
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output, result);
@@ -366,7 +366,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode6Test)
 
     auto lexer = aria::Lexer{source};
     auto tokens = lexer.tokenize();
-    EXPECT_FALSE(lexer.hadError());
+    EXPECT_FALSE(lexer.had_error());
     auto parser = aria::Parser{tokens};
     auto ast = parser.parse();
     EXPECT_FALSE(parser.hasError());
@@ -374,7 +374,7 @@ TEST_F(CompileGenByteCodeTest, GenByteCode6Test)
     auto fn = generator.generateCode(ast);
     testing::internal::CaptureStdout();
 
-    fn->chunk->disassemble("example6");
+    fn->chunk_->disassemble("example6");
 
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(output, result);

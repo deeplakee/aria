@@ -16,50 +16,44 @@ public:
     ObjNativeFn() = delete;
 
     ObjNativeFn(
-        FunctionType _type,
-        NativeFn_t _function,
-        ObjString *_name,
-        int _arity,
-        bool _acceptsVarargs,
-        GC *_gc);
+        FunctionType type,
+        NativeFn_t function,
+        ObjString *name,
+        int arity,
+        bool acceptsVarargs,
+        GC *gc);
 
     ~ObjNativeFn() override;
 
-    using Obj::toString;
+    String to_string() override;
 
-    String toString(ValueStack *printStack) override;
-
-    size_t objSize() override { return sizeof(ObjNativeFn); }
+    size_t obj_size() override { return sizeof(ObjNativeFn); }
 
     void blacken() override;
 
-    FunctionType type;
-    NativeFn_t function;
-    ObjString *name;
-    int arity;
-    bool acceptsVarargs;
+    FunctionType type_;
+    NativeFn_t function_;
+    ObjString *name_;
+    int arity_;
+    bool accepts_varargs_;
 };
 
-inline bool isObjNativeFn(Value value)
+inline bool is_obj_native_fn(Value value)
 {
-    return isObjType(value, ObjType::NATIVE_FN);
+    return is_obj_type(value, ObjType::NATIVE_FN);
 }
 
-inline ObjNativeFn *asObjNativeFn(Value value)
+inline ObjNativeFn *as_obj_native_fn(Value value)
 {
-#ifdef DEBUG_MODE
-    return dynamic_cast<ObjNativeFn *>(NanBox::toObj(value));
-#else
-    return static_cast<ObjNativeFn *>(NanBox::toObj(value));
-#endif
+    return as_Obj<ObjNativeFn>(value);
 }
 
-inline NativeFn_t asNativeFn(Value value)
+inline NativeFn_t as_native_fn(Value value)
 {
-    return asObjNativeFn(value)->function;
+    return as_obj_native_fn(value)->function_;
 }
 
-ObjNativeFn *newObjNativeFn(
+ObjNativeFn *new_ObjNativeFn(
     FunctionType type, NativeFn_t function, ObjString *name, int arity, bool acceptsVarargs, GC *gc);
 
 void bindBuiltinMethod(

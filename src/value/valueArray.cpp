@@ -4,182 +4,182 @@
 #include <cstring>
 
 namespace aria {
-ValueArray::ValueArray(GC *_gc)
-    : capacity{0}
-    , count{0}
-    , values{nullptr}
-    , gc{_gc}
+ValueArray::ValueArray(GC *gc)
+    : capacity_{0}
+    , count_{0}
+    , values_{nullptr}
+    , gc_{gc}
 {}
 
-ValueArray::ValueArray(const uint32_t begin, const uint32_t end, const ValueArray *other, GC *_gc)
-    : capacity{0}
-    , count{0}
-    , values{nullptr}
-    , gc{_gc}
+ValueArray::ValueArray(const uint32_t begin, const uint32_t end, const ValueArray *other, GC *gc)
+    : capacity_{0}
+    , count_{0}
+    , values_{nullptr}
+    , gc_{gc}
 {
     uint32_t size = end - begin;
-    reserve(nextPowerOf2(size));
-    if (size > 0 && (other == nullptr || other->values == nullptr)) {
-        fatalError(
+    reserve(next_power_of_2(size));
+    if (size > 0 && (other == nullptr || other->values_ == nullptr)) {
+        fatal_error(
             ErrorCode::RESOURCE_LIST_CONSTRUCT_FAIL,
             "ValueArray constructor error: other is null but size > 0.");
     }
     if (size != 0) {
-        Value *from = other->values + begin;
-        memcpy(values, from, size * sizeof(Value));
+        Value *from = other->values_ + begin;
+        memcpy(values_, from, size * sizeof(Value));
     }
 
-    count = size;
+    count_ = size;
 }
 
-ValueArray::ValueArray(Value *_values, uint32_t _count, GC *_gc)
-    : capacity{0}
-    , count{0}
-    , values{nullptr}
-    , gc{_gc}
+ValueArray::ValueArray(Value *values, uint32_t count, GC *gc)
+    : capacity_{0}
+    , count_{0}
+    , values_{nullptr}
+    , gc_{gc}
 {
-    reserve(nextPowerOf2(_count));
-    if (_count > 0 && _values == nullptr) {
-        fatalError(
+    reserve(next_power_of_2(count));
+    if (count > 0 && values == nullptr) {
+        fatal_error(
             ErrorCode::RESOURCE_LIST_CONSTRUCT_FAIL,
-            "ValueArray constructor error: _values is null but _count > 0.");
+            "ValueArray constructor error: values is null but count > 0.");
     }
-    if (_count != 0) {
-        memcpy(values, _values, _count * sizeof(Value));
+    if (count != 0) {
+        memcpy(values_, values, count * sizeof(Value));
     }
-    count = _count;
+    count_ = count;
 }
 
 ValueArray::~ValueArray()
 {
-    gc->freeArray<Value>(values, capacity);
+    gc_->free_array<Value>(values_, capacity_);
 }
 
 void ValueArray::push(Value value)
 {
-    if (capacity < count + 1) {
-        uint64_t newCapacity = GC::growCapacity(capacity);
-        if (newCapacity > UINT32_MAX) {
-            fatalError(ErrorCode::RESOURCE_LIST_OVERFLOW, "Too many values in a list");
+    if (capacity_ < count_ + 1) {
+        uint64_t new_capacity = GC::grow_capacity(capacity_);
+        if (new_capacity > UINT32_MAX) {
+            fatal_error(ErrorCode::RESOURCE_LIST_OVERFLOW, "Too many values in a list");
         }
-        reserve(newCapacity);
+        reserve(new_capacity);
     }
-    values[count] = value;
-    count++;
+    values_[count_] = value;
+    count_++;
 }
 
 Value ValueArray::pop()
 {
-    if (count > 0) {
-        count--;
-        return values[count];
+    if (count_ > 0) {
+        count_--;
+        return values_[count_];
     }
     return NanBox::NilValue;
 }
 
 bool ValueArray::remove(uint32_t index)
 {
-    if (index > count) {
+    if (index > count_) {
         return false;
     }
-    count--;
-    for (uint32_t i = index; i < count; i++) {
-        values[i] = values[i + 1];
+    count_--;
+    for (uint32_t i = index; i < count_; i++) {
+        values_[i] = values_[i + 1];
     }
     return true;
 }
 
 bool ValueArray::insert(uint32_t index, Value v)
 {
-    if (index > count) {
+    if (index > count_) {
         return false;
     }
-    if (capacity < count + 1) {
-        reserve(GC::growCapacity(capacity));
+    if (capacity_ < count_ + 1) {
+        reserve(GC::grow_capacity(capacity_));
     }
-    for (uint32_t i = count; i > index; i--) {
-        values[i] = values[i - 1];
+    for (uint32_t i = count_; i > index; i--) {
+        values_[i] = values_[i - 1];
     }
-    values[index] = v;
-    count++;
+    values_[index] = v;
+    count_++;
     return true;
 }
 
 void ValueArray::extend(ValueArray *other)
 {
-    uint32_t newCount = count + other->count;
-    uint32_t newCapacity = nextPowerOf2(newCount);
-    reserve(newCapacity);
-    memcpy(values + count, other->values, other->count * sizeof(Value));
-    count = newCount;
+    uint32_t new_count = count_ + other->count_;
+    uint32_t new_capacity = next_power_of_2(new_count);
+    reserve(new_capacity);
+    memcpy(values_ + count_, other->values_, other->count_ * sizeof(Value));
+    count_ = new_count;
 }
 
 void ValueArray::copy(ValueArray *other)
 {
-    reserve(other->capacity);
-    memcpy(values, other->values, other->count * sizeof(Value));
-    count = other->count;
+    reserve(other->capacity_);
+    memcpy(values_, other->values_, other->count_ * sizeof(Value));
+    count_ = other->count_;
 }
 
 void ValueArray::clear()
 {
-    count = 0;
+    count_ = 0;
     reserve(0);
 }
 
 void ValueArray::reverse()
 {
-    for (uint32_t i = 0; i < count / 2; i++) {
-        swap(values[i], values[count - 1 - i]);
+    for (uint32_t i = 0; i < count_ / 2; i++) {
+        swap(values_[i], values_[count_ - 1 - i]);
     }
 }
 
 uint32_t ValueArray::size() const
 {
-    return count;
+    return count_;
 }
 
-void ValueArray::reserve(const uint32_t newCapacity)
+void ValueArray::reserve(const uint32_t new_capacity)
 {
-    values = gc->resizeArray<Value>(values, capacity, newCapacity);
-    capacity = newCapacity;
+    values_ = gc_->resize_array<Value>(values_, capacity_, new_capacity);
+    capacity_ = new_capacity;
 }
 
 bool ValueArray::equals(ValueArray *other) const
 {
-    if (count != other->count) {
+    if (count_ != other->count_) {
         return false;
     }
-    for (uint32_t i = 0; i < count; i++) {
-        if (!valuesEqual(values[i], other->values[i])) {
+    for (uint32_t i = 0; i < count_; i++) {
+        if (!values_equal(values_[i], other->values_[i])) {
             return false;
         }
     }
     return true;
 }
 
-String ValueArray::toString(ValueStack *printStack) const
+String ValueArray::to_string() const
 {
-    String listStr = "[";
-    if (count == 0) {
-        listStr += "]";
+    String list_str = "[";
+    if (count_ == 0) {
+        list_str += "]";
     }
-    for (uint32_t i = 0; i < count; i++) {
-        Value elem = values[i];
-        listStr += valueRepresentation(elem, printStack);
-        if (i != count - 1) {
-            listStr += ",";
+    for (uint32_t i = 0; i < count_; i++) {
+        Value elem = values_[i];
+        list_str += value_representation(elem);
+        if (i != count_ - 1) {
+            list_str += ",";
         } else {
-            listStr += "]";
+            list_str += "]";
         }
     }
-    return listStr;
+    return list_str;
 }
 
 void ValueArray::mark()
 {
-    for (int i = 0; i < count; i++) {
-        markValue(values[i]);
+    for (int i = 0; i < count_; i++) {
+        mark_value(values_[i]);
     }
 }
 

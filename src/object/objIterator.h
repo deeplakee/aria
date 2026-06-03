@@ -14,49 +14,41 @@ class ObjIterator : public Obj
 public:
     ObjIterator() = delete;
 
-    explicit ObjIterator(Iterator *_iter, GC *_gc);
+    explicit ObjIterator(Iterator *iter, GC *gc);
 
     ~ObjIterator() override;
 
-    using Obj::toString;
+    String to_string() override;
 
-    using Obj::representation;
-
-    String toString(ValueStack *printStack) override;
-
-    size_t objSize() override { return sizeof(ObjIterator); }
+    size_t obj_size() override { return sizeof(ObjIterator); }
 
     void blacken() override;
 
-    Value getByField(ObjString *name, Value &value) override;
+    Value get_by_field(ObjString *name, Value &value) override;
 
-    Iterator *iter;
-    ValueHashTable *cachedMethods;
+    Iterator *iter_;
+    ValueHashTable *cached_methods_;
 
     static void init(GC *_gc, ValueHashTable *builtins);
 };
 
-inline bool isObjIterator(Value value)
+inline bool is_obj_iterator(Value value)
 {
-    return isObjType(value, ObjType::ITERATOR);
+    return is_obj_type(value, ObjType::ITERATOR);
 }
 
-inline ObjIterator *asObjIterator(Value value)
+inline ObjIterator *as_obj_iterator(Value value)
 {
-#ifdef DEBUG_MODE
-    return dynamic_cast<ObjIterator *>(NanBox::toObj(value));
-#else
-    return static_cast<ObjIterator *>(NanBox::toObj(value));
-#endif
+    return as_Obj<ObjIterator>(value);
 }
 
-ObjIterator *newObjIterator(Iterator *iter, GC *gc);
+ObjIterator *new_ObjIterator(Iterator *iter, GC *gc);
 
-ObjIterator *newObjIterator(ObjList *list, GC *gc);
+ObjIterator *new_ObjIterator(ObjList *list, GC *gc);
 
-ObjIterator *newObjIterator(ObjMap *map, GC *gc);
+ObjIterator *new_ObjIterator(ObjMap *map, GC *gc);
 
-ObjIterator *newObjIterator(ObjString *str, GC *gc);
+ObjIterator *new_ObjIterator(ObjString *str, GC *gc);
 
 } // namespace aria
 

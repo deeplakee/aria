@@ -13,41 +13,35 @@ class ObjClass : public Obj
 public:
     ObjClass() = delete;
 
-    ObjClass(ObjString *_name, GC *_gc);
+    ObjClass(ObjString *name, GC *gc);
 
     ~ObjClass() override;
 
-    using Obj::toString;
+    String to_string() override;
 
-    String toString(ValueStack *printStack) override;
-
-    size_t objSize() override { return sizeof(ObjClass); }
+    size_t obj_size() override { return sizeof(ObjClass); }
 
     void blacken() override;
 
-    bool getSuperMethod(ObjString *methodName, Value &method) const;
+    bool getSuperMethod(ObjString *method_name, Value &method) const;
 
-    ObjString *name;
-    ValueHashTable methods;
-    ObjClass *superKlass;
-    ObjFunction *initMethod;
+    ObjString *name_;
+    ValueHashTable methods_;
+    ObjClass *super_klass_;
+    ObjFunction *init_method_;
 };
 
-inline bool isObjClass(Value value)
+inline bool is_obj_class(Value value)
 {
-    return isObjType(value, ObjType::CLASS);
+    return is_obj_type(value, ObjType::CLASS);
 }
 
-inline ObjClass *asObjClass(Value value)
+inline ObjClass *as_obj_class(Value value)
 {
-#ifdef DEBUG_MODE
-    return dynamic_cast<ObjClass *>(NanBox::toObj(value));
-#else
-    return static_cast<ObjClass *>(NanBox::toObj(value));
-#endif
+    return as_Obj<ObjClass>(value);
 }
 
-ObjClass *newObjClass(ObjString *name, GC *gc);
+ObjClass *new_ObjClass(ObjString *name, GC *gc);
 
 } // namespace aria
 

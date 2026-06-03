@@ -222,11 +222,18 @@ if (BUILD_TESTS)
             tests/gc/gc_init.h
             tests/object/test_ObjString.cpp
             tests/value/test_valueHashTable.cpp
+            tests/value/test_valueHashTable2.cpp
             tests/value/test_valueStack.cpp
+            tests/value/test_valueStack2.cpp
+            tests/object/test_objList.cpp
+            tests/object/test_objMap.cpp
             tests/compile/test_token.cpp
             tests/compile/test_lexer.cpp
+            tests/compile/test_lexer2.cpp
             tests/compile/test_parser.cpp
             tests/compile/test_generateByteCode.cpp
+            tests/chunk/test_chunk.cpp
+            tests/runtime/test_vm.cpp
             tests/util/test_util.cpp)
 
     target_include_directories(all_tests PRIVATE ${CMAKE_SOURCE_DIR})

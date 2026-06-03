@@ -14,12 +14,12 @@ class ValueArray
 public:
     ValueArray() = delete;
 
-    explicit ValueArray(GC *_gc);
+    explicit ValueArray(GC *gc);
 
     // Constructs a new ValueArray by copying elements from another ValueArray within the specified range.
-    ValueArray(uint32_t begin, uint32_t end, const ValueArray *other, GC *_gc);
+    ValueArray(uint32_t begin, uint32_t end, const ValueArray *other, GC *gc);
 
-    ValueArray(Value *_values, uint32_t _count, GC *_gc);
+    ValueArray(Value *values, uint32_t count, GC *gc);
 
     ~ValueArray();
 
@@ -28,7 +28,7 @@ public:
 #ifdef DEBUG_MODE
         assert(index < size());
 #endif
-        return values[index];
+        return values_[index];
     }
 
     const Value &operator[](uint32_t index) const
@@ -36,7 +36,7 @@ public:
 #ifdef DEBUG_MODE
         assert(index < size());
 #endif
-        return values[index];
+        return values_[index];
     }
 
     void push(Value value);
@@ -57,21 +57,21 @@ public:
 
     [[nodiscard]] uint32_t size() const;
 
-    [[nodiscard]] bool empty() const { return count == 0; }
+    [[nodiscard]] bool empty() const { return count_ == 0; }
 
-    void reserve(uint32_t newCapacity);
+    void reserve(uint32_t new_capacity);
 
     bool equals(ValueArray *other) const;
 
-    String toString(ValueStack *printStack = nullptr) const;
+    String to_string() const;
 
     void mark();
 
 private:
-    uint32_t capacity;
-    uint32_t count;
-    Value *values;
-    GC *gc;
+    uint32_t capacity_;
+    uint32_t count_;
+    Value *values_;
+    GC *gc_;
 };
 } // namespace aria
 
