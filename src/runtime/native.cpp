@@ -60,7 +60,7 @@ Value Native::_aria_println_(AriaEnv *env, int argCount, Value *args)
 
         std::cout << result << '\n';
     } catch (const std::exception &e) {
-        return env->new_exception(ErrorCode::RUNTIME_UNKNOWN, e.what());
+        return env->new_exception(ErrorCode::RUNTIME_TYPE_ERROR, e.what());
     }
 
     return list->list_->size();
@@ -98,7 +98,7 @@ Value Native::_aria_num_(AriaEnv *env, int argCount, Value *args)
     try {
         return NanBox::fromNumber(std::stod(as_c_string(args[0])));
     } catch ([[maybe_unused]] const std::exception &e) {
-        return env->new_exception(ErrorCode::RUNTIME_UNKNOWN, "Conversion failed");
+        return env->new_exception(ErrorCode::RUNTIME_TYPE_ERROR, "Conversion failed");
     }
 }
 
@@ -112,7 +112,7 @@ Value Native::_aria_bool_(AriaEnv *env, int argCount, Value *args)
     if (str->length_ == 5 && memcmp(str->c_str(), "false", 5) == 0) {
         return NanBox::FalseValue;
     }
-    return env->new_exception(ErrorCode::RUNTIME_UNKNOWN, "Invalid boolean string");
+    return env->new_exception(ErrorCode::RUNTIME_TYPE_ERROR, "Invalid boolean string");
 }
 
 Value Native::_aria_copy_(AriaEnv *env, int argCount, Value *args)

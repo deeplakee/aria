@@ -11,11 +11,9 @@ class ObjException : public Obj
 public:
     ObjException() = delete;
 
-    ObjException(const char *_msg, GC *_gc);
+    ObjException(ErrorCode code, const char *msg, GC *gc);
 
-    ObjException(const char *_msg, GC *_gc, ErrorCode _code);
-
-    ObjException(ObjString *_msg, GC *_gc);
+    ObjException(ErrorCode code, ObjString *msg, GC *gc);
 
     ~ObjException() override;
 
@@ -41,11 +39,9 @@ inline ObjException *as_obj_exception(Value value)
     return as_Obj<ObjException>(value);
 }
 
-ObjException *new_ObjException(const char *msg, GC *gc);
-
 ObjException *new_ObjException(ErrorCode code, const char *msg, GC *gc);
 
-ObjException *new_ObjException(ObjString *msg, GC *gc);
+ObjException *new_ObjException(ErrorCode code,ObjString *msg, GC *gc);
 
 } // namespace aria
 

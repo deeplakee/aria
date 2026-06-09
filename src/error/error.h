@@ -16,7 +16,8 @@ void error(const String &fmt, Args &&...args)
 }
 
 template<typename... Args>
-[[noreturn]] void fatal_error(ErrorCode code, const String &fmt, Args &&...args)
+[[noreturn]]
+void fatal_error(ErrorCode code, const String &fmt, Args &&...args)
 {
     auto msg = "[fatalError] " + std::vformat(fmt, std::make_format_args(args...));
     error(msg);

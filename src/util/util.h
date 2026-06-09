@@ -27,7 +27,8 @@ void print(const String &fmt, Args &&...args)
 template<typename... Args>
 void println(std::ostream &os, const String &fmt, Args &&...args)
 {
-    os << std::vformat(fmt, std::make_format_args(args...)) << std::endl;
+    print(os, fmt, std::forward<Args>(args)...);
+    os << std::endl;
 }
 
 template<typename... Args>
@@ -96,7 +97,7 @@ String get_working_directory();
 // Get absolute path of file_path.
 String get_absolute_path(const String &current_directory, const String &file_path);
 
-bool is_file_path(const String& path);
+bool is_file_path(const String &path);
 
 /**
  * @brief 根据文件A的完整路径和文件B的相对或完整路径，返回文件B的完整路径。

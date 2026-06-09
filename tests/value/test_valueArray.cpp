@@ -3,6 +3,7 @@
 
 #include "tests/gc/gc_init.h"
 
+#include "src/error/ErrorCode.h"
 #include "src/object/objException.h"
 #include "src/object/objString.h"
 #include "src/value/valueArray.h"
@@ -18,7 +19,7 @@ TEST_F(ValueTestFixture, ValueArrayOperation1)
     auto str1 = aria::new_ObjString(msg1, gc);
     aria::Value val_1 = aria::NanBox::fromObj(str1);
 
-    auto e1 = aria::new_ObjException(msg1, gc);
+    auto e1 = aria::new_ObjException(aria::ErrorCode::INTERNAL_UNKNOWN, msg1, gc);
     aria::Value val_2 = aria::NanBox::fromObj(e1);
 
     aria::Value val_3 = aria::NanBox::NilValue;
@@ -33,7 +34,8 @@ TEST_F(ValueTestFixture, ValueArrayOperation1)
 
     aria::Value val_7 = aria::NanBox::fromObj(str2);
 
-    aria::Value val_8 = aria::NanBox::fromObj(aria::new_ObjException(str2, gc));
+    aria::Value val_8 = aria::NanBox::fromObj(
+        aria::new_ObjException(aria::ErrorCode::INTERNAL_UNKNOWN, str2, gc));
 
     arr.push(val_1);
     arr.push(val_2);

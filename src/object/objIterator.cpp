@@ -11,8 +11,6 @@
 
 namespace aria {
 
-#define genException(code, msg) gc_->running_vm_->new_exception((code), (msg))
-
 ObjIterator::ObjIterator(Iterator *iter, GC *gc)
     : Obj{ObjType::ITERATOR, hash_obj(this, ObjType::ITERATOR), gc}
     , iter_{iter}

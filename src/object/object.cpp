@@ -32,10 +32,14 @@ void Obj::mark()
     gc_->push_grey(this);
 }
 
+Value Obj::new_exception(ErrorCode code, const char *msg) {
+    return gc_->running_vm_->new_exception(code, msg);
+}
+
 Value Obj::op_call(AriaEnv *env, int arg_count)
 {
     String msg = format("Cannot call object of {}", value_representation(NanBox::fromObj(this)));
-    return env->new_exception(msg.c_str());
+    return env->new_exception(ErrorCode::RUNTIME_INVALID_CALL, msg.c_str());
 }
 
 } // namespace aria

@@ -3,6 +3,7 @@
 
 #include "aria.h"
 #include "common.h"
+#include "error/ErrorCode.h"
 #include "util/util.h"
 #include "value/value.h"
 
@@ -93,6 +94,8 @@ public:
     virtual size_t obj_size() = 0;
 
     void mark();
+
+    Value new_exception(ErrorCode code, const char *msg);
 
     virtual void blacken() = 0;
 

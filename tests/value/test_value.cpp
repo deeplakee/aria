@@ -2,10 +2,10 @@
 
 #include "tests/gc/gc_init.h"
 
-#include "src/value/value.h"
+#include "src/error/ErrorCode.h"
 #include "src/object/objException.h"
 #include "src/object/objString.h"
-
+#include "src/value/value.h"
 
 TEST(ValueTest, ValueNumber)
 {
@@ -59,7 +59,7 @@ TEST_F(ValueTestFixture, ValueObj)
     aria::Value str1_value = aria::NanBox::fromObj(str1);
     EXPECT_TRUE(aria::NanBox::isObj(str1_value));
 
-    auto e1 = aria::new_ObjException(msg1,gc);
+    auto e1 = aria::new_ObjException(aria::ErrorCode::INTERNAL_UNKNOWN, msg1, gc);
     aria::Value e1_value = aria::NanBox::fromObj(e1);
     EXPECT_TRUE(aria::NanBox::isObj(e1_value));
 }

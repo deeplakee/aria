@@ -45,8 +45,6 @@ public:
 
     void define_native_var(const char *name, Value value) const;
 
-    Value new_exception(const char *msg);
-
     Value new_exception(ErrorCode code, const char *msg);
 
     Value new_exception(ErrorCode code, const String &msg);
@@ -59,6 +57,7 @@ public:
 
     void throw_exception(ErrorCode code, const String &message);
 
+    [[noreturn]]
     void report_runtime_fatal_error(ErrorCode code, const char *msg) const;
 
     void mark_gc_roots();
@@ -82,14 +81,14 @@ private:
         undefined7,
     };
 
-    #define defFlag(what) \
+#define defFlag(what) \
     void set_##what##_flag() { flags_ = flags_ | (1 << index_##what); } \
     void unset_##what##_flag() { flags_ = flags_ & ~(1 << index_##what); } \
     [[nodiscard]] bool get_##what##_flag() const { return (flags_ & (1 << index_##what)); }
 
     defFlag(err);
 
-    #undef defFlag
+#undef defFlag
 
     static constexpr int k_frame_size = 256;
 
@@ -121,7 +120,8 @@ private:
 
     void push_call_frame(ObjFunction *function, uint8_t *ip, Value *stack_base);
 
-    void push_exception_frame(int c_frame_count, int r_module_count, uint8_t *ip, uint32_t stack_size);
+    void push_exception_frame(
+        int c_frame_count, int r_module_count, uint8_t *ip, uint32_t stack_size);
 
     void push_running_module(const ObjFunction *function);
 

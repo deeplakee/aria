@@ -38,7 +38,7 @@ public:
     ValueHashTable *map_;
     ValueHashTable cached_methods_;
 
-    static void init(GC *_gc,ValueHashTable *builtins);
+    static void init(GC *_gc, ValueHashTable *builtins);
 };
 
 inline bool is_obj_map(Value value)
@@ -57,4 +57,4 @@ ObjMap *new_ObjMap(Value *values, uint32_t count, GC *gc);
 
 } // namespace aria
 
-#endif //ARIA_OBJMAP_H
+#endif // ARIA_OBJMAP_H

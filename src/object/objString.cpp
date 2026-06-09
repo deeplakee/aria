@@ -12,8 +12,6 @@
 
 namespace aria {
 
-#define genException(code, msg) gc_->running_vm_->new_exception((code), (msg))
-
 ObjString::ObjString(char *chars, size_t length, uint32_t hash, bool own_chars, GC *gc)
     : Obj{ObjType::STRING, hash, gc}
     , length_{length}
@@ -84,14 +82,14 @@ Value ObjString::get_by_field(ObjString *name, Value &value)
 Value ObjString::get_by_index(Value k, Value &v)
 {
     if (!NanBox::isNumber(k)) {
-        return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of string must be a integer");
+        return new_exception(ErrorCode::RUNTIME_TYPE_ERROR, "index of string must be a integer");
     }
     int index = static_cast<int>(NanBox::toNumber(k));
     if (index != NanBox::toNumber(k)) {
-        return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of string must be a integer");
+        return new_exception(ErrorCode::RUNTIME_TYPE_ERROR, "index of string must be a integer");
     }
     if (index < 0 || index >= length_) {
-        return genException(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "index out of range");
+        return new_exception(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "index out of range");
     }
     char a = c_str()[index];
     v = NanBox::fromObj(new_ObjString(a, gc_));

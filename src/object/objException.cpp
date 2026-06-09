@@ -6,22 +6,16 @@
 
 namespace aria {
 
-ObjException::ObjException(const char *msg, GC *gc)
-    : Obj{ObjType::EXCEPTION, hash_obj(this, ObjType::EXCEPTION), gc}
-    , msg_{new_ObjString(msg, gc)}
-    , code_{ErrorCode::INTERNAL_UNKNOWN}
-{}
-
-ObjException::ObjException(const char *msg, GC *gc, ErrorCode code)
+ObjException::ObjException(ErrorCode code, const char *msg, GC *gc)
     : Obj{ObjType::EXCEPTION, hash_obj(this, ObjType::EXCEPTION), gc}
     , msg_{new_ObjString(msg, gc)}
     , code_{code}
 {}
 
-ObjException::ObjException(ObjString *msg, GC *gc)
+ObjException::ObjException(ErrorCode code, ObjString *msg, GC *gc)
     : Obj{ObjType::EXCEPTION, hash_obj(this, ObjType::EXCEPTION), gc}
     , msg_{msg}
-    , code_{ErrorCode::INTERNAL_UNKNOWN}
+    , code_{code}
 {}
 
 ObjException::~ObjException() = default;
@@ -41,23 +35,16 @@ const char *ObjException::what() const
     return msg_->c_str();
 }
 
-ObjException *new_ObjException(const char *msg, GC *gc)
-{
-    auto obj = gc->allocate_object<ObjException>(msg, gc);
-    log_obj_allocation(obj);
-    return obj;
-}
-
 ObjException *new_ObjException(ErrorCode code, const char *msg, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjException>(msg, gc, code);
+    auto obj = gc->allocate_object<ObjException>(code, msg, gc);
     log_obj_allocation(obj);
     return obj;
 }
 
-ObjException *new_ObjException(ObjString *msg, GC *gc)
+ObjException *new_ObjException(ErrorCode code, ObjString *msg, GC *gc)
 {
-    auto obj = gc->allocate_object<ObjException>(msg, gc);
+    auto obj = gc->allocate_object<ObjException>(code, msg, gc);
     log_obj_allocation(obj);
     return obj;
 }

@@ -133,14 +133,6 @@ void AriaVM::set_debugger(AriaDebugger *_debugger)
     debugger_ = _debugger;
 }
 
-Value AriaVM::new_exception(const char *msg)
-{
-    set_err_flag();
-    auto e = NanBox::fromObj(new_ObjException(msg, gc_));
-    e_reg_ = e;
-    return e;
-}
-
 Value AriaVM::new_exception(ErrorCode code, const char *msg)
 {
     set_err_flag();
@@ -292,7 +284,7 @@ Value AriaVM::call_value(Value callee, int argCount)
             return NanBox::toObj(callee)->op_call(this, argCount);
         }
     }
-    return new_exception("Invalid call operation.");
+    return new_exception(ErrorCode::RUNTIME_INVALID_CALL, "Invalid call operation.");
 }
 
 Value AriaVM::call_module(ObjFunction *module)
@@ -358,7 +350,7 @@ Value AriaVM::call_bound_method(const ObjBoundMethod *method, const int argCount
         stack_[stack_.size() - argCount - 1] = method->receiver_;
         return call_native_fn(method->native_method_, argCount);
     }
-    return new_exception(ErrorCode::RUNTIME_UNKNOWN, "Unknown bound method type.");
+    return new_exception(ErrorCode::RUNTIME_INVALID_CALL, "Unknown bound method type.");
 }
 
 ObjUpvalue *AriaVM::capture_upvalue(Value *local)
@@ -666,7 +658,7 @@ Value AriaVM::run(int retFrame)
             }
             if (get_err_flag()) {
                 if (!is_obj_exception(result)) {
-                    report_runtime_fatal_error(ErrorCode::RUNTIME_UNKNOWN, "Invalid return value");
+                    report_runtime_fatal_error(ErrorCode::INTERNAL_UNKNOWN, "Invalid return value");
                 }
                 throw_exception(as_obj_exception(result));
                 break;

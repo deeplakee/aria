@@ -16,8 +16,6 @@
 
 namespace aria {
 
-#define genException(code, msg) gc_->running_vm_->new_exception((code), (msg))
-
 ObjList::ObjList(GC *gc)
     : Obj{ObjType::LIST, hash_obj(this, ObjType::LIST), gc}
     , list_{new ValueArray{gc}}
@@ -80,14 +78,14 @@ Value ObjList::get_by_field(ObjString *name, Value &value)
 Value ObjList::get_by_index(Value k, Value &v)
 {
     if (!NanBox::isNumber(k)) {
-        return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
+        return new_exception(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
     }
     int index = static_cast<int>(NanBox::toNumber(k));
     if (index != NanBox::toNumber(k)) {
-        return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
+        return new_exception(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
     }
     if (index < 0 || index >= list_->size()) {
-        return genException(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "index out of range");
+        return new_exception(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "index out of range");
     }
     v = (*list_)[index];
     return NanBox::TrueValue;
@@ -96,14 +94,14 @@ Value ObjList::get_by_index(Value k, Value &v)
 Value ObjList::set_by_index(Value k, Value v)
 {
     if (!NanBox::isNumber(k)) {
-        return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
+        return new_exception(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
     }
     int index = static_cast<int>(NanBox::toNumber(k));
     if (index != NanBox::toNumber(k)) {
-        return genException(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
+        return new_exception(ErrorCode::RUNTIME_TYPE_ERROR, "index of list must be a integer");
     }
     if (index < 0 || index >= list_->size()) {
-        return genException(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "index out of range");
+        return new_exception(ErrorCode::RUNTIME_OUT_OF_BOUNDS, "index out of range");
     }
     (*list_)[index] = v;
     return NanBox::TrueValue;

@@ -14,8 +14,6 @@
 
 namespace aria {
 
-#define genException(code, msg) gc_->running_vm_->new_exception((code), (msg))
-
 ObjMap::ObjMap(GC *gc)
     : Obj{ObjType::MAP, hash_obj(this, ObjType::MAP), gc}
     , map_{new ValueHashTable{gc}}
