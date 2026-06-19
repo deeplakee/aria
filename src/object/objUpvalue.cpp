@@ -7,7 +7,7 @@
 namespace aria {
 
 ObjUpvalue::ObjUpvalue(Value *location, GC *gc)
-    : Obj{ObjType::STRING, hash_obj(this, ObjType::UPVALUE), gc}
+    : Obj{ObjType::UPVALUE, hash_obj(this, ObjType::UPVALUE), gc}
     , location_{location}
     , closed_{NanBox::NilValue}
     , next_upvalue_{nullptr}
