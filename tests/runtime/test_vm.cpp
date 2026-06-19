@@ -381,6 +381,29 @@ print result;
         "catch"));
 }
 
+// 跨帧抛异常时，被越过的中间帧里 open upvalue 必须被正确 close，
+// 否则 stack_.resize 后闭包读取的将是悬挂/被覆盖的栈槽。
+TEST_F(VMTest, UnwindClosesUpvaluesAcrossFrames)
+{
+    EXPECT_TRUE(runAndExpect(R"(
+var g;
+fun outer() {
+    var x = 42;
+    fun get() { return x; }
+    g = get;
+    fun inner() { throw "boom"; }
+    inner();
+}
+try {
+    outer();
+} catch (e) {
+    print "caught: " + e;
+}
+print g();
+)",
+        "42"));
+}
+
 // ==================== For-in 循环 ====================
 
 TEST_F(VMTest, ForInList)

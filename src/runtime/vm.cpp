@@ -1027,6 +1027,9 @@ void AriaVM::unwind_to_catch_point()
     update_call_frame();
     r_module_count_ = ef->RmoduleCount;
     frame_->ip = ef->ip;
+    // 在截断栈之前，关闭所有指向将被丢弃的中间栈帧局部的 open upvalue，
+    // 将其值拷贝到各自的 closed_，避免 stack_.resize 后产生悬挂指针。
+    close_upvalues(stack_.base() + ef->stackSize);
     stack_.resize(ef->stackSize);
     stack_.push(e_reg_);
     e_reg_ = NanBox::NilValue;
