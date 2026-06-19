@@ -198,16 +198,22 @@ uint32_t ValueHashTable::find_position(Value key, uint32_t hash) const
 {
     uint8_t h2 = get_hash_h2(hash);
     uint32_t index = hash & (capacity_ - 1);
+    // 记住探测路径上遇到的第一个墓碑槽，作为 key 不存在时的优先插入位。
+    // 用 UINT32_MAX 表示“尚未遇到墓碑”（capacity_ 为 2 的幂且受 0.75 负载限制，不会达到该值）。
+    uint32_t first_tombstone = UINT32_MAX;
 
     for (;;) {
         auto c = ctrl_[index];
         if (c == k_empty) {
-            return index;
+            // 探测到真空槽，说明 key 不存在：优先复用墓碑位，否则用此空槽。
+            return first_tombstone != UINT32_MAX ? first_tombstone : index;
         }
         if (c == k_deleted) {
-            return index;
-        }
-        if (c == h2 && values_same(entry_[index].key, key)) {
+            if (first_tombstone == UINT32_MAX) {
+                first_tombstone = index;
+            }
+            // 不立即返回：key 可能已存在于更后面的槽中，必须继续探测确认。
+        } else if (c == h2 && values_same(entry_[index].key, key)) {
             return index;
         }
         index = (index + 1) & (capacity_ - 1);

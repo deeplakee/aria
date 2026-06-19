@@ -77,6 +77,54 @@ TEST_F(ValueHashTableTest, RemoveThenReinsert)
     EXPECT_DOUBLE_EQ(NanBox::toNumber(v), 20.0);
 }
 
+// 删除墓碑槽后，重插一个因哈希冲突被挤到后续槽的 key，
+// find_position 必须穿透墓碑继续探测到已有槽，而非在墓碑处重复插入。
+// 回归 bug：find_position 遇 k_deleted 立即返回，导致同 key 出现在两个槽、
+// count_ 虚高、后续 remove 残留孤儿条目。
+TEST_F(ValueHashTableTest, ReinsertCollidedKeyAfterTombstone)
+{
+    ValueHashTable table{gc};
+
+    // 搜索两个 number key，使其 h1 对 capacity=8 取模相同（哈希冲突，线性探测挤位）。
+    // 插入首个 key 后 capacity 由 0 扩到 8。
+    double key_a = -1;
+    double key_b = -1;
+    bool found = false;
+    for (int i = 0; i < 100000 && !found; ++i) {
+        auto a = NanBox::fromNumber(i);
+        for (int j = i + 1; j < 100000 && !found; ++j) {
+            auto b = NanBox::fromNumber(j);
+            if ((value_hash(a) & 7u) == (value_hash(b) & 7u)) {
+                key_a = i;
+                key_b = j;
+                found = true;
+            }
+        }
+    }
+    ASSERT_TRUE(found) << "未找到哈希冲突的 number key";
+
+    auto a = NanBox::fromNumber(key_a);
+    auto b = NanBox::fromNumber(key_b);
+
+    // a 落首选槽，b 冲突挤到下一槽。
+    table.insert(a, NanBox::fromNumber(1));
+    table.insert(b, NanBox::fromNumber(2));
+    EXPECT_EQ(table.size(), 2);
+
+    // 删除 a：其首选槽变为墓碑，b 仍在后续槽。
+    EXPECT_TRUE(table.remove(a));
+    EXPECT_EQ(table.size(), 1);
+
+    // 重新插入 b：旧实现在墓碑槽重复插入 b，size 错误地变为 2。
+    // 修复后应识别 b 已存在，原地更新，size 保持 1。
+    EXPECT_FALSE(table.insert(b, NanBox::fromNumber(3)));
+    EXPECT_EQ(table.size(), 1);
+
+    Value v = NanBox::NilValue;
+    EXPECT_TRUE(table.get(b, v));
+    EXPECT_DOUBLE_EQ(NanBox::toNumber(v), 3.0);
+}
+
 // copy 合并
 TEST_F(ValueHashTableTest, CopyMergesEntries)
 {
