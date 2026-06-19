@@ -101,3 +101,36 @@ TEST_F(ValueTestFixture, ValueArrayOperation3)
     aria::print(oss, "{}", arr.to_string());
     EXPECT_STREQ(oss.str().c_str(), "[123.456,-123.456,true,false,nil]");
 }
+
+// remove 的越界处理：index == size 是非法位置（合法区间 [0, size)），
+// 应返回 false 且不改变 size。回归 bug：原实现用 index > count_ 判断，
+// 导致 remove(size) 误返回 true 并错误地 size--。
+TEST_F(ValueTestFixture, ValueArrayRemoveBounds)
+{
+    aria::ValueArray arr = aria::ValueArray(gc);
+    arr.push(aria::NanBox::fromNumber(10));
+    arr.push(aria::NanBox::fromNumber(20));
+    arr.push(aria::NanBox::fromNumber(30));
+    EXPECT_EQ(arr.size(), 3);
+
+    // index == size：越界，应拒绝，size 不变。
+    EXPECT_FALSE(arr.remove(arr.size()));
+    EXPECT_EQ(arr.size(), 3);
+
+    // index > size：越界，应拒绝。
+    EXPECT_FALSE(arr.remove(arr.size() + 5));
+    EXPECT_EQ(arr.size(), 3);
+
+    // 正常删除中间元素，后继前移。
+    EXPECT_TRUE(arr.remove(1));
+    EXPECT_EQ(arr.size(), 2);
+    EXPECT_EQ(aria::NanBox::toNumber(arr[0]), 10.0);
+    EXPECT_EQ(aria::NanBox::toNumber(arr[1]), 30.0);
+
+    // 删到空。
+    EXPECT_TRUE(arr.remove(0));
+    EXPECT_TRUE(arr.remove(0));
+    EXPECT_EQ(arr.size(), 0);
+    // 空表任何 index 都越界。
+    EXPECT_FALSE(arr.remove(0));
+}

@@ -79,7 +79,7 @@ Value ValueArray::pop()
 
 bool ValueArray::remove(uint32_t index)
 {
-    if (index > count_) {
+    if (index >= count_) {
         return false;
     }
     count_--;
