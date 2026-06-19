@@ -151,7 +151,10 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
 endif ()
 
 # 链接库
-target_link_libraries(aria_core PUBLIC m)
+# m (libm) 在 Linux/macOS 以及 MinGW 上存在；MSVC ABI 下数学函数已包含在默认 CRT 中，无需也不应链接。
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR UNIX)
+    target_link_libraries(aria_core PUBLIC m)
+endif ()
 target_compile_features(aria_core PUBLIC cxx_std_20)
 
 

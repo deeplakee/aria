@@ -6,8 +6,5 @@ ehthumbs.db
 .vscode/
 .idea/
 
-cmake-build-debug/
-cmake-build-debug-msys2/
-cmake-build-release/
-cmake-build-release-msys2/
+cmake-build-*/
 build/

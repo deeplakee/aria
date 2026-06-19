@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+#include <array>
 #include <format>
 #include <utility>
 
